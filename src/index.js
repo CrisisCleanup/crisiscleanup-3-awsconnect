@@ -1,6 +1,7 @@
 const axios = require('axios');
 
 axios.defaults.baseURL = 'https://api.crisiscleanup.org';
+axios.defaults.headers.common.Authorization = `Token ${process.env.CC_AUTH_TOKEN}`;
 
 module.exports.handler = async (event, context, callback) => {
   // Grab inbound number from event
@@ -14,12 +15,6 @@ module.exports.handler = async (event, context, callback) => {
   const queryNumber = inboundNumber.split('+')[1];
   const response = await axios.get(
     `/phone_outbound?phone_number=${queryNumber}`,
-    {
-      auth: {
-        username: process.env.CC_AUTH_USERNAME,
-        password: process.env.CC_AUTH_PASSWORD,
-      },
-    },
   );
 
   // Throw error to trigger 'no ID' path in connect
@@ -30,18 +25,28 @@ module.exports.handler = async (event, context, callback) => {
 
   // Filter for outbounds w/ valid pda/worksite id
   const { results } = response.data;
-  const cases = results.filter(({ pda, worksite }) => {
+  const cases = {
+    pdas: [],
+    worksites: [],
+  };
+
+  results.forEach(({ pda, worksite }) => {
     if (worksite !== null) {
-      return { type: 'worksite', id: worksite };
+      return cases.worksites.push(worksite);
     }
     if (pda !== null) {
-      return { type: 'pda', id: pda };
+      return cases.pdas.push(pda);
     }
   });
+  console.log('response', response);
+  console.log('cases', cases);
 
-  // if we got any, send em' back
+  // Response must be simple string map
   if (cases) {
-    return callback(null, { cases });
+    return callback(null, {
+      pdas: cases.pdas.join(','),
+      worksites: cases.worksites.join(','),
+    });
   }
 
   // Catch all, 'no ID'
