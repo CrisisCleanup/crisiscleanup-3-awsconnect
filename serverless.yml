@@ -5,12 +5,12 @@ org: crisiscleanup
 awsConnect:
   component: '@serverless/aws-lambda'
   inputs:
-    name: crisiscleanup-3-awsconnect 
+    name: crisiscleanup-3-awsconnect
     description: CC3 AWS Connect Lambda Integrations
     memory: 128
     timeout: 20
     code: ./src
-    handler: handler.hello
+    handler: index.handler
     runtime: nodejs12.x
     region: us-east-1
     bucket: crisiscleanup-3-awsconnect
