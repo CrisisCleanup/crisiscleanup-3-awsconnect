@@ -10,10 +10,6 @@ module.exports.handler = async (event, context, callback) => {
     },
   } = event;
 
-  // Log
-  console.log('EVENT', event);
-  console.log('CONTEXT', context);
-
   // Query phone outbound table
   const queryNumber = inboundNumber.split('+')[1];
   const response = await axios.get(
@@ -25,19 +21,29 @@ module.exports.handler = async (event, context, callback) => {
       },
     },
   );
-  console.log('RESPONSE', response);
+
+  // Throw error to trigger 'no ID' path in connect
   if (response.status !== 200) {
+    console.error('response:', response);
     throw 'Number not found!';
   }
 
-  const { pda, worksite } = response.data;
-  if (worksite !== null) {
-    return callback(null, { type: 'worksite', id: worksite });
+  // Filter for outbounds w/ valid pda/worksite id
+  const { results } = response.data;
+  const cases = results.filter(({ pda, worksite }) => {
+    if (worksite !== null) {
+      return { type: 'worksite', id: worksite };
+    }
+    if (pda !== null) {
+      return { type: 'pda', id: pda };
+    }
+  });
+
+  // if we got any, send em' back
+  if (cases) {
+    return callback(null, { cases });
   }
 
-  if (pda !== null) {
-    return callback(null, { type: 'pda', id: pda });
-  }
-
+  // Catch all, 'no ID'
   throw 'Number does not have a pda or worksite associated!';
 };
