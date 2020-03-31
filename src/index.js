@@ -44,6 +44,7 @@ module.exports.handler = async (event, context, callback) => {
   // Response must be simple string map
   if (cases) {
     return callback(null, {
+      outboundId: results.id,
       pdas: cases.pdas.join(','),
       worksites: cases.worksites.join(','),
     });
