@@ -18,3 +18,4 @@ awsConnectPda:
     bucket: crisiscleanup-3-awsconnect
     env:
       CC_AUTH_TOKEN: ${env.CC_AUTH_TOKEN}
+      CC_API_BASE_URL: ${env.CC_API_BASE_URL}

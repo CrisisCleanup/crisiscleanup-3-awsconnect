@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-axios.defaults.baseURL = 'https://api.crisiscleanup.org';
+axios.defaults.baseURL = process.env.CC_API_BASE_URL;
 axios.defaults.headers.common.Authorization = `Token ${process.env.CC_AUTH_TOKEN}`;
 
 module.exports.handler = async (event, context, callback) => {
@@ -28,9 +28,11 @@ module.exports.handler = async (event, context, callback) => {
   const cases = {
     pdas: [],
     worksites: [],
+    ids: [],
   };
 
-  results.forEach(({ pda, worksite }) => {
+  results.forEach(({ id, pda, worksite }) => {
+    cases.ids.push(id);
     if (worksite !== null) {
       return cases.worksites.push(worksite);
     }
@@ -44,7 +46,7 @@ module.exports.handler = async (event, context, callback) => {
   // Response must be simple string map
   if (cases) {
     return callback(null, {
-      outboundId: results.id,
+      ids: cases.ids.join(','),
       pdas: cases.pdas.join(','),
       worksites: cases.worksites.join(','),
     });
