@@ -4,7 +4,7 @@ service: crisiscleanup-3-awsconnect
 app: crisiscleanup-3-awsconnect
 org: crisiscleanup
 
-awsConnectPda:
+awsConnect:
   component: "@serverless/aws-lambda"
   inputs:
     name: crisiscleanup-3-awsconnect

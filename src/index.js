@@ -12,19 +12,7 @@ const ENDPOINT = (isDev) => {
   return ep;
 };
 
-module.exports.handler = async (event, context, callback) => {
-  // Grab inbound number from event
-  const {
-    Details: {
-      Parameters: { inboundNumber, isDev },
-    },
-  } = event;
-
-  // Get Endpoint
-  const endpoint = ENDPOINT(isDev);
-  axios.defaults.baseURL = endpoint.baseUrl;
-  axios.defaults.headers.common.Authorization = endpoint.auth;
-
+const checkCases = async (inboundNumber, callback) => {
   // Query phone outbound table
   const queryNumber = inboundNumber.split('+')[1];
   const response = await axios.get(
@@ -70,4 +58,60 @@ module.exports.handler = async (event, context, callback) => {
   // Catch all, 'no ID'
   console.log('No cases found!');
   throw 'Number does not have a pda or worksite associated!';
+};
+
+const getLanguageId = async (subtag) => {
+  const response = await axios.get('/languages');
+  const { results } = response.data;
+  const tag = subtag.replace('_', '-');
+  const id = results.filter((r) => (r.subtag === tag ? r.id : null));
+  if (!id.length >= 1) {
+    return 2; // en-US default
+  }
+  return id[0].id;
+};
+
+const createCallback = async (
+  inboundNumber,
+  userLanguage,
+  incidentId,
+  callback,
+) => {
+  // Request params
+  const params = {
+    dnis1: inboundNumber,
+    call_type: 'callback',
+    language: await getLanguageId(userLanguage),
+    incident_id: [incidentId],
+  };
+  console.log('creating callback...', params);
+
+  const response = await axios.post('/phone_outbound', params);
+  console.log('callback response:', response);
+  callback(0);
+};
+
+module.exports.handler = async (event, context, callback) => {
+  // Grab inbound number from event
+  const {
+    Details: {
+      Parameters: { inboundNumber, isDev, action, userLanguage, incidentId },
+    },
+  } = event;
+
+  // Get Endpoint
+  const endpoint = ENDPOINT(isDev);
+  axios.defaults.baseURL = endpoint.baseUrl;
+  axios.defaults.headers.common.Authorization = endpoint.auth;
+
+  switch (action) {
+    case 'CHECK_CASE':
+      return checkCases(inboundNumber, callback);
+    case 'CALLBACK':
+      return createCallback(inboundNumber, userLanguage, incidentId, callback);
+    default:
+      console.log('no action provided!');
+      callback(0);
+      break;
+  }
 };
