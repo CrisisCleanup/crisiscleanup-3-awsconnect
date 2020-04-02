@@ -1,15 +1,29 @@
 const axios = require('axios');
 
-axios.defaults.baseURL = process.env.CC_API_BASE_URL;
-axios.defaults.headers.common.Authorization = `Token ${process.env.CC_AUTH_TOKEN}`;
+const ENDPOINT = (isDev) => {
+  const ep = {
+    auth: `Token ${process.env.CC_AUTH_TOKEN}`,
+    baseUrl: process.env.CC_API_BASE_URL,
+  };
+  if (isDev) {
+    (ep.auth = `Token ${process.env.CC_DEV_AUTH_TOKEN}`),
+      (ep.baseUrl = process.env.CC_DEV_API_BASE_URL);
+  }
+  return ep;
+};
 
 module.exports.handler = async (event, context, callback) => {
   // Grab inbound number from event
   const {
     Details: {
-      Parameters: { inboundNumber },
+      Parameters: { inboundNumber, isDev },
     },
   } = event;
+
+  // Get Endpoint
+  const endpoint = ENDPOINT(isDev);
+  axios.defaults.baseURL = endpoint.baseUrl;
+  axios.defaults.headers.common.Authorization = endpoint.auth;
 
   // Query phone outbound table
   const queryNumber = inboundNumber.split('+')[1];
@@ -44,7 +58,8 @@ module.exports.handler = async (event, context, callback) => {
   console.log('cases', cases);
 
   // Response must be simple string map
-  if (cases) {
+  if (cases.ids.length >= 1) {
+    console.log('Case found!');
     return callback(null, {
       ids: cases.ids.join(','),
       pdas: cases.pdas.join(','),
@@ -53,5 +68,6 @@ module.exports.handler = async (event, context, callback) => {
   }
 
   // Catch all, 'no ID'
+  console.log('No cases found!');
   throw 'Number does not have a pda or worksite associated!';
 };

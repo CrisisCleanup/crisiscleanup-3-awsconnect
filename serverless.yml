@@ -19,3 +19,5 @@ awsConnectPda:
     env:
       CC_AUTH_TOKEN: ${env.CC_AUTH_TOKEN}
       CC_API_BASE_URL: ${env.CC_API_BASE_URL}
+      CC_DEV_AUTH_TOKEN: ${env.CC_DEV_AUTH_TOKEN}
+      CC_DEV_API_BASE_URL: ${env.CC_DEV_API_BASE_URL}
