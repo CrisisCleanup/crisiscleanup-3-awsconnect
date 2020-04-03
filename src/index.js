@@ -88,7 +88,7 @@ const createCallback = async (
 
   const response = await axios.post('/phone_outbound', params);
   console.log('callback response:', response);
-  callback(0);
+  callback(null, { status: 'CREATED' });
 };
 
 module.exports.handler = async (event, context, callback) => {
