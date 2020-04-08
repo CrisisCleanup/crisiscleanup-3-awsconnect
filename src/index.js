@@ -5,7 +5,8 @@ const ENDPOINT = (isDev) => {
     auth: `Token ${process.env.CC_AUTH_TOKEN}`,
     baseUrl: process.env.CC_API_BASE_URL,
   };
-  if (isDev) {
+  // AWS connect likes to cast inputs as strings
+  if (isDev === '1') {
     (ep.auth = `Token ${process.env.CC_DEV_AUTH_TOKEN}`),
       (ep.baseUrl = process.env.CC_DEV_API_BASE_URL);
   }
