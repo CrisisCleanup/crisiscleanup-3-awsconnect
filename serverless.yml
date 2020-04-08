@@ -21,3 +21,19 @@ awsConnect:
       CC_API_BASE_URL: ${env.CC_API_BASE_URL}
       CC_DEV_AUTH_TOKEN: ${env.CC_DEV_AUTH_TOKEN}
       CC_DEV_API_BASE_URL: ${env.CC_DEV_API_BASE_URL}
+
+metricsTable:
+  component: "@serverless/aws-dynamodb"
+  app: crisiscleanup-3-awsconnect
+  org: crisiscleanup
+  name: connect-metrics-table
+
+  inputs:
+    name: connect-metrics-table
+    region: us-east-1
+    attributeDefinitions:
+      - AttributeName: name
+        AttributeType: S
+    keySchema:
+      - AttributeName: name
+        KeyType: HASH
