@@ -34,6 +34,10 @@ metricsTable:
     attributeDefinitions:
       - AttributeName: name
         AttributeType: S
+      - AttributeName: type
+        AttributeType: S
     keySchema:
       - AttributeName: name
         KeyType: HASH
+      - AttributeName: type
+        KeyType: RANGE
