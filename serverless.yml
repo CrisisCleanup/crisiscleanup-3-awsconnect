@@ -32,12 +32,12 @@ metricsTable:
     name: connect-metrics-table
     region: us-east-1
     attributeDefinitions:
-      - AttributeName: name
-        AttributeType: S
       - AttributeName: type
+        AttributeType: S
+      - AttributeName: name
         AttributeType: S
     keySchema:
-      - AttributeName: name
-        KeyType: HASH
       - AttributeName: type
+        KeyType: HASH
+      - AttributeName: name
         KeyType: RANGE
