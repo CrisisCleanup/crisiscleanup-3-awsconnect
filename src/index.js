@@ -92,6 +92,33 @@ const createCallback = async (
   callback(null, { status: 'CREATED' });
 };
 
+const deniedCallback = async (inboundNumber, callback) => {
+  console.log('unlocking callback for:', inboundNumber);
+  // Query phone outbound table
+  const queryNumber = inboundNumber.split('+')[1];
+  const response = await axios.get(
+    `/phone_outbound?phone_number=${queryNumber}`,
+  );
+  // Throw error to trigger 'no ID' path in connect
+  if (response.status !== 200) {
+    console.error('response:', response);
+    throw 'Number not found!';
+  }
+
+  const { results } = response.data;
+  const recentId = Math.max(...results.map((o) => o.id));
+  console.log('outbound id found:', recentId);
+
+  // Unlock phone outbound
+  const resp = await axios.post(`/phone_outbound/${recentId}/unlock`);
+  if (resp.status !== 200) {
+    console.error('response:', resp);
+    throw 'Could not unlock id!';
+  }
+
+  callback(null, { status: 'UNLOCKED' });
+};
+
 module.exports.handler = async (event, context, callback) => {
   // Grab inbound number from event
   const {
@@ -110,6 +137,8 @@ module.exports.handler = async (event, context, callback) => {
       return checkCases(inboundNumber, callback);
     case 'CALLBACK':
       return createCallback(inboundNumber, userLanguage, incidentId, callback);
+    case 'DENIED_CALLBACK':
+      return deniedCallback(inboundNumber, callback);
     default:
       console.log('no action provided!');
       callback(0);
