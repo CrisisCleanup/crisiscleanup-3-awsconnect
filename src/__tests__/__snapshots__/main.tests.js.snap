@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`handler checks for existing case 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      null,
+      Object {
+        "ids": "0,1",
+        "pdas": "1",
+        "worksites": "2",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": undefined,
+    },
+  ],
+}
+`;
