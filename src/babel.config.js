@@ -7,7 +7,7 @@ module.exports = {
         [
           '@babel/preset-env',
           {
-            modules: 'auto',
+            targets: { node: 'current' },
           },
           'jest',
         ],
