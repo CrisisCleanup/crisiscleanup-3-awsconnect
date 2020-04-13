@@ -28,4 +28,31 @@ describe('api', () => {
     const resp = await Outbound.getByPhoneNumber('+1234567890');
     expect(resp).toMatchSnapshot();
   });
+
+  it('throws error on no results', async () => {
+    const mock = new MockAdapter(axios);
+    mock
+      .onGet('/phone_outbound', {
+        params: { phone_number: '1234567890' },
+      })
+      .reply(404, {
+        results: [],
+      });
+    await expect(Outbound.getByPhoneNumber('123')).rejects.toThrow();
+  });
+
+  it('resolves cases by number', async () => {
+    const mock = new MockAdapter(axios);
+    mock
+      .onGet('/phone_outbound', { params: { phone_number: '1234567890' } })
+      .reply(200, {
+        results: [
+          MockOutbound(),
+          MockOutbound({ id: 1, worksite: 1 }),
+          MockOutbound({ id: 3, pda: 1 }),
+        ],
+      });
+    const cases = await Outbound.resolveCasesByNumber('+1234567890');
+    expect(cases).toMatchSnapshot();
+  });
 });

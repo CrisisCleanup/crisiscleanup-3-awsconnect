@@ -1,5 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`api resolves cases by number 1`] = `
+Object {
+  "ids": Array [
+    0,
+    1,
+    3,
+  ],
+  "pdas": Array [
+    1,
+  ],
+  "worksites": Array [
+    1,
+  ],
+}
+`;
+
 exports[`api retrieves outbound by number 1`] = `
 Array [
   Object {
