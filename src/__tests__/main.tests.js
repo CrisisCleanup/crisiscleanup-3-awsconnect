@@ -45,4 +45,15 @@ describe('handler', () => {
     expect(Outbound.create.mock.calls.length).toBe(1);
     expect(callback).toMatchSnapshot();
   });
+
+  it('denies a callback', async () => {
+    Outbound.unlock = jest.fn();
+    Outbound.unlock.mockResolvedValue({
+      status: 200,
+    });
+    const callback = jest.fn();
+    await Handler(MockEvent({ action: 'DENIED_CALLBACK' }), {}, callback);
+    expect(Outbound.unlock.mock.calls.length).toBe(1);
+    expect(callback).toMatchSnapshot();
+  });
 });

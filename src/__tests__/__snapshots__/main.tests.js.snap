@@ -39,3 +39,22 @@ exports[`handler creates a new callback 1`] = `
   ],
 }
 `;
+
+exports[`handler denies a callback 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      null,
+      Object {
+        "status": "UNLOCKED",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": undefined,
+    },
+  ],
+}
+`;
