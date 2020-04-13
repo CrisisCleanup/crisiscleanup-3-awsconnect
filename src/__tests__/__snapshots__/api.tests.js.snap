@@ -1,5 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`api creates callback 1`] = `
+Object {
+  "config": Object {
+    "data": "{\\"dnis1\\":\\"+10000000000\\",\\"call_type\\":\\"callback\\",\\"language\\":5,\\"incident_id\\":[\\"199\\"]}",
+    "headers": Object {
+      "Accept": "application/json, text/plain, */*",
+      "Content-Type": "application/json;charset=utf-8",
+    },
+    "maxContentLength": -1,
+    "method": "post",
+    "timeout": 0,
+    "transformRequest": Array [
+      [Function],
+    ],
+    "transformResponse": Array [
+      [Function],
+    ],
+    "url": "/phone_outbound",
+    "validateStatus": [Function],
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+  },
+  "data": undefined,
+  "headers": undefined,
+  "request": Object {
+    "responseUrl": "/phone_outbound",
+  },
+  "status": 201,
+}
+`;
+
 exports[`api resolves cases by number 1`] = `
 Object {
   "ids": Array [

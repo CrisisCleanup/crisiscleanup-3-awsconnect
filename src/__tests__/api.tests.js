@@ -56,6 +56,28 @@ describe('api', () => {
     expect(cases).toMatchSnapshot();
   });
 
+  it('creates callback', async () => {
+    const mock = new MockAdapter(axios);
+    mock.onGet('/languages').reply(200, {
+      results: [
+        {
+          id: 5,
+          subtag: 'en-US',
+        },
+      ],
+    });
+    mock
+      .onPost('/phone_outbound', {
+        dnis1: '+10000000000',
+        call_type: 'callback',
+        language: 5,
+        incident_id: ['199'],
+      })
+      .reply(201);
+    const resp = await Outbound.createOutbound('+10000000000', 'en_US', '199');
+    expect(resp).toMatchSnapshot();
+  });
+
   it('gets the language id', async () => {
     const mock = new MockAdapter(axios);
     mock.onGet('/languages').reply(200, {

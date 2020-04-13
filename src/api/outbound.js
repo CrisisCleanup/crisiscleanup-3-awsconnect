@@ -4,6 +4,7 @@
  */
 
 import axios from 'axios';
+import {getLanguageId} from './helpers';
 
 export const getByPhoneNumber = async (number) => {
   // Format number
@@ -43,4 +44,19 @@ export const resolveCasesByNumber = async (number) => {
   });
   console.log('cases', cases);
   return cases;
+};
+
+export const createOutbound = async (number, language, incidentId) => {
+  // Params
+  const params = {
+    dnis1: number,
+    call_type: 'callback',
+    language: await getLanguageId(language),
+    incident_id: [incidentId],
+  };
+  console.log('creating callback...', params);
+
+  const response = await axios.post('/phone_outbound', params);
+  console.log('callback response: ', response);
+  return response;
 };
