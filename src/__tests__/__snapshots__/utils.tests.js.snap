@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils should return correct endpoint 1`] = `
+Object {
+  "auth": "Token abc123",
+  "baseUrl": "http://api.com",
+}
+`;
+
+exports[`utils should return correct endpoint 2`] = `
+Object {
+  "auth": "Token dev_abc123",
+  "baseUrl": "http://dev.api.com",
+}
+`;
+
+exports[`utils should set axios defaults correctly 1`] = `
+Object {
+  "adapter": [Function],
+  "baseURL": "http://api.com",
+  "headers": Object {
+    "common": Object {
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Token abc123",
+    },
+    "delete": Object {},
+    "get": Object {},
+    "head": Object {},
+    "patch": Object {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    "post": Object {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    "put": Object {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  },
+  "maxContentLength": -1,
+  "timeout": 0,
+  "transformRequest": Array [
+    [Function],
+  ],
+  "transformResponse": Array [
+    [Function],
+  ],
+  "validateStatus": [Function],
+  "xsrfCookieName": "XSRF-TOKEN",
+  "xsrfHeaderName": "X-XSRF-TOKEN",
+}
+`;
