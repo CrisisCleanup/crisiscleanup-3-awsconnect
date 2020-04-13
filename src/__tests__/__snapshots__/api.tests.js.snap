@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`api retrieves outbound by number 1`] = `
+Array [
+  Object {
+    "id": 0,
+    "pda": null,
+    "phone_number": "+1234567890",
+    "worksite": null,
+  },
+]
+`;
