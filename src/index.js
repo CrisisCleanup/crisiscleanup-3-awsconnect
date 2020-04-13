@@ -25,7 +25,7 @@ const checkCases = async ({ inboundNumber }) => {
 };
 
 const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
-  const response = await Outbound.createOutbound(
+  const response = await Outbound.create(
     inboundNumber,
     userLanguage,
     incidentId,
@@ -36,7 +36,21 @@ const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
   }
   return {
     data: {
-      status: 'CREATED!',
+      status: 'CREATED',
+    },
+  };
+};
+
+const denyCallback = async ({ inboundNumber }) => {
+  console.log('unlocking callback for:', inboundNumber);
+  const resp = await Outbound.unlock(inboundNumber);
+  if (!resp.status === 200) {
+    console.error(resp);
+    throw new Error('outbound failed to unlock!');
+  }
+  return {
+    data: {
+      status: 'UNLOCKED',
     },
   };
 };
@@ -44,6 +58,7 @@ const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
 const ACTIONS = {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
+  DENIED_CALLBACK: denyCallback,
 };
 
 export default async (event, context, callback) => {

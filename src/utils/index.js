@@ -26,3 +26,5 @@ export const configureEndpoint = (isDev = null) => {
   axios.defaults.headers.common.Authorization = auth;
   return axios;
 };
+
+export const getLatestById = (items) => Math.max(...items.map((o) => o.id));

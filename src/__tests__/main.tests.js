@@ -36,13 +36,13 @@ describe('handler', () => {
   });
 
   it('creates a new callback', async () => {
-    Outbound.createOutbound = jest.fn();
-    Outbound.createOutbound.mockResolvedValue({
+    Outbound.create = jest.fn();
+    Outbound.create.mockResolvedValue({
       status: 200,
     });
     const callback = jest.fn();
     await Handler(MockEvent({ action: 'CALLBACK' }), {}, callback);
-    expect(Outbound.createOutbound.mock.calls.length).toBe(1);
+    expect(Outbound.create.mock.calls.length).toBe(1);
     expect(callback).toMatchSnapshot();
   });
 });

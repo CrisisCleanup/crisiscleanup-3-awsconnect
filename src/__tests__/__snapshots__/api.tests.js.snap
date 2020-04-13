@@ -57,3 +57,34 @@ Array [
   },
 ]
 `;
+
+exports[`api unlocks the latest callback 1`] = `
+Object {
+  "config": Object {
+    "data": undefined,
+    "headers": Object {
+      "Accept": "application/json, text/plain, */*",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    "maxContentLength": -1,
+    "method": "post",
+    "timeout": 0,
+    "transformRequest": Array [
+      [Function],
+    ],
+    "transformResponse": Array [
+      [Function],
+    ],
+    "url": "/phone_outbound/99/unlock",
+    "validateStatus": [Function],
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+  },
+  "data": undefined,
+  "headers": undefined,
+  "request": Object {
+    "responseUrl": "/phone_outbound/99/unlock",
+  },
+  "status": 200,
+}
+`;

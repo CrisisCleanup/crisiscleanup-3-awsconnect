@@ -74,7 +74,19 @@ describe('api', () => {
         incident_id: ['199'],
       })
       .reply(201);
-    const resp = await Outbound.createOutbound('+10000000000', 'en_US', '199');
+    const resp = await Outbound.create('+10000000000', 'en_US', '199');
+    expect(resp).toMatchSnapshot();
+  });
+
+  it('unlocks the latest callback', async () => {
+    const mock = new MockAdapter(axios);
+    mock
+      .onGet('/phone_outbound', { params: { phone_number: '10001112222' } })
+      .reply(200, {
+        results: [MockOutbound(), MockOutbound({ id: 99 })],
+      });
+    mock.onPost('/phone_outbound/99/unlock').reply(200);
+    const resp = await Outbound.unlock('+10001112222');
     expect(resp).toMatchSnapshot();
   });
 

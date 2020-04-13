@@ -27,7 +27,7 @@ exports[`handler creates a new callback 1`] = `
     Array [
       null,
       Object {
-        "status": "CREATED!",
+        "status": "CREATED",
       },
     ],
   ],
