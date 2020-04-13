@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { Outbound } from '../api';
+import { Helpers, Outbound } from '../api';
 
 const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   id: id || 0,
@@ -54,5 +54,22 @@ describe('api', () => {
       });
     const cases = await Outbound.resolveCasesByNumber('+1234567890');
     expect(cases).toMatchSnapshot();
+  });
+
+  it('gets the language id', async () => {
+    const mock = new MockAdapter(axios);
+    mock.onGet('/languages').reply(200, {
+      results: [
+        {
+          id: 5,
+          subtag: 'en-US',
+        },
+      ],
+    });
+
+    const result = await Helpers.getLanguageId('en_US');
+    expect(result).toBe(5);
+    const defaultResult = await Helpers.getLanguageId('abc');
+    expect(defaultResult).toBe(2);
   });
 });

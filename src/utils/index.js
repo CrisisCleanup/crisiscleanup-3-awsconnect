@@ -19,17 +19,10 @@ export const ENDPOINT = (isDev = null) => {
   return ep;
 };
 
-export const getEndpoint = ({ isDev, path } = {}) => {
+export const configureEndpoint = (isDev = null) => {
   const apiConfig = ENDPOINT(isDev);
   const { baseUrl, auth } = apiConfig;
-  let endpoint = baseUrl;
-  if (path) {
-    endpoint = `${baseUrl}/${path}`;
-  }
-  return axios.create({
-    baseUrl: endpoint,
-    headers: {
-      'X-Authorization': auth,
-    },
-  });
+  axios.defaults.baseURL = baseUrl;
+  axios.defaults.headers.common.Authorization = auth;
+  return axios;
 };
