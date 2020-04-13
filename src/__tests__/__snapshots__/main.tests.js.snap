@@ -20,3 +20,22 @@ exports[`handler checks for existing case 1`] = `
   ],
 }
 `;
+
+exports[`handler creates a new callback 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      null,
+      Object {
+        "status": "CREATED!",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": undefined,
+    },
+  ],
+}
+`;

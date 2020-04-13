@@ -24,8 +24,26 @@ const checkCases = async ({ inboundNumber }) => {
   throw new Error('Number does not have a pda or worksite associated!');
 };
 
+const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
+  const response = await Outbound.createOutbound(
+    inboundNumber,
+    userLanguage,
+    incidentId,
+  );
+  if (![200, 201].includes(response.status)) {
+    console.error('callback failed to create!', response);
+    throw new Error('failed to create callback!');
+  }
+  return {
+    data: {
+      status: 'CREATED!',
+    },
+  };
+};
+
 const ACTIONS = {
   CHECK_CASE: checkCases,
+  CALLBACK: createCallback,
 };
 
 export default async (event, context, callback) => {
