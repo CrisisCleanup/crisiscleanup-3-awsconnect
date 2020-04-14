@@ -16,8 +16,35 @@ provider:
     - Effect: 'Allow'
       Action:
         - 'lambda:InvokeFunction'
-      Resource: '*'
-
+      Resource:
+        - 'Fn::Join':
+            - ':'
+            - - 'arn:aws:lambda'
+              - Ref: 'AWS::Region'
+              - Ref: 'AWS::AccountId'
+              - 'function:${self:service}-${self:custom.stage}-awsConnect'
+    - Effect: 'Allow'
+      Action:
+        - 'dynamodb:Query'
+        - 'dynamodb:Scan'
+        - 'dynamodb:UpdateItem'
+        - 'dynamodb:DeleteItem'
+        - 'dynamodb:PutItem'
+        - 'dynamodb:GetItem'
+        - 'dynamodb:BatchGetItem'
+      Resource:
+        - 'Fn::Join':
+            - ':'
+            - - 'arn:aws:dynamodb'
+              - Ref: 'AWS::Region'
+              - Ref: 'AWS::AccountId'
+              - 'table:/connect-metrics-table'
+        - 'Fn::Join':
+            - ':'
+            - - 'arn:aws:dynamodb'
+              - Ref: 'AWS::Region'
+              - Ref: 'AWS::AccountId'
+              - 'table:/connect-agents-table'
 plugins:
   - serverless-webpack
   - serverless-offline
@@ -26,12 +53,13 @@ plugins:
   - serverless-prune-plugin
 
 custom:
+  stage: ${opt:stage, self:provider.stage}
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
     packager: 'yarn'
   warmup:
-    enabled: true
+    enabled: false
     events:
       - schedule: rate(5 minutes)
     prewarm: true
