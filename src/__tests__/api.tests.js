@@ -15,6 +15,8 @@ const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   phone_number: phoneNumber || '+1234567890',
   pda: pda || null,
   worksite: worksite || null,
+  external_id: '123abc',
+  external_platform: 'connect',
 });
 
 describe('outbound api', () => {
@@ -75,9 +77,16 @@ describe('outbound api', () => {
         call_type: 'callback',
         language: 5,
         incident_id: ['199'],
+        external_id: '123abc',
+        external_platform: 'connect',
       })
       .reply(201);
-    const resp = await Outbound.create('+10000000000', 'en_US', '199');
+    const resp = await Outbound.create(
+      '+10000000000',
+      'en_US',
+      '199',
+      '123abc',
+    );
     expect(resp).toMatchSnapshot();
   });
 

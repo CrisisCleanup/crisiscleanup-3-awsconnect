@@ -48,7 +48,10 @@ exports[`agent api sets agent state 2`] = `
       Object {
         "Item": Object {
           "entered_timestamp": Object {
-            "S": "2020-04-14T12:21:21.505Z",
+            "S": "2020-04-14T14:03:39.492Z",
+          },
+          "last_contact_id": Object {
+            "S": "",
           },
           "state": Object {
             "S": "routable",
@@ -69,7 +72,7 @@ exports[`agent api sets agent state 2`] = `
 exports[`outbound api creates callback 1`] = `
 Object {
   "config": Object {
-    "data": "{\\"dnis1\\":\\"+10000000000\\",\\"call_type\\":\\"callback\\",\\"language\\":5,\\"incident_id\\":[\\"199\\"]}",
+    "data": "{\\"dnis1\\":\\"+10000000000\\",\\"call_type\\":\\"callback\\",\\"language\\":5,\\"incident_id\\":[\\"199\\"],\\"external_id\\":\\"123abc\\",\\"external_platform\\":\\"connect\\"}",
     "headers": Object {
       "Accept": "application/json, text/plain, */*",
       "Content-Type": "application/json;charset=utf-8",
@@ -116,6 +119,8 @@ Object {
 exports[`outbound api retrieves outbound by number 1`] = `
 Array [
   Object {
+    "external_id": "123abc",
+    "external_platform": "connect",
     "id": 0,
     "pda": null,
     "phone_number": "+1234567890",

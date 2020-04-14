@@ -66,6 +66,7 @@ exports[`handler sets agent state 1`] = `
       Object {
         "agentId": "xxxx",
         "agentState": "routable",
+        "initContactId": null,
       },
     ],
   ],

@@ -24,11 +24,17 @@ const checkCases = async ({ inboundNumber }) => {
   throw new Error('Number does not have a pda or worksite associated!');
 };
 
-const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
+const createCallback = async ({
+  inboundNumber,
+  userLanguage,
+  incidentId,
+  initContactId,
+}) => {
   const response = await Outbound.create(
     inboundNumber,
     userLanguage,
     incidentId,
+    initContactId,
   );
   Outbound.unlock(inboundNumber);
   if (![200, 201].includes(response.status)) {
@@ -58,9 +64,9 @@ const denyCallback = async ({ inboundNumber, agentId }) => {
   };
 };
 
-const setAgentState = async ({ agentId, agentState }) => {
-  console.log('setting agent state: ', agentId, agentState);
-  const resp = await Agent.setState({ agentId, agentState });
+const setAgentState = async ({ agentId, agentState, initContactId = null }) => {
+  console.log('setting agent state: ', agentId, agentState, initContactId);
+  const resp = await Agent.setState({ agentId, agentState, initContactId });
   console.log(resp);
   return {
     data: {

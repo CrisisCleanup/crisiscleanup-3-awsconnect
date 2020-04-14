@@ -23,7 +23,7 @@ export const KeyMap = ({ mapName = 'Key', agentId, attributes = {} }) => ({
   },
 });
 
-export const setState = async ({ agentId, agentState }) => {
+export const setState = async ({ agentId, agentState, initContactId = '' }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
     ...KeyMap({
@@ -37,9 +37,13 @@ export const setState = async ({ agentId, agentState }) => {
         entered_timestamp: {
           S: new Date().toISOString(),
         },
+        last_contact_id: {
+          S: initContactId,
+        },
       },
     }),
   };
+  console.log('setting state params:', params);
   const results = await db.putItem(params).promise();
   console.log('set agent state: ', agentId, agentState, results);
 };
