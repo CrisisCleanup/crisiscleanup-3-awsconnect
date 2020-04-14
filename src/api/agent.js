@@ -33,10 +33,16 @@ export const KeyMap = ({
 export const setState = async ({ agentId, agentState }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
-    ...KeyMap({ mapName: 'Item', agentId, agentState }),
-    entered_timestamp: {
-      S: new Date().toISOString(),
-    },
+    ...KeyMap({
+      mapName: 'Item',
+      agentId,
+      agentState,
+      attributes: {
+        entered_timestamp: {
+          S: new Date().toISOString(),
+        },
+      },
+    }),
   };
   const results = await db.putItem(params).promise();
   console.log('set agent state: ', agentId, agentState, results);

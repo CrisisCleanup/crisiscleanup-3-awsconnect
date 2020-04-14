@@ -56,12 +56,12 @@ exports[`agent api sets agent state 2`] = `
           "agent_id": Object {
             "S": "xxxx",
           },
+          "entered_timestamp": Object {
+            "S": "2020-04-14T06:51:40.174Z",
+          },
           "state": Object {
             "S": "routable",
           },
-        },
-        "entered_timestamp": Object {
-          "S": "2020-04-14T06:23:12.477Z",
         },
       },
     ],
