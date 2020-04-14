@@ -1,0 +1,13 @@
+{
+  "include": [
+    "./src/**/*",
+    "./node_modules/cypress",
+    "cypress/**/*.js",
+    "src/index.js"
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2015",
+    "baseUrl": "."
+  }
+}

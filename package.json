@@ -2,7 +2,7 @@
   "name": "crisiscleanup-3-awsconnect",
   "version": "1.0.0",
   "description": "Crisis Cleanup AWS Connect Lambda Integrations",
-  "main": "index.js",
+  "main": "src/index.js",
   "repository": "https://github.com/CrisisCleanup/crisiscleanup-3-awsconnect",
   "author": "BradenM",
   "license": "MIT",
@@ -21,6 +21,7 @@
     "axios-mock-adapter": "^1.18.1",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^25.3.0",
+    "babel-loader": "^8.1.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^6.10.1",
@@ -28,9 +29,19 @@
     "eslint-plugin-jest": "^23.8.2",
     "eslint-plugin-prettier": "^3.1.2",
     "jest": "^25.3.0",
-    "prettier": "^2.0.2"
+    "prettier": "^2.0.2",
+    "serverless": "^1.67.3",
+    "serverless-dotenv-plugin": "^2.3.2",
+    "serverless-offline": "^6.1.4",
+    "serverless-plugin-warmup": "^4.9.0",
+    "serverless-prune-plugin": "^1.4.2",
+    "serverless-webpack": "^5.3.1",
+    "webpack": "^4.42.1",
+    "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
-    "axios": "^0.19.2"
+    "aws-sdk": "^2.656.0",
+    "axios": "^0.19.2",
+    "babel-core": "^7.0.0-bridge.0"
   }
 }

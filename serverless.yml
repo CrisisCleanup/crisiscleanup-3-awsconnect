@@ -4,40 +4,80 @@ service: crisiscleanup-3-awsconnect
 app: crisiscleanup-3-awsconnect
 org: crisiscleanup
 
-awsConnect:
-  component: "@serverless/aws-lambda"
-  inputs:
-    name: crisiscleanup-3-awsconnect
-    description: CC3 AWS Connect Lambda Integrations
-    memory: 128
-    timeout: 20
-    code: ./src
-    handler: index.handler
-    runtime: nodejs12.x
-    region: us-east-1
-    bucket: crisiscleanup-3-awsconnect
-    env:
-      CC_AUTH_TOKEN: ${env.CC_AUTH_TOKEN}
-      CC_API_BASE_URL: ${env.CC_API_BASE_URL}
-      CC_DEV_AUTH_TOKEN: ${env.CC_DEV_AUTH_TOKEN}
-      CC_DEV_API_BASE_URL: ${env.CC_DEV_API_BASE_URL}
+package:
+  individually: true
 
-metricsTable:
-  component: "@serverless/aws-dynamodb"
-  app: crisiscleanup-3-awsconnect
-  org: crisiscleanup
-  name: connect-metrics-table
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'lambda:InvokeFunction'
+      Resource: '*'
 
-  inputs:
-    name: connect-metrics-table
-    region: us-east-1
-    attributeDefinitions:
-      - AttributeName: type
-        AttributeType: S
-      - AttributeName: name
-        AttributeType: S
-    keySchema:
-      - AttributeName: type
-        KeyType: HASH
-      - AttributeName: name
-        KeyType: RANGE
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-plugin-warmup
+  - serverless-dotenv-plugin
+  - serverless-prune-plugin
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+    packager: 'yarn'
+  warmup:
+    enabled: true
+    events:
+      - schedule: rate(5 minutes)
+    prewarm: true
+    concurrency: 1
+  prune:
+    automatic: true
+    number: 5
+
+functions:
+  awsConnect:
+    handler: src/index.default
+
+resources:
+  Resources:
+    # Connect Metrics Table
+    metricsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connect-metrics-table
+        AttributeDefinitions:
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: type
+            KeyType: HASH
+          - AttributeName: name
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    agentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connect-agents-table
+        AttributeDefinitions:
+          - AttributeName: agent_id
+            AttributeType: S
+          - AttributeName: state
+            AttributeType: S
+        KeySchema:
+          - AttributeName: agent_id
+            KeyType: HASH
+          - AttributeName: state
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
