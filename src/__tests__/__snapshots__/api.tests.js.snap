@@ -3,11 +3,8 @@
 exports[`agent api generates valid keymaps 1`] = `
 Object {
   "Key": Object {
-    "agent_id": Object {
-      "S": "xxxx",
-    },
     "state": Object {
-      "S": "routable",
+      "S": "xxxx",
     },
   },
 }
@@ -16,12 +13,9 @@ Object {
 exports[`agent api generates valid keymaps 2`] = `
 Object {
   "Item": Object {
-    "agent_id": Object {
-      "S": "xxxx",
-    },
     "contactId": "yyyy",
     "state": Object {
-      "S": "onCall",
+      "S": "xxxx",
     },
   },
 }
@@ -53,11 +47,8 @@ exports[`agent api sets agent state 2`] = `
     Array [
       Object {
         "Item": Object {
-          "agent_id": Object {
-            "S": "xxxx",
-          },
           "entered_timestamp": Object {
-            "S": "2020-04-14T07:14:35.869Z",
+            "S": "2020-04-14T12:21:21.505Z",
           },
           "state": Object {
             "S": "routable",

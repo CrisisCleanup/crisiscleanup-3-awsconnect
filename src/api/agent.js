@@ -14,17 +14,9 @@ export const AGENT_STATES = Object.freeze({
   OFFLINE: 'offline',
 });
 
-export const KeyMap = ({
-  mapName = 'Key',
-  agentId,
-  agentState,
-  attributes = {},
-}) => ({
+export const KeyMap = ({ mapName = 'Key', agentId, attributes = {} }) => ({
   [mapName]: {
     [TABLE.hash]: {
-      S: agentState,
-    },
-    [TABLE.range]: {
       S: agentId,
     },
     ...attributes,
@@ -39,6 +31,9 @@ export const setState = async ({ agentId, agentState }) => {
       agentId,
       agentState,
       attributes: {
+        state: {
+          S: agentState,
+        },
         entered_timestamp: {
           S: new Date().toISOString(),
         },
