@@ -5,7 +5,7 @@
 
 import { Outbound } from '../api';
 // eslint-disable-next-line import/named
-import { handler as Handler } from '../index';
+import Handler from '../index';
 
 jest.mock('../api');
 
