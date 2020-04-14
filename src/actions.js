@@ -3,7 +3,7 @@
  * Lambda Actions
  */
 
-import { Outbound } from './api';
+import { Agent, Outbound } from './api';
 
 const checkCases = async ({ inboundNumber }) => {
   const cases = await Outbound.resolveCasesByNumber(inboundNumber);
@@ -55,8 +55,20 @@ const denyCallback = async ({ inboundNumber }) => {
   };
 };
 
+const setAgentState = async ({ agentId, agentState }) => {
+  console.log('setting agent state: ', agentId, agentState);
+  const resp = await Agent.setState({ agentId, agentState });
+  console.log(resp);
+  return {
+    data: {
+      status: 'SET',
+    },
+  };
+};
+
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
   DENIED_CALLBACK: denyCallback,
+  SET_AGENT_STATE: setAgentState,
 };

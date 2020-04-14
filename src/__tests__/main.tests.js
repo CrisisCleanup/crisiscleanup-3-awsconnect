@@ -3,8 +3,7 @@
  * Main Tests
  */
 
-import { Outbound } from '../api';
-// eslint-disable-next-line import/named
+import { Agent, Outbound } from '../api';
 import Handler from '../index';
 
 jest.mock('../api');
@@ -55,6 +54,23 @@ describe('handler', () => {
     const callback = jest.fn();
     await Handler(MockEvent({ action: 'DENIED_CALLBACK' }), {}, callback);
     expect(Outbound.unlock.mock.calls.length).toBe(1);
+    expect(callback).toMatchSnapshot();
+  });
+
+  it('sets agent state', async () => {
+    Agent.setState = jest.fn();
+    const callback = jest.fn();
+    const params = {
+      action: 'SET_AGENT_STATE',
+      agentId: 'xxxx',
+      agentState: 'routable',
+    };
+    await Handler(
+      MockEvent({ action: 'SET_AGENT_STATE', ...params }),
+      {},
+      callback,
+    );
+    expect(Agent.setState).toMatchSnapshot();
     expect(callback).toMatchSnapshot();
   });
 });
