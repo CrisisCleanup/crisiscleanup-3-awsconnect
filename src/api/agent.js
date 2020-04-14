@@ -25,6 +25,14 @@ export const KeyMap = ({ mapName = 'Key', agentId, attributes = {} }) => ({
 
 export const setState = async ({ agentId, agentState, initContactId = '' }) => {
   const db = Dynamo.DynamoTable(TABLE);
+  let contactParams = {};
+  if (initContactId) {
+    contactParams = {
+      last_contact_id: {
+        S: initContactId,
+      },
+    };
+  }
   const params = {
     ...KeyMap({
       mapName: 'Item',
@@ -37,9 +45,7 @@ export const setState = async ({ agentId, agentState, initContactId = '' }) => {
         entered_timestamp: {
           S: new Date().toISOString(),
         },
-        last_contact_id: {
-          S: initContactId,
-        },
+        ...contactParams,
       },
     }),
   };
