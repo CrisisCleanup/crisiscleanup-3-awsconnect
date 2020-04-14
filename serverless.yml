@@ -105,14 +105,14 @@ resources:
       Properties:
         TableName: connect-agents-table
         AttributeDefinitions:
-          - AttributeName: agent_id
-            AttributeType: S
           - AttributeName: state
+            AttributeType: S
+          - AttributeName: agent_id
             AttributeType: S
         KeySchema:
-          - AttributeName: agent_id
-            KeyType: HASH
           - AttributeName: state
+            KeyType: HASH
+          - AttributeName: agent_id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
