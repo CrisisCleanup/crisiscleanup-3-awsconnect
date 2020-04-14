@@ -4,6 +4,9 @@
  */
 
 import axios from 'axios';
+import * as DynamoDB from './dynamo';
+
+export const Dynamo = DynamoDB;
 
 export const ENDPOINT = (isDev = null) => {
   const ep = {
