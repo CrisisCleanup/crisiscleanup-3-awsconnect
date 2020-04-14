@@ -8,8 +8,8 @@ import AWS from 'aws-sdk';
 export const TABLES = {
   AGENTS: {
     name: 'connect-agents-table',
-    hash: 'agent_id',
-    range: 'state',
+    range: 'agent_id',
+    hash: 'state',
   },
 };
 

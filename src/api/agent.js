@@ -22,10 +22,10 @@ export const KeyMap = ({
 }) => ({
   [mapName]: {
     [TABLE.hash]: {
-      S: agentId,
+      S: agentState,
     },
     [TABLE.range]: {
-      S: agentState,
+      S: agentId,
     },
     ...attributes,
   },

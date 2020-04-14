@@ -32,9 +32,9 @@ exports[`agent api sets agent state 1`] = `
   "calls": Array [
     Array [
       Object {
-        "hash": "agent_id",
+        "hash": "state",
         "name": "connect-agents-table",
-        "range": "state",
+        "range": "agent_id",
       },
     ],
   ],
@@ -57,7 +57,7 @@ exports[`agent api sets agent state 2`] = `
             "S": "xxxx",
           },
           "entered_timestamp": Object {
-            "S": "2020-04-14T06:56:45.545Z",
+            "S": "2020-04-14T07:14:35.869Z",
           },
           "state": Object {
             "S": "routable",
