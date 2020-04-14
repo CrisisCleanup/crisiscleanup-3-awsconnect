@@ -5,7 +5,10 @@
 
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { Helpers, Outbound } from '../api';
+import { Agent, Helpers, Outbound } from '../api';
+import { Dynamo } from '../utils';
+
+jest.mock('../utils/dynamo.js');
 
 const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   id: id || 0,
@@ -14,7 +17,7 @@ const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   worksite: worksite || null,
 });
 
-describe('api', () => {
+describe('outbound api', () => {
   it('retrieves outbound by number', async () => {
     const mock = new MockAdapter(axios);
     mock
@@ -105,5 +108,38 @@ describe('api', () => {
     expect(result).toBe(5);
     const defaultResult = await Helpers.getLanguageId('abc');
     expect(defaultResult).toBe(2);
+  });
+});
+
+describe('agent api', () => {
+  it('generates valid keymaps', () => {
+    const keyMap = Agent.KeyMap({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    expect(keyMap).toMatchSnapshot();
+    const itemKeyMap = Agent.KeyMap({
+      mapName: 'Item',
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ON_CALL,
+      attributes: {
+        contactId: 'yyyy',
+      },
+    });
+    expect(itemKeyMap).toMatchSnapshot();
+  });
+
+  it('sets agent state', () => {
+    const putItemsMock = jest.fn();
+    const mockDb = jest.fn();
+    mockDb.putItem = putItemsMock;
+    Dynamo.DynamoTable = jest.fn(() => mockDb);
+    Dynamo.DynamoTable.mockReturnValue(mockDb);
+    Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    expect(Dynamo.DynamoTable).toMatchSnapshot();
+    expect(putItemsMock).toMatchSnapshot();
   });
 });

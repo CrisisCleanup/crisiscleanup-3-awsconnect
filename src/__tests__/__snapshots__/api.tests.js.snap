@@ -1,6 +1,81 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`api creates callback 1`] = `
+exports[`agent api generates valid keymaps 1`] = `
+Object {
+  "Key": Object {
+    "agent_id": Object {
+      "S": "xxxx",
+    },
+    "state": Object {
+      "S": "routable",
+    },
+  },
+}
+`;
+
+exports[`agent api generates valid keymaps 2`] = `
+Object {
+  "Item": Object {
+    "agent_id": Object {
+      "S": "xxxx",
+    },
+    "contactId": "yyyy",
+    "state": Object {
+      "S": "onCall",
+    },
+  },
+}
+`;
+
+exports[`agent api sets agent state 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "hash": "agent_id",
+        "name": "connect-agents-table",
+        "range": "state",
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": [MockFunction],
+    },
+  ],
+}
+`;
+
+exports[`agent api sets agent state 2`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "Item": Object {
+          "agent_id": Object {
+            "S": "xxxx",
+          },
+          "state": Object {
+            "S": "routable",
+          },
+        },
+        "entered_timestamp": Object {
+          "S": "2020-04-14T06:23:12.477Z",
+        },
+      },
+    ],
+  ],
+  "results": Array [
+    Object {
+      "type": "return",
+      "value": undefined,
+    },
+  ],
+}
+`;
+
+exports[`outbound api creates callback 1`] = `
 Object {
   "config": Object {
     "data": "{\\"dnis1\\":\\"+10000000000\\",\\"call_type\\":\\"callback\\",\\"language\\":5,\\"incident_id\\":[\\"199\\"]}",
@@ -31,7 +106,7 @@ Object {
 }
 `;
 
-exports[`api resolves cases by number 1`] = `
+exports[`outbound api resolves cases by number 1`] = `
 Object {
   "ids": Array [
     0,
@@ -47,7 +122,7 @@ Object {
 }
 `;
 
-exports[`api retrieves outbound by number 1`] = `
+exports[`outbound api retrieves outbound by number 1`] = `
 Array [
   Object {
     "id": 0,
@@ -58,7 +133,7 @@ Array [
 ]
 `;
 
-exports[`api unlocks the latest callback 1`] = `
+exports[`outbound api unlocks the latest callback 1`] = `
 Object {
   "config": Object {
     "data": undefined,
