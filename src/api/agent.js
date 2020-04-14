@@ -11,6 +11,7 @@ export const AGENT_STATES = Object.freeze({
   PENDING_CALL: 'pendingCall',
   ROUTABLE: 'routable',
   ON_CALL: 'onCall',
+  OFFLINE: 'offline',
 });
 
 export const KeyMap = ({

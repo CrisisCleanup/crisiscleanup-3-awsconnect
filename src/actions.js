@@ -41,7 +41,9 @@ const createCallback = async ({ inboundNumber, userLanguage, incidentId }) => {
   };
 };
 
-const denyCallback = async ({ inboundNumber }) => {
+const denyCallback = async ({ inboundNumber, agentId }) => {
+  console.log('setting agent state to offline...');
+  Agent.setState({ agentId, agentState: Agent.AGENT_STATES.OFFLINE });
   console.log('unlocking callback for:', inboundNumber);
   const resp = await Outbound.unlock(inboundNumber);
   if (!resp.status === 200) {
