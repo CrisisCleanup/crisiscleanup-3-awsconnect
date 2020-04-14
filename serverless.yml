@@ -51,6 +51,7 @@ plugins:
   - serverless-plugin-warmup
   - serverless-dotenv-plugin
   - serverless-prune-plugin
+  - serverless-dynamodb-local
 
 custom:
   stage: ${opt:stage, self:provider.stage}
@@ -67,6 +68,13 @@ custom:
   prune:
     automatic: true
     number: 5
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migration: true
 
 functions:
   awsConnect:
