@@ -17,3 +17,5 @@ export const DynamoTable = ({ name }) =>
     params: { TableName: name },
     apiVersion: '2012-08-10',
   });
+
+export const normalize = (record) => AWS.DynamoDB.Converter.unmarshall(record);
