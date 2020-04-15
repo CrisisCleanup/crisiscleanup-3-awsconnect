@@ -81,6 +81,7 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: connect-metrics-table
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: type
             AttributeType: S
@@ -91,17 +92,17 @@ resources:
             KeyType: HASH
           - AttributeName: name
             KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
     agentsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: connect-agents-table
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: agent_id
             AttributeType: S
           - AttributeName: state
+            AttributeType: S
+          - AttributeName: current_contact_id
             AttributeType: S
         KeySchema:
           - AttributeName: agent_id
@@ -115,9 +116,3 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
