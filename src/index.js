@@ -4,6 +4,23 @@
 
 import ACTIONS from './actions';
 import { configureEndpoint } from './utils';
+import WS from './ws';
+
+export const wsConnectionHandler = async (event, context) => {
+  console.log('got ws connection:', event, context);
+  return {
+    statusCode: 200,
+  };
+};
+
+export const wsHandler = async (event, context) => {
+  console.log('got ws message', event, context);
+  const message = WS.parse(event);
+  console.log(message);
+  return {
+    statusCode: 200,
+  };
+};
 
 export default async (event, context, callback) => {
   // Grab inbound number from event

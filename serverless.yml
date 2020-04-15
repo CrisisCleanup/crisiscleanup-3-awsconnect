@@ -12,6 +12,8 @@ provider:
   runtime: nodejs12.x
   stage: dev
   region: us-east-1
+  websocketsApiName: crisiscleanup-3-awsconnect-ws
+  websocketsApiRouteSelectionExpression: $request.body.action
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -73,6 +75,20 @@ custom:
 functions:
   awsConnect:
     handler: src/index.default
+
+  connectionHandler:
+    handler: src/index.wsConnectionHandler
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+
+  defaultHandler:
+    handler: src/index.wsHandler
+    events:
+      - websocket:
+          route: handler
 
 resources:
   Resources:
