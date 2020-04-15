@@ -120,17 +120,24 @@ const findAgent = async ({
     const targAgent = await Agent.getTargetAgent({
       currentContactId: currentContactId || inbound.session_id,
     });
-    if (targAgent) {
-      const newState =
-        targAgent.state === Agent.AGENT_STATES.ROUTABLE ? 'READY' : 'PENDING';
+    if (!targAgent || targAgent === null) {
       return {
         data: {
-          targetAgentId: targAgent.agent_id,
-          targetAgentState: newState,
+          targetAgentId,
+          targetAgentState: 'PENDING',
           triggerPrompt: newTriggerValue,
         },
       };
     }
+    const newState =
+      targAgent.state === Agent.AGENT_STATES.ROUTABLE ? 'READY' : 'PENDING';
+    return {
+      data: {
+        targetAgentId: targAgent.agent_id,
+        targetAgentState: newState,
+        triggerPrompt: newTriggerValue,
+      },
+    };
   }
   const agent = await Agent.findNextAgent();
   if (!agent || agent === null) {
