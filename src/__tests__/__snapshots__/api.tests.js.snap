@@ -34,30 +34,78 @@ exports[`agent api sets agent state 1`] = `
   "results": Array [
     Object {
       "type": "return",
-      "value": [MockFunction],
+      "value": Object {
+        "putItem": [MockFunction] {
+          "calls": Array [
+            Array [
+              Object {
+                "Item": Object {
+                  "agent_id": Object {
+                    "S": "xxxx",
+                  },
+                  "current_contact_id": Object {
+                    "S": "123abc",
+                  },
+                  "entered_timestamp": Object {
+                    "S": "2020-04-15T04:48:33.751Z",
+                  },
+                  "last_contact_id": Object {
+                    "S": "abc123",
+                  },
+                  "state": Object {
+                    "S": "routable",
+                  },
+                },
+              },
+            ],
+          ],
+          "results": Array [
+            Object {
+              "type": "return",
+              "value": Object {
+                "promise": [MockFunction] {
+                  "calls": Array [
+                    Array [],
+                  ],
+                  "results": Array [
+                    Object {
+                      "type": "return",
+                      "value": undefined,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
     },
   ],
 }
 `;
 
 exports[`agent api sets agent state 2`] = `
-[MockFunction] {
+Object {
   "calls": Array [
-    Array [
-      Object {
-        "Item": Object {
-          "agent_id": Object {
-            "S": "xxxx",
+    Array [],
+  ],
+  "instances": Array [
+    Object {
+      "promise": [MockFunction] {
+        "calls": Array [
+          Array [],
+        ],
+        "results": Array [
+          Object {
+            "type": "return",
+            "value": undefined,
           },
-          "entered_timestamp": Object {
-            "S": "2020-04-14T15:15:46.314Z",
-          },
-          "state": Object {
-            "S": "routable",
-          },
-        },
+        ],
       },
-    ],
+    },
+  ],
+  "invocationCallOrder": Array [
+    3,
   ],
   "results": Array [
     Object {

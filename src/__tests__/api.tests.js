@@ -139,16 +139,19 @@ describe('agent api', () => {
   });
 
   it('sets agent state', () => {
-    const putItemsMock = jest.fn();
     const mockDb = jest.fn();
-    mockDb.putItem = putItemsMock;
-    Dynamo.DynamoTable = jest.fn(() => mockDb);
-    Dynamo.DynamoTable.mockReturnValue(mockDb);
+    Dynamo.DynamoTable = jest.fn().mockImplementation(() => ({
+      putItem: jest.fn().mockImplementation(() => ({
+        promise: mockDb,
+      })),
+    }));
     Agent.setState({
       agentId: 'xxxx',
       agentState: Agent.AGENT_STATES.ROUTABLE,
+      last_contact_id: 'abc123',
+      current_contact_id: '123abc',
     });
     expect(Dynamo.DynamoTable).toMatchSnapshot();
-    expect(putItemsMock).toMatchSnapshot();
+    expect(mockDb.mock).toMatchSnapshot();
   });
 });
