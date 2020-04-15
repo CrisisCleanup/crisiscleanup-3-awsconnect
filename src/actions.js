@@ -3,7 +3,7 @@
  * Lambda Actions
  */
 
-import { Agent, Outbound } from './api';
+import { Agent, Inbound, Outbound } from './api';
 
 const checkCases = async ({ inboundNumber }) => {
   const cases = await Outbound.resolveCasesByNumber(inboundNumber);
@@ -64,13 +64,89 @@ const denyCallback = async ({ inboundNumber, agentId }) => {
   };
 };
 
-const setAgentState = async ({ agentId, agentState, initContactId = null }) => {
-  console.log('setting agent state: ', agentId, agentState, initContactId);
-  const resp = await Agent.setState({ agentId, agentState, initContactId });
+const setAgentState = async ({
+  agentId,
+  agentState,
+  initContactId = null,
+  currentContactId = null,
+}) => {
+  console.log(
+    'setting agent state: ',
+    agentId,
+    agentState,
+    initContactId,
+    currentContactId,
+  );
+  const resp = await Agent.setState({
+    agentId,
+    agentState,
+    last_contact_id: initContactId,
+    current_contact_id: currentContactId,
+  });
   console.log(resp);
+  const callType = currentContactId ? 'INBOUND' : 'OUTBOUND';
   return {
     data: {
-      status: 'SET',
+      promptCallType: callType,
+    },
+  };
+};
+
+const findAgent = async ({
+  initContactId,
+  inboundNumber,
+  incidentId,
+  userLanguage,
+  callAni,
+  currentContactId,
+  targetAgentId,
+  triggerPrompt,
+}) => {
+  console.log('trigger prompt timer:', triggerPrompt);
+  const newTriggerValue = String(Number(triggerPrompt) + 10);
+  console.log('finding next agent to serve contact too...');
+  const inbound = await Inbound.create({
+    initContactId,
+    number: inboundNumber,
+    incidentId,
+    language: userLanguage,
+    ani: callAni,
+  });
+  console.log('created inbound: ', inbound);
+  if (targetAgentId) {
+    const targAgent = await Agent.getTargetAgent({
+      currentContactId: currentContactId || inbound.session_id,
+    });
+    const newState =
+      targAgent.state === Agent.AGENT_STATES.ROUTABLE ? 'READY' : 'PENDING';
+    return {
+      data: {
+        targetAgentId: targAgent.agent_id,
+        targetAgentState: newState,
+        triggerPrompt: newTriggerValue,
+      },
+    };
+  }
+  const agent = await Agent.findNextAgent();
+  if (!agent || agent === null) {
+    return {
+      data: {
+        targetAgentState: 'NONE',
+        triggerPrompt: newTriggerValue,
+      },
+    };
+  }
+  await Agent.setState({
+    agentId: agent.agent_id,
+    agentState: agent.state,
+    current_contact_id: initContactId,
+  });
+  await Inbound.prompt({ inboundId: inbound.id, agentId: agent.agent_id });
+  return {
+    data: {
+      targetAgentId: agent.agent_id,
+      targetAgentState: 'PENDING',
+      triggerPrompt: newTriggerValue,
     },
   };
 };
@@ -80,4 +156,5 @@ export default {
   CALLBACK: createCallback,
   DENIED_CALLBACK: denyCallback,
   SET_AGENT_STATE: setAgentState,
+  FIND_AGENT: findAgent,
 };
