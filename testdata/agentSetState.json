@@ -1,0 +1,10 @@
+{
+  "Details": {
+    "Parameters": {
+      "isDev": "1",
+      "action": "SET_AGENT_STATE",
+      "agentId": "xxxxx",
+      "agentState": "routable"
+    }
+  }
+}

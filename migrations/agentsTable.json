@@ -1,0 +1,25 @@
+{
+  "Table": {
+    "TableName": "connect-agents-table",
+    "KeySchema": [
+      {
+        "AttributeName": "agent_id",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "state",
+        "KeyType": "RANGE"
+      }
+    ],
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    }
+  },
+  "Seeds": [
+    {
+      "agent_id": "xxxxxxxx",
+      "state": "routable"
+    }
+  ]
+}

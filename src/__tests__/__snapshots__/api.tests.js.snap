@@ -47,7 +47,7 @@ exports[`agent api sets agent state 1`] = `
                     "S": "123abc",
                   },
                   "entered_timestamp": Object {
-                    "S": "2020-04-15T04:48:33.751Z",
+                    "S": "2020-04-15T05:08:45.222Z",
                   },
                   "last_contact_id": Object {
                     "S": "abc123",
