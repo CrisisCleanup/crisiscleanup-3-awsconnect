@@ -103,7 +103,10 @@ const findAgent = async ({
   triggerPrompt,
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
-  const newTriggerValue = String(Number(triggerPrompt) + 10);
+  let newTriggerValue = String(Number(triggerPrompt) + 10);
+  if (newTriggerValue >= 40) {
+    newTriggerValue = 0;
+  }
   console.log('finding next agent to serve contact too...');
   const inbound = await Inbound.create({
     initContactId,
