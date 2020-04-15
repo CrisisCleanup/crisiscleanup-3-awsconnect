@@ -116,3 +116,9 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+          - IndexName: contact-index
+            KeySchema:
+              - AttributeName: current_contact_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL

@@ -15,7 +15,7 @@ module.exports = {
     '!**/node_modules/**',
   ],
 
-  setupFiles: ['<rootDir>/.jest/setEnvVars.js'],
+  setupFiles: ['<rootDir>/.jest/setEnvVars.js', 'jest-date-mock'],
 
   // The directory where Jest should output its coverage files
   coverageDirectory: 'coverage',
