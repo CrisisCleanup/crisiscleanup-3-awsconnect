@@ -5,13 +5,13 @@
 
 import AWS from 'aws-sdk';
 
-export const send = async ({ meta, payload }) => {
+export const send = async ({ meta, ...data }) => {
   const { endpoint, connectionId } = meta;
   const gateway = new AWS.ApiGatewayManagementApi({
     apiVersion: '2018-11-29',
     endpoint,
   });
-  const Data = JSON.stringify(payload);
+  const Data = JSON.stringify(data);
   console.log('outgoing payload:', Data);
   const result = await gateway
     .postToConnection({
@@ -24,21 +24,35 @@ export const send = async ({ meta, payload }) => {
 
 export const parse = (event) => {
   const {
-    requestContext: { domainName, stage, connectionId },
+    requestContext: { domainName, stage, connectionId, eventType },
     body,
   } = event;
   const domainUrl = new URL(`https://${domainName}`);
   let callbackUrl = new URL(stage, domainUrl).toString();
+  console.log('generated callback url:', callbackUrl);
   if (domainName === 'localhost') {
     callbackUrl = 'http://localhost:3001';
   }
-  const { action, data } = JSON.parse(body);
+  const meta = {
+    endpoint: callbackUrl,
+    connectionId,
+  };
+  console.log('parsed metadata:', meta);
+  if (eventType === 'DISCONNECT') {
+    return { meta, action: 'wsDisconnect' };
+  }
+  if (!body) {
+    return { meta };
+  }
+  console.log('parsing incoming data:', body);
+  const { options, action, data } = JSON.parse(body);
+  let parsedData = data;
+  if (options && options.includeMeta) {
+    parsedData = { ...data, ...meta };
+  }
   return {
     action,
-    data,
-    meta: {
-      endpoint: callbackUrl,
-      connectionId,
-    },
+    data: parsedData,
+    meta,
   };
 };
