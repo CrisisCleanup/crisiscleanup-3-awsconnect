@@ -28,7 +28,11 @@ export const parse = (event) => {
     body,
   } = event;
   const domainUrl = new URL(`https://${domainName}`);
-  let callbackUrl = new URL(stage, domainUrl).toString();
+  let callbackUrl = domainUrl;
+  if (domainName.includes('amazon')) {
+    callbackUrl = new URL(stage, domainUrl);
+  }
+  callbackUrl = callbackUrl.toString();
   console.log('generated callback url:', callbackUrl);
   if (domainName === 'localhost') {
     callbackUrl = 'http://localhost:3001';
