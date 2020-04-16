@@ -6,7 +6,16 @@ import ACTIONS from './actions';
 import { configureEndpoint } from './utils';
 import WS from './ws';
 
+export const checkWarmup = async ({ source }) => {
+  if (source === 'serverless-warmup-plugin') {
+    console.log('Warmup! Lambda is warm.');
+    return true;
+  }
+  return false;
+};
+
 export const wsConnectionHandler = async (event, context) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws connection', event, context);
   configureEndpoint(true);
   const { action } = WS.parse(event);
@@ -21,6 +30,7 @@ export const wsConnectionHandler = async (event, context) => {
 };
 
 export const wsHandler = async (event, context) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws message', event, context);
   configureEndpoint(true);
   const { meta, action, data } = WS.parse(event);
@@ -34,6 +44,7 @@ export const wsHandler = async (event, context) => {
 };
 
 export default async (event, context, callback) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
   // Grab inbound number from event
   const {
     Details: {
@@ -52,4 +63,5 @@ export default async (event, context, callback) => {
   });
   console.log('action complete. returning data:', status, data);
   callback(status || null, data);
+  return data;
 };

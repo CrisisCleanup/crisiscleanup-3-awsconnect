@@ -94,9 +94,10 @@ custom:
     includeModules: true
     packager: 'yarn'
   warmup:
-    enabled: false
+    enabled: true
     events:
-      - schedule: rate(5 minutes)
+      # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 5:55pm (UTC)
+      - schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
     prewarm: true
     concurrency: 1
   prune:
