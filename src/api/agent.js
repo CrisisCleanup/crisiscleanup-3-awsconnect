@@ -39,13 +39,23 @@ export const KeyMap = ({
 
 export const get = async ({ agentId, attributes }) => {
   const db = Dynamo.DynamoTable(TABLE);
-  const projExp = attributes || AGENT_ATTRS.values();
+  const projExp = attributes || Object.values(AGENT_ATTRS);
   const params = {
     ...KeyMap({
       agentId,
     }),
     ProjectionExpression: projExp.join(','),
   };
+  if (projExp.includes('state')) {
+    // state is a dynamodb reserved key word
+    params.ExpressionAttributeNames = {
+      '#A': 'state',
+    };
+    const filteredProjExp = projExp.filter((i) => i !== 'state');
+    filteredProjExp.push('#A');
+    params.ProjectionExpression = filteredProjExp.join(',');
+  }
+  console.log('fetching agent from dynamo:', params);
   const { Item } = await db.getItem(params).promise();
   return Dynamo.normalize(Item);
 };
@@ -80,13 +90,14 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   const results = await db.putItem(params).promise();
   console.log('set agent state: ', agentId, agentState, results);
   const agent = Dynamo.normalize(results[0]);
+  console.log('resulting set agent:', agent);
   return {
     namespace: 'phone',
     action: {
       type: 'action',
       name: 'setAgentState',
       data: {
-        state: agent.state,
+        state: agentState,
       },
     },
   };
