@@ -4,6 +4,7 @@
  */
 
 import { Agent, Inbound, Outbound } from './api';
+import WS from './ws';
 
 const checkCases = async ({ inboundNumber }) => {
   const cases = await Outbound.resolveCasesByNumber(inboundNumber);
@@ -48,9 +49,15 @@ const createCallback = async ({
   };
 };
 
-const denyCallback = async ({ inboundNumber, agentId }) => {
+const denyCallback = async ({ inboundNumber, agentId, client }) => {
   console.log('setting agent state to offline...');
-  Agent.setState({ agentId, agentState: Agent.AGENT_STATES.OFFLINE });
+  const newState = {
+    agentId,
+    agentState: Agent.AGENT_STATES.OFFLINE,
+  };
+  const agentResp = await Agent.setState(newState);
+  const payload = await Agent.createStateWSPayload(newState);
+  await WS.send(payload);
   console.log('unlocking callback for:', inboundNumber);
   const resp = await Outbound.unlock(inboundNumber);
   if (!resp.status === 200) {
@@ -67,8 +74,10 @@ const denyCallback = async ({ inboundNumber, agentId }) => {
 const setAgentState = async ({
   agentId,
   agentState,
+  client,
   initContactId = null,
   currentContactId = null,
+  connectionId = null,
 }) => {
   console.log(
     'setting agent state: ',
@@ -82,14 +91,37 @@ const setAgentState = async ({
     agentState,
     last_contact_id: initContactId,
     current_contact_id: currentContactId,
+    connection_id: connectionId,
   });
-  console.log(resp);
+  console.log('agent state response', resp);
+  if (client !== 'ws') {
+    console.log('returning data for websocket');
+    return resp;
+  }
   const callType = currentContactId ? 'INBOUND' : 'OUTBOUND';
   return {
     data: {
       promptCallType: callType,
     },
   };
+};
+
+const getAgentState = async ({ agentId, client }) => {
+  console.log('fetching agent state for agent:', agentId);
+  const agent = await Agent.get({ agentId });
+  console.log('got agent:', agent);
+  if (client === 'ws') {
+    return {
+      namespace: 'phone',
+      action: {
+        type: 'action',
+        name: 'setAgentState',
+      },
+      data: {
+        state: agent.state,
+      },
+    };
+  }
 };
 
 const findAgent = async ({
@@ -168,5 +200,6 @@ export default {
   CALLBACK: createCallback,
   DENIED_CALLBACK: denyCallback,
   SET_AGENT_STATE: setAgentState,
+  GET_AGENT_STATE: getAgentState,
   FIND_AGENT: findAgent,
 };
