@@ -7,7 +7,14 @@ import { configureEndpoint } from './utils';
 import WS from './ws';
 
 export const wsConnectionHandler = async (event, context) => {
-  console.log('got ws connection:', event, context);
+  console.log('got ws connection', event, context);
+  configureEndpoint(true);
+  const { action } = WS.parse(event);
+  if (action === 'wsDisconnect') {
+    return {
+      statusCode: 200,
+    };
+  }
   return {
     statusCode: 200,
   };
@@ -15,8 +22,12 @@ export const wsConnectionHandler = async (event, context) => {
 
 export const wsHandler = async (event, context) => {
   console.log('got ws message', event, context);
-  const message = WS.parse(event);
-  console.log(message);
+  configureEndpoint(true);
+  const { meta, action, data } = WS.parse(event);
+  const response = await ACTIONS[action]({ ...data, client: 'ws' });
+  if (response.action) {
+    await WS.send({ meta, ...response });
+  }
   return {
     statusCode: 200,
   };
@@ -35,7 +46,10 @@ export default async (event, context, callback) => {
   configureEndpoint(isDev);
 
   // Handlers
-  const { status, data } = await ACTIONS[action](params);
+  const { status, data } = await ACTIONS[action]({
+    ...params,
+    client: 'connect',
+  });
   console.log('action complete. returning data:', status, data);
   callback(status || null, data);
 };
