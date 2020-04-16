@@ -84,9 +84,11 @@ plugins:
   - serverless-dotenv-plugin
   - serverless-prune-plugin
   - serverless-dynamodb-local
+  - serverless-domain-manager
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  dynamic: ${file(config.js)}
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
@@ -107,6 +109,7 @@ custom:
       port: 8000
       inMemory: true
       migration: true
+  customDomain: ${self:custom.dynamic.domain}
 
 functions:
   awsConnect:
@@ -124,7 +127,6 @@ functions:
     handler: src/index.wsHandler
     events:
       - websocket: $default
-
 
 resources:
   Resources:

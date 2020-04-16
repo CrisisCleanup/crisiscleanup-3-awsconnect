@@ -43,6 +43,7 @@
     "aws-sdk": "^2.656.0",
     "axios": "^0.19.2",
     "babel-core": "^7.0.0-bridge.0",
+    "serverless-domain-manager": "^3.3.1",
     "serverless-dynamodb-local": "^0.2.39"
   }
 }
