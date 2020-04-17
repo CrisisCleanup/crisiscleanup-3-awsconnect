@@ -13,6 +13,7 @@ export const send = async ({ meta, ...data }) => {
   });
   const Data = JSON.stringify(data);
   console.log('outgoing payload:', Data);
+  console.log('outgoing meta:', meta);
   const result = await gateway
     .postToConnection({
       ConnectionId: connectionId,
