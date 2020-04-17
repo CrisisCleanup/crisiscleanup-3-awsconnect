@@ -85,6 +85,7 @@ const setAgentState = async ({
     agentState,
     initContactId,
     currentContactId,
+    connectionId,
   );
   const resp = await Agent.setState({
     agentId,
@@ -95,8 +96,10 @@ const setAgentState = async ({
   });
   console.log('agent state response', resp);
   if (client !== 'ws') {
-    console.log('returning data for websocket');
-    return resp;
+    console.log('sending data to socket client!');
+    const payload = await Agent.createStateWSPayload({ agentId, agentState });
+    console.log('[socket] (SERVER -> CLIENT)', payload);
+    await WS.send(payload);
   }
   const callType = currentContactId ? 'INBOUND' : 'OUTBOUND';
   return {
@@ -161,8 +164,12 @@ const findAgent = async ({
         },
       };
     }
-    const newState =
-      targAgent.state === Agent.AGENT_STATES.ROUTABLE ? 'READY' : 'PENDING';
+    const newState = [
+      Agent.AGENT_STATES.PENDING_CALL,
+      Agent.AGENT_STATES.AGENT_CALLING,
+    ].includes(targAgent.state)
+      ? 'READY'
+      : 'PENDING';
     return {
       data: {
         targetAgentId: targAgent.agent_id,

@@ -9,10 +9,13 @@ import { Dynamo } from '../utils';
 const TABLE = Dynamo.TABLES.AGENTS;
 
 export const AGENT_STATES = Object.freeze({
-  PENDING_CALL: 'pendingCall',
+  PENDING_CALL: 'PendingBusy',
+  AGENT_CALLING: 'CallingCustomer',
+  AGENT_PENDING: 'pending',
   ROUTABLE: 'routable',
-  ON_CALL: 'onCall',
+  ON_CALL: 'Busy',
   OFFLINE: 'offline',
+  DISCONNECTED: 'ended',
 });
 
 export const AGENT_ATTRS = Object.freeze({
@@ -57,16 +60,55 @@ export const get = async ({ agentId, attributes }) => {
   }
   console.log('fetching agent from dynamo:', params);
   const { Item } = await db.getItem(params).promise();
+  console.log('fetched item:', Item);
   return Dynamo.normalize(Item);
 };
 
 export const setState = async ({ agentId, agentState, ...attrs }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const additionalAttrs = {};
-  Object.keys(attrs).forEach((key) => {
+  const fetchedAgent = await get({ agentId });
+
+  const deletedAttrs = [];
+  const neededAttrs = [AGENT_ATTRS.CONNECTION];
+  switch (agentState) {
+    case AGENT_STATES.DISCONNECTED:
+    case AGENT_STATES.OFFLINE:
+    case AGENT_STATES.ROUTABLE:
+      if (fetchedAgent && fetchedAgent.current_contact_id) {
+        console.log(
+          `releasing contact id ${fetchedAgent.current_contact_id} from ${agentId}`,
+        );
+        deletedAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
+      }
+      break;
+    case AGENT_STATES.AGENT_CALLING:
+    case AGENT_STATES.AGENT_PENDING:
+    case AGENT_STATES.PENDING_CALL:
+      console.log('agent requires contact attribute! fetching!');
+      neededAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
+      break;
+    default:
+      break;
+  }
+
+  console.log('originally passed additional attrs:', attrs);
+  const reqKeys = Object.keys(attrs);
+
+  const finalKeys = [...new Set([...reqKeys, ...neededAttrs])].filter(
+    (k) => !deletedAttrs.includes(k),
+  );
+
+  console.log('AGENT FINAL ATTRS:', finalKeys);
+
+  finalKeys.forEach((key) => {
     if (attrs[key] && attrs[key] !== null) {
       additionalAttrs[key] = {
         S: attrs[key],
+      };
+    } else if (fetchedAgent && fetchedAgent[key]) {
+      additionalAttrs[key] = {
+        S: fetchedAgent[key],
       };
     }
   });
@@ -86,11 +128,13 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
       },
     }),
   };
+
   console.log('setting state params:', params);
   const results = await db.putItem(params).promise();
   console.log('set agent state: ', agentId, agentState, results);
   const agent = Dynamo.normalize(results[0]);
   console.log('resulting set agent:', agent);
+
   return {
     namespace: 'phone',
     action: {
