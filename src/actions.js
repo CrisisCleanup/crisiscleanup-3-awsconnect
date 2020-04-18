@@ -176,6 +176,27 @@ const findAgent = async ({
         agentId: targAgent.agent_id,
         agentState: Agent.AGENT_STATES.OFFLINE,
       });
+    } else {
+      const attributes = { worksites, pdas, ids };
+      const payload = {
+        namespace: 'phone',
+        action: {
+          type: 'action',
+          name: 'setContactState',
+        },
+        meta: {
+          endpoint: process.env.WS_CALLBACK_URL,
+          connectionId: targAgent.connection_id,
+        },
+        data: {
+          state: {
+            id: targAgent.current_contact_id,
+            attributes,
+          },
+        },
+      };
+      await WS.send(payload);
+    }
     return {
       data: {
         targetAgentId: targAgent.agent_id,
