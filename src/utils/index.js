@@ -8,25 +8,18 @@ import * as DynamoDB from './dynamo';
 
 export const Dynamo = DynamoDB;
 
-export const ENDPOINT = (isDev = null) => {
-  const ep = {
-    auth: `Token ${process.env.CC_AUTH_TOKEN}`,
-    baseUrl: process.env.CC_API_BASE_URL,
-  };
-  // AWS connect likes to cast inputs as strings
-  const dev = isDev || Boolean(Number(process.env.IS_DEV));
-  if (dev) {
-    ep.auth = `Token ${process.env.CC_DEV_AUTH_TOKEN}`;
-    ep.baseUrl = process.env.CC_DEV_API_BASE_URL;
-  }
-  return ep;
+export const CURRENT_ENDPOINT = {
+  ws: process.env.WS_CALLBACK_URL,
+  token: process.env.CC_AUTH_TOKEN,
+  api: process.env.CC_API_BASE_URL,
 };
 
-export const configureEndpoint = (isDev = null) => {
-  const apiConfig = ENDPOINT(isDev);
-  const { baseUrl, auth } = apiConfig;
-  axios.defaults.baseURL = baseUrl;
-  axios.defaults.headers.common.Authorization = auth;
+export const configureEndpoint = () => {
+  const ep = CURRENT_ENDPOINT;
+  const { api, token } = ep;
+  axios.defaults.baseURL = api;
+  axios.defaults.headers.common.Authorization = `Token ${token}`;
+  console.log('Endpoints Configured:', ep);
   return axios;
 };
 
