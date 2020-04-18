@@ -48,7 +48,7 @@ export const wsHandler = async (event, context) => {
 };
 
 export default async (event, context, callback) => {
-  if (checkWarmup(event)) return { statusCode: 200 };
+  if (checkWarmup(event)) return callback(null, {});
   // Grab inbound number from event
   const {
     Details: {

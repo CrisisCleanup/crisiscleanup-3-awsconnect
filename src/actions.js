@@ -139,7 +139,7 @@ const findAgent = async ({
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 10);
-  if (newTriggerValue >= 40) {
+  if (newTriggerValue >= 130) {
     newTriggerValue = 0;
   }
   console.log('finding next agent to serve contact too...');
@@ -158,18 +158,24 @@ const findAgent = async ({
     if (!targAgent || targAgent === null) {
       return {
         data: {
-          targetAgentId,
+          targetAgentId: '',
           targetAgentState: 'PENDING',
           triggerPrompt: newTriggerValue,
         },
       };
     }
-    const newState = [
-      Agent.AGENT_STATES.PENDING_CALL,
-      Agent.AGENT_STATES.AGENT_CALLING,
-    ].includes(targAgent.state)
-      ? 'READY'
-      : 'PENDING';
+
+    const newState = Agent.isInRoute(targAgent.state) ? 'READY' : 'PENDING';
+    const hasExpired = Date.now() > Number(targAgent.state_ttl);
+    if (newState === 'PENDING' && hasExpired) {
+      // release the contact id
+      console.log(
+        'agent state ttl has expired! setting offline and relasing contact...',
+      );
+      await Agent.setState({
+        agentId: targAgent.agent_id,
+        agentState: Agent.AGENT_STATES.OFFLINE,
+      });
     return {
       data: {
         targetAgentId: targAgent.agent_id,
