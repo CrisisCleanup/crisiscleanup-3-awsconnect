@@ -113,7 +113,8 @@ const getAgentState = async ({ agentId, client }) => {
   console.log('fetching agent state for agent:', agentId);
   const agent = await Agent.get({ agentId });
   console.log('got agent:', agent);
-  if (client === 'ws') {
+  if (client === 'ws' && agent) {
+    const [stateOnline, stateType, subState] = Agent.getStateDef(agent.state);
     return {
       namespace: 'phone',
       action: {
@@ -121,7 +122,7 @@ const getAgentState = async ({ agentId, client }) => {
         name: 'setAgentState',
       },
       data: {
-        state: agent.state,
+        state: subState,
       },
     };
   }
@@ -136,6 +137,9 @@ const findAgent = async ({
   currentContactId,
   targetAgentId,
   triggerPrompt,
+  worksites,
+  ids,
+  pdas,
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 10);
@@ -205,21 +209,44 @@ const findAgent = async ({
       },
     };
   }
-  const agent = await Agent.findNextAgent();
-  if (!agent || agent === null) {
+  let agent;
+  try {
+    agent = await Agent.findNextAgent();
+  } catch (e) {
+    if (e instanceof Agent.AgentError) {
+      return {
+        data: {
+          targetAgentState: 'NONE',
+          triggerPrompt: newTriggerValue,
+        },
+      };
+    }
+    throw e;
+  }
+
+  // agents are online, but not routable
+  if (!agent) {
     return {
       data: {
-        targetAgentState: 'NONE',
+        targetAgentId: '',
+        targetAgentState: 'PENDING',
         triggerPrompt: newTriggerValue,
       },
     };
   }
+
+  // found a routable and ready agent
+  const stateExpire = Date.now() + 40 * 1000; // expire state if it doesn't change in 40s
   await Agent.setState({
     agentId: agent.agent_id,
     agentState: agent.state,
     current_contact_id: initContactId,
+    state_ttl: String(stateExpire),
   });
-  await Inbound.prompt({ inboundId: inbound.id, agentId: agent.agent_id });
+  if (Agent.isRoutable(agent.state)) {
+    console.log('agent is routable! calling now...');
+    await Inbound.prompt({ inboundId: inbound.id, agentId: agent.agent_id });
+  }
   return {
     data: {
       targetAgentId: agent.agent_id,
