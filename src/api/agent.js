@@ -13,10 +13,63 @@ export const AGENT_STATES = Object.freeze({
   AGENT_CALLING: 'CallingCustomer',
   AGENT_PENDING: 'pending',
   ROUTABLE: 'routable',
+  NOT_ROUTABLE: 'not_routable',
+  BUSY: 'Busy',
   ON_CALL: 'Busy',
   OFFLINE: 'offline',
   DISCONNECTED: 'ended',
+  PAUSED: 'AfterCallWork',
 });
+
+export const AGENT_STATE_TYPES = [
+  AGENT_STATES.ROUTABLE,
+  AGENT_STATES.NOT_ROUTABLE,
+];
+
+const ROUTABLE_STATES = [AGENT_STATES.ROUTABLE];
+
+const NOT_ROUTABLE_STATES = [
+  AGENT_STATES.ON_CALL,
+  AGENT_STATES.NOT_ROUTABLE,
+  AGENT_STATES.OFFLINE,
+  AGENT_STATES.AGENT_PENDING,
+  AGENT_STATES.PAUSED,
+  AGENT_STATES.PENDING_CALL,
+  AGENT_STATES.AGENT_CALLING,
+];
+
+const INROUTE_STATES = [AGENT_STATES.PENDING_CALL, AGENT_STATES.AGENT_CALLING];
+
+export const AGENT_STATE_GROUPS = Object.freeze({
+  [AGENT_STATES.ROUTABLE]: ROUTABLE_STATES,
+  [AGENT_STATES.NOT_ROUTABLE]: NOT_ROUTABLE_STATES,
+});
+
+export const isRoutable = (state) =>
+  ROUTABLE_STATES.includes(state.split('#')[2] || state);
+export const isInRoute = (state) =>
+  INROUTE_STATES.includes(state.split('#')[2] || state);
+
+export const getStateDef = (state) => {
+  if (!state || state === null || typeof state !== 'string') {
+    console.log(`state ${state} is not a supported type!`);
+    return getStateDef(AGENT_STATES.OFFLINE);
+  }
+  if (state.includes('#')) {
+    console.log(`state [${state}] already contains type, returning`);
+    return state.split('#');
+  }
+  const stateType = Object.keys(AGENT_STATE_GROUPS).filter((key) =>
+    AGENT_STATE_GROUPS[key].includes(state) ? key : false,
+  );
+  if (stateType.length) {
+    console.log(`found state type: ${stateType} for state: ${state}`);
+    const isOnline = state === 'offline' ? 'offline' : 'online';
+    return [isOnline, stateType[0], state];
+  }
+  console.log(`Unknown state type for state: ${state}`);
+  return ['offline', '', state];
+};
 
 export const AGENT_ATTRS = Object.freeze({
   STATE: 'state',
@@ -24,6 +77,8 @@ export const AGENT_ATTRS = Object.freeze({
   LAST_CONTACT: 'last_contact_id',
   CURRENT_CONTACT: 'current_contact_id',
   CONNECTION: 'connection_id',
+  ACTIVE: 'active',
+  STATE_TTL: 'state_ttl',
 });
 
 export const KeyMap = ({
@@ -60,6 +115,9 @@ export const get = async ({ agentId, attributes }) => {
   }
   console.log('fetching agent from dynamo:', params);
   const { Item } = await db.getItem(params).promise();
+  if (!Item) {
+    return Item;
+  }
   console.log('fetched item:', Item);
   return Dynamo.normalize(Item);
 };
@@ -71,7 +129,9 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
 
   const deletedAttrs = [];
   const neededAttrs = [AGENT_ATTRS.CONNECTION];
-  switch (agentState) {
+
+  const [stateOnline, stateType, subState] = getStateDef(agentState);
+  switch (subState) {
     case AGENT_STATES.DISCONNECTED:
     case AGENT_STATES.OFFLINE:
     case AGENT_STATES.ROUTABLE:
@@ -80,6 +140,8 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
           `releasing contact id ${fetchedAgent.current_contact_id} from ${agentId}`,
         );
         deletedAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
+        deletedAttrs.push(AGENT_ATTRS.STATE_TTL);
+        deletedAttrs.push(AGENT_STATES.CASES);
       }
       break;
     case AGENT_STATES.AGENT_CALLING:
@@ -87,9 +149,19 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
     case AGENT_STATES.PENDING_CALL:
       console.log('agent requires contact attribute! fetching!');
       neededAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
+      neededAttrs.push(AGENT_ATTRS.STATE_TTL);
+      neededAttrs.push(AGENT_ATTRS.CASES);
       break;
     default:
       break;
+  }
+
+  if (stateOnline) {
+    additionalAttrs[AGENT_ATTRS.ACTIVE] = {
+      S: 'y',
+    };
+  } else {
+    deletedAttrs.push(AGENT_ATTRS.ACTIVE);
   }
 
   console.log('originally passed additional attrs:', attrs);
@@ -101,25 +173,37 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
 
   console.log('AGENT FINAL ATTRS:', finalKeys);
 
+  const getDataType = (attr) => {
+    const types = {
+      number: 'N',
+      string: 'S',
+    };
+    if (Object.keys(types).includes(typeof attr)) {
+      return types[typeof attr];
+    }
+    return 'S';
+  };
+
   finalKeys.forEach((key) => {
     if (attrs[key] && attrs[key] !== null) {
       additionalAttrs[key] = {
-        S: attrs[key],
+        [getDataType(attrs[key])]: attrs[key],
       };
     } else if (fetchedAgent && fetchedAgent[key]) {
       additionalAttrs[key] = {
-        S: fetchedAgent[key],
+        [getDataType(attrs[key])]: fetchedAgent[key],
       };
     }
   });
+  const finalAgentState = `${stateOnline}#${stateType}#${subState}`;
   const params = {
     ...KeyMap({
       mapName: 'Item',
       agentId,
-      agentState,
+      agentState: finalAgentState,
       attributes: {
         state: {
-          S: agentState,
+          S: finalAgentState,
         },
         entered_timestamp: {
           S: new Date().toISOString(),
@@ -131,7 +215,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
 
   console.log('setting state params:', params);
   const results = await db.putItem(params).promise();
-  console.log('set agent state: ', agentId, agentState, results);
+  console.log('set agent state: ', agentId, finalAgentState, results);
   const agent = Dynamo.normalize(results[0]);
   console.log('resulting set agent:', agent);
 
@@ -141,7 +225,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
       type: 'action',
       name: 'setAgentState',
       data: {
-        state: agentState,
+        state: subState,
       },
     },
   };
@@ -170,19 +254,24 @@ export const getTargetAgent = async ({ currentContactId }) => {
   return agent;
 };
 
+export class AgentError extends Error {}
+
 export const findNextAgent = async () => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
     ExpressionAttributeNames: {
       '#S': 'state',
+      '#O': 'active',
     },
     ExpressionAttributeValues: {
-      ':current': {
-        S: 'routable',
+      ':t': {
+        S: 'online#',
+      },
+      ':a': {
+        S: 'y',
       },
     },
-    KeyConditionExpression: '#S = :current',
-    FilterExpression: 'attribute_not_exists(current_contact_id)',
+    KeyConditionExpression: '#O = :a AND begins_with (#S, :t)',
     IndexName: 'state-index',
     Select: 'ALL_ATTRIBUTES',
   };
@@ -191,13 +280,18 @@ export const findNextAgent = async () => {
   const normalizedItems = Items.map((m) => Dynamo.normalize(m));
   console.log('resulting items:', normalizedItems);
   if (!normalizedItems.length) {
-    return null;
+    throw new AgentError('No agents are available!');
   }
-  const routables = normalizedItems.filter(
-    (a) => a.state === AGENT_STATES.ROUTABLE,
-  );
+
+  const routables = normalizedItems.filter((a) => isRoutable(a.state));
+  console.log('filtered routables:');
+  if (!routables.length) {
+    console.log('active agents found, but none are currently routable!');
+    return false;
+  }
+
   // find the agent who's been routable the longest
-  const agent = routables.reduce((pre, cur) => {
+  const agent = normalizedItems.reduce((pre, cur) => {
     return Date.parse(pre.entered_timestamp) > Date.parse(cur.entered_timestamp)
       ? cur
       : pre;
@@ -219,7 +313,7 @@ export const createStateWSPayload = async ({ agentId, agentState }) => {
       connectionId: agent.connection_id,
     },
     data: {
-      state: agentState || agent.state,
+      state: getStateDef(agentState)[2] || getStateDef(agent.state)[2],
     },
   };
 };
