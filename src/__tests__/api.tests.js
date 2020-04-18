@@ -9,6 +9,7 @@ import { Agent, Helpers, Outbound } from '../api';
 import { Dynamo } from '../utils';
 
 jest.mock('../utils/dynamo.js');
+jest.mock('../ws');
 
 const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   id: id || 0,
@@ -150,8 +151,40 @@ describe('agent api', () => {
       agentState: Agent.AGENT_STATES.ROUTABLE,
       last_contact_id: 'abc123',
       current_contact_id: '123abc',
+      connection_id: 'zzzz',
     });
     expect(Dynamo.DynamoTable).toMatchSnapshot();
     expect(mockDb.mock).toMatchSnapshot();
+  });
+
+  it('gets the correct state def', () => {
+    const routeState = Agent.getStateDef(Agent.AGENT_STATES.ROUTABLE);
+    expect(routeState).toStrictEqual(['online', 'routable', 'routable']);
+
+    expect(Agent.getStateDef('offline')).toStrictEqual([
+      'offline',
+      'not_routable',
+      'offline',
+    ]);
+    expect(Agent.getStateDef(Agent.AGENT_STATES.NOT_ROUTABLE)).toStrictEqual([
+      'online',
+      'not_routable',
+      'not_routable',
+    ]);
+    expect(Agent.getStateDef(Agent.AGENT_STATES.PAUSED)).toStrictEqual([
+      'online',
+      'not_routable',
+      'AfterCallWork',
+    ]);
+    expect(Agent.getStateDef(Agent.AGENT_STATES.AGENT_CALLING)).toStrictEqual([
+      'online',
+      'not_routable',
+      'CallingCustomer',
+    ]);
+    expect(Agent.getStateDef(undefined)).toStrictEqual([
+      'offline',
+      'not_routable',
+      'offline',
+    ]);
   });
 });

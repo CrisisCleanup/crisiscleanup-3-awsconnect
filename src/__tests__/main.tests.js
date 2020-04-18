@@ -7,6 +7,7 @@ import { Agent, Outbound } from '../api';
 import Handler from '../index';
 
 jest.mock('../api');
+jest.mock('../ws');
 
 const MockEvent = (data = {}) => ({
   Details: {

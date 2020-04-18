@@ -30,54 +30,24 @@ exports[`agent api sets agent state 1`] = `
         "name": "connect-agents-table",
       },
     ],
+    Array [
+      Object {
+        "hash": "agent_id",
+        "name": "connect-agents-table",
+      },
+    ],
   ],
   "results": Array [
     Object {
       "type": "return",
       "value": Object {
-        "putItem": [MockFunction] {
-          "calls": Array [
-            Array [
-              Object {
-                "Item": Object {
-                  "agent_id": Object {
-                    "S": "xxxx",
-                  },
-                  "current_contact_id": Object {
-                    "S": "123abc",
-                  },
-                  "entered_timestamp": Object {
-                    "S": "2020-04-15T05:08:45.222Z",
-                  },
-                  "last_contact_id": Object {
-                    "S": "abc123",
-                  },
-                  "state": Object {
-                    "S": "routable",
-                  },
-                },
-              },
-            ],
-          ],
-          "results": Array [
-            Object {
-              "type": "return",
-              "value": Object {
-                "promise": [MockFunction] {
-                  "calls": Array [
-                    Array [],
-                  ],
-                  "results": Array [
-                    Object {
-                      "type": "return",
-                      "value": undefined,
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-        },
+        "putItem": [MockFunction],
+      },
+    },
+    Object {
+      "type": "return",
+      "value": Object {
+        "putItem": [MockFunction],
       },
     },
   ],
@@ -86,33 +56,10 @@ exports[`agent api sets agent state 1`] = `
 
 exports[`agent api sets agent state 2`] = `
 Object {
-  "calls": Array [
-    Array [],
-  ],
-  "instances": Array [
-    Object {
-      "promise": [MockFunction] {
-        "calls": Array [
-          Array [],
-        ],
-        "results": Array [
-          Object {
-            "type": "return",
-            "value": undefined,
-          },
-        ],
-      },
-    },
-  ],
-  "invocationCallOrder": Array [
-    3,
-  ],
-  "results": Array [
-    Object {
-      "type": "return",
-      "value": undefined,
-    },
-  ],
+  "calls": Array [],
+  "instances": Array [],
+  "invocationCallOrder": Array [],
+  "results": Array [],
 }
 `;
 

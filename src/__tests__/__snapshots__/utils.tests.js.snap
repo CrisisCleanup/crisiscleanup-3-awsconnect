@@ -1,23 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`utils should return correct endpoint 1`] = `
-Object {
-  "auth": "Token abc123",
-  "baseUrl": "http://api.com",
-}
-`;
-
-exports[`utils should return correct endpoint 2`] = `
-Object {
-  "auth": "Token dev_abc123",
-  "baseUrl": "http://dev.api.com",
-}
-`;
-
 exports[`utils should set axios defaults correctly 1`] = `
 Object {
   "adapter": [Function],
-  "baseURL": "http://api.com",
+  "baseURL": "http://api.io",
   "headers": Object {
     "common": Object {
       "Accept": "application/json, text/plain, */*",
