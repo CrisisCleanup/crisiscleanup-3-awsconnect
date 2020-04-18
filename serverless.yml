@@ -36,7 +36,7 @@ provider:
             - - 'arn:aws:execute-api'
               - Ref: 'AWS::Region'
               - Ref: 'AWS::AccountId'
-              - 'e0vdihgxol/*'
+              - '*'
     - Effect: Allow
       Action:
         - logs:CreateLogGroup
@@ -159,15 +159,17 @@ resources:
             AttributeType: S
           - AttributeName: current_contact_id
             AttributeType: S
+          - AttributeName: active
+            AttributeType: S
         KeySchema:
           - AttributeName: agent_id
             KeyType: HASH
         GlobalSecondaryIndexes:
           - IndexName: state-index
             KeySchema:
-              - AttributeName: state
+              - AttributeName: active
                 KeyType: HASH
-              - AttributeName: agent_id
+              - AttributeName: state
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
