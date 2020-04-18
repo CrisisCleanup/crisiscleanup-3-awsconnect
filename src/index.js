@@ -6,7 +6,7 @@ import ACTIONS from './actions';
 import { configureEndpoint } from './utils';
 import WS from './ws';
 
-export const checkWarmup = async ({ source }) => {
+export const checkWarmup = ({ source }) => {
   if (source === 'serverless-warmup-plugin') {
     console.log('Warmup! Lambda is warm.');
     return true;
