@@ -9,6 +9,12 @@
   "private": false,
   "scripts": {
     "format": "prettier ./{*,**/*}.js",
+    "logs": "sls logs --env dev --stage dev -f",
+    "offline": "sls --env local offline",
+    "update": "node internal/scripts/deploy-functions.js",
+    "deploy:dev": "sls deploy --env dev --stage dev --aws-s3-accelerate",
+    "deploy:staging": "sls deploy --env staging --stage staging --aws-s3-accelerate",
+    "deploy:prod": "sls deploy --env prod --stage prod --aws-s3-accelerate",
     "lint": "eslint --fix ./{*,**/*}.js && yarn format",
     "test": "jest",
     "test:watch": "yarn test --watch"
@@ -31,19 +37,21 @@
     "jest": "^25.3.0",
     "prettier": "^2.0.2",
     "serverless": "^1.67.3",
+    "serverless-domain-manager": "^3.3.1",
     "serverless-dotenv-plugin": "^2.3.2",
+    "serverless-dynamodb-local": "^0.2.39",
     "serverless-offline": "^6.1.4",
     "serverless-plugin-warmup": "^4.9.0",
     "serverless-prune-plugin": "^1.4.2",
+    "serverless-stack-output": "^0.2.3",
     "serverless-webpack": "^5.3.1",
+    "shelljs": "^0.8.3",
     "webpack": "^4.42.1",
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
     "aws-sdk": "^2.656.0",
     "axios": "^0.19.2",
-    "babel-core": "^7.0.0-bridge.0",
-    "serverless-domain-manager": "^3.3.1",
-    "serverless-dynamodb-local": "^0.2.39"
+    "babel-core": "^7.0.0-bridge.0"
   }
 }
