@@ -79,12 +79,13 @@ provider:
               - 'table/connect-*'
 plugins:
   - serverless-webpack
-  - serverless-offline
   - serverless-plugin-warmup
   - serverless-dotenv-plugin
   - serverless-prune-plugin
   - serverless-dynamodb-local
   - serverless-domain-manager
+  - serverless-stack-output
+  - serverless-offline
 
 custom:
   stage: ${opt:stage, self:provider.stage}
@@ -111,21 +112,32 @@ custom:
       inMemory: true
       migration: true
   customDomain: ${self:custom.dynamic.domain}
+  output:
+    file: .build/stack.yml
 
 functions:
   awsConnect:
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
     handler: src/index.default
+    onError: !Ref ConnectErrorsTopic
 
   connectionHandler:
     handler: src/index.wsConnectionHandler
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
+    memorySize: 512
+    onError: !Ref ConnectErrorsTopic
     events:
       - websocket:
           route: $connect
       - websocket:
           route: $disconnect
-
   wsHandler:
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
     handler: src/index.wsHandler
+    onError: !Ref ConnectErrorsTopic
     events:
       - websocket: $default
 
@@ -135,7 +147,7 @@ resources:
     metricsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: connect-metrics-table
+        TableName: connect-metrics-table-${self:custom.stage}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: type
@@ -150,7 +162,7 @@ resources:
     agentsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: connect-agents-table
+        TableName: connect-agents-table-${self:custom.stage}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: agent_id
@@ -179,3 +191,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+    ConnectErrorsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: AWSConnectErrorTopic-${self:custom.stage}
