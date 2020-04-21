@@ -27,13 +27,13 @@ exports[`agent api sets agent state 1`] = `
     Array [
       Object {
         "hash": "agent_id",
-        "name": "connect-agents-table",
+        "name": "connect-agents-table-dev",
       },
     ],
     Array [
       Object {
         "hash": "agent_id",
-        "name": "connect-agents-table",
+        "name": "connect-agents-table-dev",
       },
     ],
   ],
@@ -60,6 +60,25 @@ Object {
   "instances": Array [],
   "invocationCallOrder": Array [],
   "results": Array [],
+}
+`;
+
+exports[`contact api generates the correct operations 1`] = `
+Object {
+  "ExpressionAttributeNames": Object {
+    "#P": "priority",
+    "#S": "state",
+    "#T": "entered_timestamp",
+  },
+  "ExpressionAttributeValues": Object {
+    ":p": 1,
+    ":s": "somestate",
+    ":t": "2020-06-20T05:00:00.000Z",
+  },
+  "Key": Object {
+    "contact_id": "xxxx",
+  },
+  "UpdateExpression": "set #S = :s and set #P = :p and set #T = :t",
 }
 `;
 

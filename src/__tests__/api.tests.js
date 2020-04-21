@@ -5,7 +5,8 @@
 
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { Agent, Helpers, Outbound } from '../api';
+import { advanceTo, clear } from 'jest-date-mock';
+import { Agent, Contact, Helpers, Outbound } from '../api';
 import { Dynamo } from '../utils';
 
 jest.mock('../utils/dynamo.js');
@@ -186,5 +187,31 @@ describe('agent api', () => {
       'not_routable',
       'offline',
     ]);
+  });
+});
+
+describe('contact api', () => {
+  it('sets correct contact state', () => {
+    const contact = new Contact.Contact({ contactId: 'xxxx' });
+    expect(contact.state).toBe('en_US#queued');
+    expect(contact.routed).toBe(false);
+    contact.setState('en_US#routed');
+    expect(contact.state).toBe('en_US#routed');
+    expect(contact.routed).toBe(true);
+    contact.setState('queued');
+    expect(contact.state).toBe('en_US#queued');
+    contact.setState('es_MX#routed');
+    expect(contact.state).toBe('es_MX#routed');
+  });
+
+  it('generates the correct operations', () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    const updateOp = Contact.OPERATIONS.updateContact({
+      contactId: 'xxxx',
+      state: 'somestate',
+      priority: 1,
+    });
+    expect(updateOp).toMatchSnapshot();
+    clear();
   });
 });

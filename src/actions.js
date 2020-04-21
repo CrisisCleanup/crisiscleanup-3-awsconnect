@@ -181,7 +181,7 @@ const findAgent = async ({
         agentState: Agent.AGENT_STATES.OFFLINE,
       });
     } else {
-      const attributes = { worksites, pdas, ids };
+      const attributes = { worksites, pdas, ids, callerID: inboundNumber };
       const payload = {
         namespace: 'phone',
         action: {
