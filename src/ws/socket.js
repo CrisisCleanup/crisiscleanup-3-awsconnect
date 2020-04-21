@@ -34,10 +34,13 @@ export const parse = (event) => {
     callbackUrl = new URL(stage, domainUrl);
   }
   callbackUrl = callbackUrl.toString();
-  console.log('generated callback url:', callbackUrl);
   if (domainName === 'localhost') {
     callbackUrl = 'http://localhost:3001';
   }
+  if (process.env.IS_OFFLINE === 'TUNNEL') {
+    callbackUrl = 'http://marssocket.crisiscleanup.io';
+  }
+  console.log('generated callback url:', callbackUrl);
   const meta = {
     endpoint: callbackUrl,
     connectionId,

@@ -17,7 +17,7 @@ export const checkWarmup = ({ source }) => {
 export const wsConnectionHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws connection', event, context);
-  configureEndpoint(true);
+  configureEndpoint();
   const { meta, action } = WS.parse(event);
   if (action === 'wsDisconnect') {
     return {
@@ -32,7 +32,7 @@ export const wsConnectionHandler = async (event, context) => {
 export const wsHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws message', event, context);
-  configureEndpoint(true);
+  configureEndpoint();
   const { meta, action, data } = WS.parse(event);
   const response = await ACTIONS[action]({
     ...data,
@@ -52,13 +52,21 @@ export default async (event, context, callback) => {
   // Grab inbound number from event
   const {
     Details: {
-      Parameters: { isDev, action, ...params },
+      Parameters: { IS_OFFLINE, isDev, action, ...params },
     },
   } = event;
 
-  // Store IS_DEV
-  process.env.IS_DEV = isDev;
-  configureEndpoint(isDev);
+  // Use tunneled endpoints for local (sls offline) testing
+  // Connect casts any passed attributes as strings
+  if (IS_OFFLINE === '1') {
+    process.env.IS_OFFLINE = 'TUNNEL';
+    configureEndpoint({
+      ws: 'http://marssocket.crisiscleanup.io',
+      api: 'http://marsapi.crisiscleanup.io',
+    });
+  } else {
+    configureEndpoint();
+  }
 
   // Handlers
   const { status, data } = await ACTIONS[action]({

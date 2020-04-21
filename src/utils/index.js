@@ -14,8 +14,9 @@ export const CURRENT_ENDPOINT = {
   api: process.env.CC_API_BASE_URL,
 };
 
-export const configureEndpoint = () => {
-  const ep = CURRENT_ENDPOINT;
+export const configureEndpoint = (config = {}) => {
+  const ep = { ...CURRENT_ENDPOINT, ...config };
+
   const { api, token } = ep;
   axios.defaults.baseURL = api;
   axios.defaults.headers.common.Authorization = `Token ${token}`;
