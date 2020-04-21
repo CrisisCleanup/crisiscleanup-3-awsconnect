@@ -66,11 +66,13 @@ Object {
 exports[`contact api generates the correct operations 1`] = `
 Object {
   "ExpressionAttributeNames": Object {
+    "#E": "ttl",
     "#P": "priority",
     "#S": "state",
     "#T": "entered_timestamp",
   },
   "ExpressionAttributeValues": Object {
+    ":e": 1592629800,
     ":p": 1,
     ":s": "somestate",
     ":t": "2020-06-20T05:00:00.000Z",
