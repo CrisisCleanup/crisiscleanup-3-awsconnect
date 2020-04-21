@@ -14,8 +14,13 @@ provider:
   region: us-east-1
   log:
     websocket: true
+  tracing:
+    lambda: true
   websocketsApiName: crisiscleanup-3-awsconnect-ws
   websocketsApiRouteSelectionExpression: $request.body.action
+  iamManagedPolicies:
+    - ${cf:serverless-domain-manager-awsconnect.ServerlessDomainManagerDeployPolicyArn}
+
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -191,6 +196,35 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+    contactsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connect-contacts-table-${self:custom.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: contact_id
+            AttributeType: S
+          - AttributeName: state
+            AttributeType: S
+          - AttributeName: active
+            AttributeType: S
+          - AttributeName: ttl
+            AttributeType: N
+        KeySchema:
+          - AttributeName: contact_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: state-index
+            KeySchema:
+              - AttributeName: active
+                KeyType: HASH
+              - AttributeName: state
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
     ConnectErrorsTopic:
       Type: AWS::SNS::Topic
       Properties:

@@ -27,6 +27,9 @@ export const TABLES = {
     name: `connect-agents-table-${process.env.SLS_STAGE}`,
     hash: 'agent_id',
   },
+  CONTACTS: {
+    name: `connect-contacts-table-${process.env.SLS_STAGE}`
+  }
 };
 
 export const DynamoTable = ({ name }) =>
