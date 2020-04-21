@@ -214,9 +214,9 @@ resources:
         GlobalSecondaryIndexes:
           - IndexName: state-index
             KeySchema:
-              - AttributeName: active
-                KeyType: HASH
               - AttributeName: state
+                KeyType: HASH
+              - AttributeName: contact_id
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
