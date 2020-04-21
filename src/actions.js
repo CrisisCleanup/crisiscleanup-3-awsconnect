@@ -3,7 +3,7 @@
  * Lambda Actions
  */
 
-import { Agent, Contact, Inbound, Outbound } from './api';
+import { Agent, Contact, Events, Inbound, Outbound } from './api';
 import WS from './ws';
 
 const checkCases = async ({ inboundNumber }) => {
@@ -160,10 +160,14 @@ const findAgent = async ({
     priority: inbound.priority,
   }).load();
   await contact.setState(Contact.CONTACT_STATES.QUEUED);
+  const inboundEvent = new Events.Event({ itemId: inbound.id }).object(
+    Events.EVENT_OBJECTS.INBOUND,
+  );
   if (targetAgentId) {
     const targAgent = await Agent.getTargetAgent({
       currentContactId: currentContactId || inbound.session_id,
     });
+    const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
     if (!targAgent || targAgent === null) {
       return {
         data: {
@@ -185,9 +189,22 @@ const findAgent = async ({
         agentId: targAgent.agent_id,
         agentState: Agent.AGENT_STATES.OFFLINE,
       });
+      await inboundEvent.join(agentEvent).save({
+        agent_id: targAgent.agent_id,
+        contact_id: initContactId,
+        ivr_action: 'reject',
+      });
     } else {
       await contact.setState(Contact.CONTACT_STATES.ROUTED);
+      await inboundEvent.update().save({
+        ivr_action: Contact.CONTACT_STATES.ROUTED,
+      });
       const attributes = { worksites, pdas, ids, callerID: inboundNumber };
+      await inboundEvent.join(agentEvent).save({
+        agent_id: targAgent.agent_id,
+        contact_id: initContactId,
+        ivr_action: 'receive',
+      });
       const payload = {
         namespace: 'phone',
         action: {
@@ -213,6 +230,11 @@ const findAgent = async ({
           await Agent.setState({
             agentId: targAgent.agent_id,
             agentState: Agent.AGENT_STATES.OFFLINE,
+          });
+          await inboundEvent.join(agentEvent).save({
+            agent_id: targAgent.agent_id,
+            contact_id: initContactId,
+            ivr_action: 'abandon',
           });
           console.log('Lost connection to agent! Setting offline...');
           return {

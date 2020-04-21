@@ -221,5 +221,9 @@ describe('events api', () => {
     const event = new Events.Event({ itemId: 'xxxx' });
     event.object(Events.EVENT_OBJECTS.AGENT).update();
     expect(event.eventKey).toBe('update_agent');
+    const callEvent = new Events.Event({ itemId: 'call_xxxx' })
+      .object(Events.EVENT_OBJECTS.INBOUND)
+      .join(event);
+    expect(callEvent.eventKey).toBe('join_inbound-call_to_agent');
   });
 });

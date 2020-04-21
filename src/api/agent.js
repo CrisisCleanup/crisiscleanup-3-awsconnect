@@ -5,6 +5,7 @@
  */
 
 import { Dynamo } from '../utils';
+import { Event, EVENT_OBJECTS } from './events';
 
 const TABLE = Dynamo.TABLES.AGENTS;
 
