@@ -205,7 +205,25 @@ const findAgent = async ({
           },
         },
       };
-      await WS.send(payload);
+      try {
+        await WS.send(payload);
+      } catch (e) {
+        // handle agent disconnects
+        if (e.statusCode === 410) {
+          await Agent.setState({
+            agentId: targAgent.agent_id,
+            agentState: Agent.AGENT_STATES.OFFLINE,
+          });
+          console.log('Lost connection to agent! Setting offline...');
+          return {
+            data: {
+              targetAgentId: '',
+              targetAgentState: '',
+              triggerPrompt: newTriggerValue,
+            },
+          };
+        }
+      }
     }
     return {
       data: {
