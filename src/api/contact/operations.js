@@ -53,9 +53,9 @@ export const updateContact = ({ contactId, state, priority }) => ({
     { name: 'state', value: state },
     { key: 'p', name: 'priority', value: priority },
     { key: 't', name: 'entered_timestamp', value: new Date().toISOString() },
-    // expire any contacts that are not updated in 10m
+    // expire any contacts that are not updated in 3m
     // implying the call has been abandoned
-    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 10 },
+    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
   ]),
   Key: {
     contact_id: contactId,
