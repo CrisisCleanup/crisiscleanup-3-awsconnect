@@ -3,7 +3,7 @@
  * Lambda Actions
  */
 
-import { Agent, Inbound, Outbound } from './api';
+import { Agent, Contact, Inbound, Outbound } from './api';
 import WS from './ws';
 
 const checkCases = async ({ inboundNumber }) => {
@@ -155,6 +155,11 @@ const findAgent = async ({
     ani: callAni,
   });
   console.log('created inbound: ', inbound);
+  const contact = await new Contact.Contact({
+    contactId: initContactId,
+    priority: inbound.priority,
+  }).load();
+  await contact.setState(Contact.CONTACT_STATES.QUEUED);
   if (targetAgentId) {
     const targAgent = await Agent.getTargetAgent({
       currentContactId: currentContactId || inbound.session_id,
@@ -181,6 +186,7 @@ const findAgent = async ({
         agentState: Agent.AGENT_STATES.OFFLINE,
       });
     } else {
+      await contact.setState(Contact.CONTACT_STATES.ROUTED);
       const attributes = { worksites, pdas, ids, callerID: inboundNumber };
       const payload = {
         namespace: 'phone',
