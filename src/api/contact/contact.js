@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /**
  * contact.js
  * Contact Module
@@ -25,7 +26,9 @@ export class Contact {
     this.db = Dynamo.DynamoClient(Dynamo.TABLES.CONTACTS);
     this.locale = contactLocale || CONTACT_LANG.en_US;
     this.routed = contactRouted || false;
-    this.priority = 0;
+    this.priority = 1;
+    this.entered_timestamp = null;
+    this.ttl = null;
   }
 
   log(message) {
@@ -69,5 +72,28 @@ export class Contact {
     const results = await this.db.update(OPS.updateContact(this)).promise();
     this.log(`updated results: ${results}`);
     return results;
+  }
+
+  async load() {
+    this.log('fetching contact from database...');
+    let response;
+    try {
+      response = await this.db.get(OPS.getContact(this)).promise();
+    } catch (e) {
+      this.log('could not find contact! assuming its new...');
+      return this;
+    }
+    const { Item } = response;
+    if (!Item || Item === null) {
+      this.log('could not find contact! assumings its new...');
+      return this;
+    }
+    this.log(`found existing contact:`);
+    this.log(Item);
+    const { entered_timestamp, priority, state } = Item;
+    this.entered_timestamp = Date.parse(entered_timestamp);
+    this.priority = priority;
+    this.state = state;
+    return this;
   }
 }
