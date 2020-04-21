@@ -80,7 +80,7 @@ Object {
   "Key": Object {
     "contact_id": "xxxx",
   },
-  "UpdateExpression": "set #S = :s and set #P = :p and set #T = :t",
+  "UpdateExpression": "set #S = :s, #P = :p, #T = :t, #E = :e",
 }
 `;
 

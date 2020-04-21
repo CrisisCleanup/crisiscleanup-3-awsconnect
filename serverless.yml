@@ -208,8 +208,6 @@ resources:
             AttributeType: S
           - AttributeName: active
             AttributeType: S
-          - AttributeName: ttl
-            AttributeType: N
         KeySchema:
           - AttributeName: contact_id
             KeyType: HASH

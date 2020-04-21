@@ -40,6 +40,13 @@ export const createContact = ({ contact_id, state }) => ({
   },
 });
 
+// Get Contact
+export const getContact = ({ contactId }) => ({
+  Key: {
+    contact_id: contactId,
+  },
+});
+
 // Update Contact
 export const updateContact = ({ contactId, state, priority }) => ({
   ...Expressions([
@@ -53,5 +60,5 @@ export const updateContact = ({ contactId, state, priority }) => ({
   Key: {
     contact_id: contactId,
   },
-  UpdateExpression: `set #S = :s and set #P = :p and set #T = :t`,
+  UpdateExpression: `set #S = :s, #P = :p, #T = :t, #E = :e`,
 });
