@@ -6,7 +6,7 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { advanceTo, clear } from 'jest-date-mock';
-import { Agent, Contact, Helpers, Outbound } from '../api';
+import { Agent, Contact, Events, Helpers, Outbound } from '../api';
 import { Dynamo } from '../utils';
 
 jest.mock('../utils/dynamo.js');
@@ -213,5 +213,13 @@ describe('contact api', () => {
     });
     expect(updateOp).toMatchSnapshot();
     clear();
+  });
+});
+
+describe('events api', () => {
+  it('creates expected event key', () => {
+    const event = new Events.Event({ itemId: 'xxxx' });
+    event.object(Events.EVENT_OBJECTS.AGENT).update();
+    expect(event.eventKey).toBe('update_agent');
   });
 });
