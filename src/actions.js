@@ -310,6 +310,26 @@ export const updateContact = async ({ contactId, action } = {}) => {
   await contact.setState(contact.State);
   return {};
 };
+
+export const getAgents = async ({ connectionId, userId, type }) => {
+  console.log('fetching all agents!');
+  const agents = await Agent.Agent.getAll();
+  const client = await new Client.Client({ connectionId, userId, type }).load();
+  const payload = {
+    namespace: 'phone',
+    action: {
+      type: 'action',
+      name: 'getAgentMetrics',
+    },
+    data: {
+      agents,
+    },
+  };
+  await client.send(payload);
+  console.log('send client payload: ', payload);
+  return {};
+};
+
 export const clientHeartbeat = async ({ connectionId, userId, type }) => {
   console.log('got client heartbeat!');
   const client = await new Client.Client({
@@ -331,4 +351,5 @@ export default {
   FIND_AGENT: findAgent,
   UPDATE_CONTACT: updateContact,
   CLIENT_HEARTBEAT: clientHeartbeat,
+  GET_AGENTS: getAgents,
 };

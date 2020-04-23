@@ -35,7 +35,7 @@ export const agentStreamHandler = async (event) => {
         connectionId: connection_id,
       });
       try {
-        clientObj.send({
+        await clientObj.send({
           namespace: 'phone',
           action: {
             type: 'action',

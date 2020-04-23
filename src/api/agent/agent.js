@@ -19,6 +19,13 @@ export default class Agent extends ApiModel {
     this.loggerName = `agent[${this.agentId}|${this.state}]`;
   }
 
+  static async getAll() {
+    const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
+    const results = await db.scan().promise();
+    const { Items } = results;
+    return Items;
+  }
+
   static async countByState(state) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
     const query = OPS.queryAgentsByState({ state, selector: 'COUNT' });
