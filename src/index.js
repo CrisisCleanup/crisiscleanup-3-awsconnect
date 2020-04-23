@@ -65,6 +65,51 @@ export const contactStreamHandler = async (event) => {
     statusCode: 200,
   };
 };
+
+export const metricStreamHandler = async (event, context) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
+  const { Records } = event;
+  console.log('[metrics] incoming metric update:', Records);
+  configureEndpoint();
+  const clients = await Client.Client.all();
+  const metricPayload = [];
+  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+    if (['INSERT', 'MODIFY'].includes(eventName)) {
+      console.log('[metrics] metric update:', NewImage);
+      metricPayload.push(Dynamo.normalize(NewImage));
+    }
+  });
+  console.log(
+    `[metrics] sending new metric data to ${clients.length} online clients...`,
+  );
+  await Promise.all(
+    clients.map(async ({ connection_id }) => {
+      const payload = {
+        namespace: 'phone',
+        action: {
+          type: 'action',
+          name: 'getRealtimeMetrics',
+        },
+        meta: {
+          connectionId: connection_id,
+          endpoint: CURRENT_ENDPOINT.ws,
+        },
+        data: {
+          metrics: metricPayload,
+        },
+      };
+      try {
+        await WS.send(payload);
+      } catch (e) {
+        console.log('[metrics] expired client found:', e);
+      }
+    }),
+  );
+  return {
+    statusCode: 200,
+  };
+};
+
 export const wsConnectionHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws connection', event, context);
