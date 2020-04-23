@@ -5,6 +5,7 @@
  */
 
 import { Dynamo } from '../../utils';
+import ApiModel from '../api';
 import * as OPS from './operations';
 
 export const OPERATIONS = OPS;
@@ -19,21 +20,25 @@ export const CONTACT_LANG = Object.freeze({
   es_MX: 7,
 });
 
-export class Contact {
-  constructor(params) {
+export const CONTACT_ACTIONS = Object.freeze({
+  ENTER: 'enter_ivr',
+  CONNECTED: 'connected',
+  ENDED: 'ended',
+});
+
+export class Contact extends ApiModel {
+  constructor(params = {}) {
     const { contactId, contactRouted, contactLocale } = params;
+    super({ dbTable: Dynamo.TABLES.CONTACTS });
+    this.loggerName = `contact[${this.contactId}|${this.state}]`;
     this.contactId = contactId;
-    this.db = Dynamo.DynamoClient(Dynamo.TABLES.CONTACTS);
     this.locale = contactLocale || CONTACT_LANG.en_US;
     this.routed = contactRouted || false;
     this.priority = 1;
     this.entered_timestamp = null;
     this.ttl = null;
-  }
-
-  log(message) {
-    const title = `contact[${this.contactId}|${this.state}]`;
-    console.log(`${title} ${message}`);
+    this.action = 'enter_ivr';
+    this.agentId = 'none';
   }
 
   get localeName() {
@@ -65,6 +70,25 @@ export class Contact {
     this.locale = CONTACT_LANG[localeValue];
     this.routed = routed;
     return this.state;
+  }
+
+  async getAll() {
+    this.log('fetching all contacts!');
+    const results = await this.db.scan().promise();
+    this.log(`scan results: ${results}`);
+    this.log(results);
+    const { Items } = results;
+    return Items;
+  }
+
+  static async numContactsInQueue() {
+    console.log('[contacts] counting num contacts in queue...');
+    const db = Dynamo.DynamoClient(Dynamo.TABLES.CONTACTS);
+    const results = await db
+      .query(OPS.queryNumByState({ state: 'en_US#queued' }))
+      .promise();
+    const { Count } = results;
+    return Count;
   }
 
   async setState(newState) {

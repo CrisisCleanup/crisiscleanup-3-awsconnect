@@ -22,11 +22,19 @@ export const getContact = ({ contactId }) => ({
 });
 
 // Update Contact
-export const updateContact = ({ contactId, state, priority }) => ({
+export const updateContact = ({
+  contactId,
+  state,
+  priority,
+  action,
+  agentId,
+}) => ({
   ...Expressions([
     { name: 'state', value: state },
     { key: 'p', name: 'priority', value: priority },
     { key: 't', name: 'entered_timestamp', value: new Date().toISOString() },
+    { key: 'a', name: 'action', value: action },
+    { key: 'i', name: 'agent_id', value: agentId },
     // expire any contacts that are not updated in 3m
     // implying the call has been abandoned
     { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
@@ -34,5 +42,13 @@ export const updateContact = ({ contactId, state, priority }) => ({
   Key: {
     contact_id: contactId,
   },
-  UpdateExpression: `set #S = :s, #P = :p, #T = :t, #E = :e`,
+  UpdateExpression: `set #S = :s, #P = :p, #T = :t, #A = :a, #I = :i, #E = :e`,
+});
+
+// Count Contacts in Queue
+export const queryNumByState = ({ state }) => ({
+  ...Expressions([{ name: 'state', value: state }]),
+  KeyConditionExpression: '#S = :S',
+  Select: 'COUNT',
+  IndexName: 'state-index',
 });
