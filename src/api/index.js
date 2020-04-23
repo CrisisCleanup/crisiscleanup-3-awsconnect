@@ -3,11 +3,13 @@
  * Api Module
  */
 
-import * as Agent from './agent';
+import Agent from './agent';
+import Client from './client';
 import Contact from './contact';
+import * as Events from './events';
 import * as Helpers from './helpers';
 import * as Inbound from './inbound';
+import * as Metrics from './metrics';
 import * as Outbound from './outbound';
-import * as Events from './events'
 
-export { Helpers, Outbound, Agent, Inbound, Contact, Events };
+export { Helpers, Outbound, Agent, Inbound, Contact, Events, Metrics, Client };

@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "format": "prettier ./{*,**/*}.js",
+    "format": "prettier --write ./{*,**/*}.js **/**/*.js ",
     "logs": "sls logs --env dev --stage dev -f",
     "offline": "sls --env local offline",
     "update": "node internal/scripts/deploy-functions.js",

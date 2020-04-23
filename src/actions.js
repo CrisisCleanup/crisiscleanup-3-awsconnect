@@ -320,6 +320,7 @@ export const clientHeartbeat = async ({ connectionId, userId, type }) => {
   await Agent.Agent.refreshMetrics();
   return {};
 };
+
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
