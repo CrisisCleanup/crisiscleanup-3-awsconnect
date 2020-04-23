@@ -309,6 +309,17 @@ export const updateContact = async ({ contactId, action } = {}) => {
   await contact.setState(contact.State);
   return {};
 };
+export const clientHeartbeat = async ({ connectionId, userId, type }) => {
+  console.log('got client heartbeat!');
+  const client = await new Client.Client({
+    connectionId,
+    userId,
+    type,
+  }).load();
+  await client.heartbeat();
+  await Agent.Agent.refreshMetrics();
+  return {};
+};
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
@@ -316,4 +327,6 @@ export default {
   SET_AGENT_STATE: setAgentState,
   GET_AGENT_STATE: getAgentState,
   FIND_AGENT: findAgent,
+  UPDATE_CONTACT: updateContact,
+  CLIENT_HEARTBEAT: clientHeartbeat,
 };
