@@ -4,8 +4,10 @@
  * Agent Api Module
  */
 
-import { Dynamo } from '../utils';
-import { Event, EVENT_OBJECTS } from './events';
+import { Dynamo } from '../../utils';
+import AgentV2 from './agent';
+
+export const Agent = AgentV2;
 
 const TABLE = Dynamo.TABLES.AGENTS;
 
@@ -317,4 +319,16 @@ export const createStateWSPayload = async ({ agentId, agentState }) => {
       state: getStateDef(agentState)[2] || getStateDef(agent.state)[2],
     },
   };
+};
+
+export const activeAgents = async () => {
+  const db = Dynamo.DynamoClient(TABLE);
+  const results = await db
+    .query({
+      ...Dynamo.Expressions([{ name: 'active', value: 'y' }]),
+      KeyConditionExpression: '#S = :s',
+    })
+    .promise();
+  const { Items } = results;
+  return Items;
 };
