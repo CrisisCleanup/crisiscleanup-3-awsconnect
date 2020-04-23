@@ -28,8 +28,11 @@ export const TABLES = {
     hash: 'agent_id',
   },
   CONTACTS: {
-    name: `connect-contacts-table-${process.env.SLS_STAGE}`
-  }
+    name: `connect-contacts-table-${process.env.SLS_STAGE}`,
+  },
+  CLIENTS: {
+    name: `connect-clients-table-${process.env.SLS_STAGE}`,
+  },
 };
 
 export const DynamoTable = ({ name }) =>
@@ -46,3 +49,31 @@ export const DynamoClient = ({ name }) =>
   });
 
 export const normalize = (record) => AWS.DynamoDB.Converter.unmarshall(record);
+
+export const AttrExpression = ({ key = 's', name = 'state', value } = {}) => ({
+  ExpressionAttributeNames: {
+    [`#${key.toUpperCase()}`]: name,
+  },
+  ExpressionAttributeValues: {
+    [`:${key.toLowerCase()}`]: value,
+  },
+});
+
+export const Expressions = (exps) => {
+  const finalExp = {
+    ExpressionAttributeNames: {},
+    ExpressionAttributeValues: {},
+  };
+  exps.forEach((exp) => {
+    const result = AttrExpression(exp);
+    finalExp.ExpressionAttributeNames = {
+      ...finalExp.ExpressionAttributeNames,
+      ...result.ExpressionAttributeNames,
+    };
+    finalExp.ExpressionAttributeValues = {
+      ...finalExp.ExpressionAttributeValues,
+      ...result.ExpressionAttributeValues,
+    };
+  });
+  return finalExp;
+};

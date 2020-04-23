@@ -4,33 +4,7 @@
  * Contact DB Operations
  */
 
-const AttrExpression = ({ key = 's', name = 'state', value } = {}) => ({
-  ExpressionAttributeNames: {
-    [`#${key.toUpperCase()}`]: name,
-  },
-  ExpressionAttributeValues: {
-    [`:${key.toLowerCase()}`]: value,
-  },
-});
-
-const Expressions = (exps) => {
-  const finalExp = {
-    ExpressionAttributeNames: {},
-    ExpressionAttributeValues: {},
-  };
-  exps.forEach((exp) => {
-    const result = AttrExpression(exp);
-    finalExp.ExpressionAttributeNames = {
-      ...finalExp.ExpressionAttributeNames,
-      ...result.ExpressionAttributeNames,
-    };
-    finalExp.ExpressionAttributeValues = {
-      ...finalExp.ExpressionAttributeValues,
-      ...result.ExpressionAttributeValues,
-    };
-  });
-  return finalExp;
-};
+import { Expressions } from '../../utils/dynamo';
 
 // Create Contact
 export const createContact = ({ contact_id, state }) => ({
