@@ -146,6 +146,12 @@ functions:
     events:
       - websocket: $default
 
+  contactStreamHandler:
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
+    handler: src/index.contactStreamHandler
+    onError: !Ref ConnectErrorsTopic
+
 resources:
   Resources:
     # Connect Metrics Table

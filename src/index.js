@@ -1,9 +1,11 @@
+/* eslint-disable camelcase */
 /**
  * AWS Connect Streams Integrations
  */
 
 import ACTIONS from './actions';
-import { configureEndpoint } from './utils';
+import { Client, Metrics } from './api';
+import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
 import WS from './ws';
 
 export const checkWarmup = ({ source }) => {
@@ -14,6 +16,55 @@ export const checkWarmup = ({ source }) => {
   return false;
 };
 
+export const contactStreamHandler = async (event) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
+  const { Records } = event;
+  console.log('[contacts] incoming contacts update:', Records);
+  configureEndpoint();
+  const adminClients = await Client.Client.allAdmins();
+  const newImages = [];
+  const metrics = new Metrics.Metrics();
+  let queueCount = 0;
+  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+    if (eventName === 'INSERT') {
+      queueCount += 1;
+    } else if (eventName === 'DELETE') {
+      queueCount -= 1;
+    }
+    if (['INSERT', 'MODIFY'].includes(eventName)) {
+      newImages.push(Dynamo.normalize(NewImage));
+    }
+  });
+  if (queueCount >= 0) {
+    await metrics.increment(Metrics.METRICS.QUEUED, queueCount);
+  } else {
+    await metrics.decrement(Metrics.METRICS.QUEUED, queueCount);
+  }
+  await adminClients.forEach(({ connection_id }) => {
+    const payload = {
+      namespace: 'phone',
+      action: {
+        type: 'action',
+        name: 'setContactMetrics',
+      },
+      meta: {
+        connectionId: connection_id,
+        endpoint: CURRENT_ENDPOINT.ws,
+      },
+      data: {
+        contacts: newImages,
+      },
+    };
+    try {
+      WS.send(payload);
+    } catch (e) {
+      console.log('[metrics] expired client found:', e);
+    }
+  });
+  return {
+    statusCode: 200,
+  };
+};
 export const wsConnectionHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws connection', event, context);
