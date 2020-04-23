@@ -15,6 +15,7 @@ const slsFunctions = [
   'connectionHandler',
   'metricStreamHandler',
   'contactStreamHandler',
+  'agentStreamHandler',
 ];
 const curShell = process.env.SHELL;
 const targStage = process.argv[2];

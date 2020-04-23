@@ -16,6 +16,46 @@ export const checkWarmup = ({ source }) => {
   return false;
 };
 
+export const agentStreamHandler = async (event) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
+  const { Records } = event;
+  console.log('[agents] incoming agents update:', Records);
+  configureEndpoint();
+  const clients = await Client.Client.all();
+  const newImages = [];
+  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+    if (['INSERT', 'MODIFY'].includes(eventName)) {
+      newImages.push(Dynamo.normalize(NewImage));
+    }
+  });
+  await Promise.all(
+    clients.map(async ({ user_id, connection_id }) => {
+      const clientObj = new Client.Client({
+        userId: user_id,
+        connectionId: connection_id,
+      });
+      try {
+        clientObj.send({
+          namespace: 'phone',
+          action: {
+            type: 'action',
+            name: 'getAgentMetrics',
+          },
+          data: {
+            agents: newImages,
+          },
+        });
+      } catch (e) {
+        // catch old/expired/disconnected clients
+        console.log('[agents] ran into exception while sending payload:', e);
+      }
+    }),
+  );
+  return {
+    statusCode: 200,
+  };
+};
+
 export const contactStreamHandler = async (event) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;

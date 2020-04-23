@@ -100,7 +100,7 @@ custom:
     includeModules: true
     packager: 'yarn'
   warmup:
-    enabled: true
+    enabled: false
     events:
       # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 5:55pm (UTC)
       - schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
@@ -156,6 +156,12 @@ functions:
     provisionedConcurrency: 3
     reservedConcurrency: 5
     handler: src/index.contactStreamHandler
+    onError: !Ref ConnectErrorsTopic
+
+  agentStreamHandler:
+    provisionedConcurrency: 10
+    reservedConcurrency: 15
+    handler: src/index.agentStreamHandler
     onError: !Ref ConnectErrorsTopic
 
 resources:
