@@ -4,7 +4,8 @@
  * Client Moudle
  */
 
-import { Dynamo } from '../../utils';
+import { CURRENT_ENDPOINT, Dynamo } from '../../utils';
+import WS from '../../ws';
 import ApiModel from '../api';
 import * as OPS from './operations';
 
@@ -71,5 +72,19 @@ export class Client extends ApiModel {
     this.userId = user_id;
     this.type = client_type;
     return this;
+  }
+
+  async send({ namespace, action, data } = {}) {
+    const payload = {
+      namespace,
+      action,
+      data,
+      meta: {
+        connectionId: this.connectionId,
+        endpoint: CURRENT_ENDPOINT.ws,
+      },
+    };
+    this.log('sending message:', payload);
+    await WS.send(payload);
   }
 }
