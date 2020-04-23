@@ -146,6 +146,12 @@ functions:
     events:
       - websocket: $default
 
+  metricStreamHandler:
+    provisionedConcurrency: 10
+    reservedConcurrency: 15
+    handler: src/index.metricStreamHandler
+    onError: !Ref ConnectErrorsTopic
+
   contactStreamHandler:
     provisionedConcurrency: 3
     reservedConcurrency: 5

@@ -9,7 +9,13 @@
 const shelljs = require('shelljs');
 
 // Vars
-const slsFunctions = ['awsConnect', 'wsHandler', 'connectionHandler'];
+const slsFunctions = [
+  'awsConnect',
+  'wsHandler',
+  'connectionHandler',
+  'metricStreamHandler',
+  'contactStreamHandler',
+];
 const curShell = process.env.SHELL;
 const targStage = process.argv[2];
 

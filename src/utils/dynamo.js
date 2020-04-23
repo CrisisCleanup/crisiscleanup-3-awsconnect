@@ -33,6 +33,9 @@ export const TABLES = {
   CLIENTS: {
     name: `connect-clients-table-${process.env.SLS_STAGE}`,
   },
+  METRICS: {
+    name: `connect-metrics-table-${process.env.SLS_STAGE}`,
+  },
 };
 
 export const DynamoTable = ({ name }) =>
