@@ -95,6 +95,7 @@ const setAgentState = async ({
     connection_id: connectionId,
   });
   console.log('agent state response', resp);
+  await Agent.Agent.refreshMetrics();
   if (client !== 'ws') {
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
