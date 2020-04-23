@@ -3,7 +3,7 @@
  * Lambda Actions
  */
 
-import { Agent, Contact, Events, Inbound, Outbound } from './api';
+import { Agent, Client, Contact, Events, Inbound, Outbound } from './api';
 import WS from './ws';
 
 const checkCases = async ({ inboundNumber }) => {
@@ -167,6 +167,7 @@ const findAgent = async ({
     const targAgent = await Agent.getTargetAgent({
       currentContactId: currentContactId || inbound.session_id,
     });
+    contact.agentId = targAgent.agent_id;
     const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
     if (!targAgent || targAgent === null) {
       return {
@@ -302,6 +303,12 @@ const findAgent = async ({
   };
 };
 
+export const updateContact = async ({ contactId, action } = {}) => {
+  const contact = await new Contact.Contact({ contactId }).load();
+  contact.action = action || contact.action;
+  await contact.setState(contact.State);
+  return {};
+};
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
