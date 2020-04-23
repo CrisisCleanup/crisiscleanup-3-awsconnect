@@ -206,8 +206,6 @@ resources:
             AttributeType: S
           - AttributeName: state
             AttributeType: S
-          - AttributeName: active
-            AttributeType: S
         KeySchema:
           - AttributeName: contact_id
             KeyType: HASH
@@ -223,6 +221,34 @@ resources:
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
+    clientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connect-clients-table-${self:custom.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connection_id
+            AttributeType: S
+          - AttributeName: client_type
+            AttributeType: S
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: type-index
+            KeySchema:
+              - AttributeName: client_type
+                KeyType: HASH
+              - AttributeName: connection_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+
     ConnectErrorsTopic:
       Type: AWS::SNS::Topic
       Properties:
