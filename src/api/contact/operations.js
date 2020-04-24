@@ -35,9 +35,9 @@ export const updateContact = ({
     { key: 't', name: 'entered_timestamp', value: new Date().toISOString() },
     { key: 'a', name: 'action', value: action },
     { key: 'i', name: 'agent_id', value: agentId },
-    // expire any contacts that are not updated in 3m
+    // expire any contacts that are not updated in 40s
     // implying the call has been abandoned
-    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
+    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 40 },
   ]),
   Key: {
     contact_id: contactId,
