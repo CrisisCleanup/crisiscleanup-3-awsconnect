@@ -30,14 +30,16 @@ const createCallback = async ({
   userLanguage,
   incidentId,
   initContactId,
+  callAni,
 }) => {
   const response = await Outbound.create(
     inboundNumber,
     userLanguage,
     incidentId,
     initContactId,
+    callAni,
   );
-  Outbound.unlock(inboundNumber);
+  await Outbound.unlock(inboundNumber);
   if (![200, 201].includes(response.status)) {
     console.error('callback failed to create!', response);
     throw new Error('failed to create callback!');

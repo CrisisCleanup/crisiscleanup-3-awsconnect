@@ -47,7 +47,13 @@ export const resolveCasesByNumber = async (number) => {
   return cases;
 };
 
-export const create = async (number, language, incidentId, initContactId) => {
+export const create = async (
+  number,
+  language,
+  incidentId,
+  initContactId,
+  callAni,
+) => {
   // Params
   const params = {
     dnis1: number,
@@ -56,6 +62,7 @@ export const create = async (number, language, incidentId, initContactId) => {
     incident_id: [incidentId],
     external_id: initContactId,
     external_platform: 'connect',
+    ani: callAni,
   };
   console.log('creating callback...', params);
 
