@@ -52,3 +52,10 @@ export const queryNumByState = ({ state }) => ({
   Select: 'COUNT',
   IndexName: 'state-index',
 });
+
+// Delete Contact
+export const deleteContact = ({ contactId }) => ({
+  Key: {
+    contact_id: contactId,
+  },
+});

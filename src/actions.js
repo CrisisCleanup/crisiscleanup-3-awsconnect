@@ -3,7 +3,15 @@
  * Lambda Actions
  */
 
-import { Agent, Client, Contact, Events, Inbound, Outbound } from './api';
+import {
+  Agent,
+  Client,
+  Contact,
+  Events,
+  Inbound,
+  Metrics,
+  Outbound,
+} from './api';
 import WS from './ws';
 
 const checkCases = async ({ inboundNumber }) => {
@@ -44,6 +52,12 @@ const createCallback = async ({
     console.error('callback failed to create!', response);
     throw new Error('failed to create callback!');
   }
+  const contact = await new Contact.Contact({
+    contactId: initContactId,
+  }).load();
+  await contact.delete();
+  const metrics = new Metrics.Metrics();
+  await metrics.increment(Metrics.METRICS.CALLBACKS);
   return {
     data: {
       status: 'CREATED',

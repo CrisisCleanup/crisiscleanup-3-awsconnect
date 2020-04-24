@@ -98,6 +98,11 @@ export class Contact extends ApiModel {
     return results;
   }
 
+  async delete() {
+    this.log('manually flushing contact...');
+    await this.db.delete(OPS.deleteContact(this)).promise();
+  }
+
   async load() {
     this.log('fetching contact from database...');
     let response;
