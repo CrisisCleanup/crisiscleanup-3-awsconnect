@@ -57,6 +57,7 @@ const createCallback = async ({
   }).load();
   await contact.delete();
   const metrics = new Metrics.Metrics();
+  await metrics.decrement(Metrics.METRICS.QUEUED);
   await metrics.increment(Metrics.METRICS.CALLBACKS);
   return {
     data: {
