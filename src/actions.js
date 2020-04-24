@@ -184,7 +184,6 @@ const findAgent = async ({
     const targAgent = await Agent.getTargetAgent({
       currentContactId: currentContactId || inbound.session_id,
     });
-    contact.agentId = targAgent.agent_id;
     const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
     if (!targAgent || targAgent === null) {
       return {
@@ -196,6 +195,7 @@ const findAgent = async ({
       };
     }
 
+    contact.agentId = targAgent.agent_id;
     const newState = Agent.isInRoute(targAgent.state) ? 'READY' : 'PENDING';
     const hasExpired = Date.now() > Number(targAgent.state_ttl);
     if (newState === 'PENDING' && hasExpired) {
