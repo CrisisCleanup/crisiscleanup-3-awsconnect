@@ -71,7 +71,7 @@ export const contactStreamHandler = async (event) => {
     } else if (eventName === 'DELETE') {
       queueCount -= 1;
     }
-    if (['INSERT', 'MODIFY'].includes(eventName)) {
+    if (['INSERT', 'MODIFY', 'DELETE'].includes(eventName)) {
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
