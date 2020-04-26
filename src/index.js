@@ -3,6 +3,8 @@
  * AWS Connect Streams Integrations
  */
 
+import Raven from 'raven';
+import RavenWrapper from 'serverless-sentry-lib';
 import ACTIONS from './actions';
 import { Client, Metrics } from './api';
 import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
@@ -16,7 +18,7 @@ export const checkWarmup = ({ source }) => {
   return false;
 };
 
-export const agentStreamHandler = async (event) => {
+export const agentStreamHandler = RavenWrapper.handler(Raven, async (event) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;
   console.log('[agents] incoming agents update:', Records);
@@ -54,101 +56,107 @@ export const agentStreamHandler = async (event) => {
   return {
     statusCode: 200,
   };
-};
+});
 
-export const contactStreamHandler = async (event) => {
-  if (checkWarmup(event)) return { statusCode: 200 };
-  const { Records } = event;
-  console.log('[contacts] incoming contacts update:', Records);
-  configureEndpoint();
-  const adminClients = await Client.Client.allAdmins();
-  const newImages = [];
-  const metrics = new Metrics.Metrics();
-  let queueCount = 0;
-  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
-    if (eventName === 'INSERT') {
-      queueCount += 1;
-    } else if (eventName === 'DELETE') {
-      queueCount -= 1;
+export const contactStreamHandler = RavenWrapper.handler(
+  Raven,
+  async (event) => {
+    if (checkWarmup(event)) return { statusCode: 200 };
+    const { Records } = event;
+    console.log('[contacts] incoming contacts update:', Records);
+    configureEndpoint();
+    const adminClients = await Client.Client.allAdmins();
+    const newImages = [];
+    const metrics = new Metrics.Metrics();
+    let queueCount = 0;
+    Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+      if (eventName === 'INSERT') {
+        queueCount += 1;
+      } else if (eventName === 'DELETE') {
+        queueCount -= 1;
+      }
+      if (['INSERT', 'MODIFY', 'DELETE'].includes(eventName)) {
+        newImages.push(Dynamo.normalize(NewImage));
+      }
+    });
+    if (queueCount >= 0) {
+      await metrics.increment(Metrics.METRICS.QUEUED, queueCount);
+    } else {
+      await metrics.decrement(Metrics.METRICS.QUEUED, queueCount);
     }
-    if (['INSERT', 'MODIFY', 'DELETE'].includes(eventName)) {
-      newImages.push(Dynamo.normalize(NewImage));
-    }
-  });
-  if (queueCount >= 0) {
-    await metrics.increment(Metrics.METRICS.QUEUED, queueCount);
-  } else {
-    await metrics.decrement(Metrics.METRICS.QUEUED, queueCount);
-  }
-  await adminClients.forEach(({ connection_id }) => {
-    const payload = {
-      namespace: 'phone',
-      action: {
-        type: 'action',
-        name: 'setContactMetrics',
-      },
-      meta: {
-        connectionId: connection_id,
-        endpoint: CURRENT_ENDPOINT.ws,
-      },
-      data: {
-        contacts: newImages,
-      },
-    };
-    try {
-      WS.send(payload);
-    } catch (e) {
-      console.log('[metrics] expired client found:', e);
-    }
-  });
-  return {
-    statusCode: 200,
-  };
-};
-
-export const metricStreamHandler = async (event, context) => {
-  if (checkWarmup(event)) return { statusCode: 200 };
-  const { Records } = event;
-  console.log('[metrics] incoming metric update:', Records);
-  configureEndpoint();
-  const clients = await Client.Client.all();
-  const metricPayload = [];
-  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
-    if (['INSERT', 'MODIFY'].includes(eventName)) {
-      console.log('[metrics] metric update:', NewImage);
-      metricPayload.push(Dynamo.normalize(NewImage));
-    }
-  });
-  console.log(
-    `[metrics] sending new metric data to ${clients.length} online clients...`,
-  );
-  await Promise.all(
-    clients.map(async ({ connection_id }) => {
+    await adminClients.forEach(({ connection_id }) => {
       const payload = {
         namespace: 'phone',
         action: {
           type: 'action',
-          name: 'getRealtimeMetrics',
+          name: 'setContactMetrics',
         },
         meta: {
           connectionId: connection_id,
           endpoint: CURRENT_ENDPOINT.ws,
         },
         data: {
-          metrics: metricPayload,
+          contacts: newImages,
         },
       };
       try {
-        await WS.send(payload);
+        WS.send(payload);
       } catch (e) {
         console.log('[metrics] expired client found:', e);
       }
-    }),
-  );
-  return {
-    statusCode: 200,
-  };
-};
+    });
+    return {
+      statusCode: 200,
+    };
+  },
+);
+
+export const metricStreamHandler = RavenWrapper.handler(
+  Raven,
+  async (event, context) => {
+    if (checkWarmup(event)) return { statusCode: 200 };
+    const { Records } = event;
+    console.log('[metrics] incoming metric update:', Records);
+    configureEndpoint();
+    const clients = await Client.Client.all();
+    const metricPayload = [];
+    Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+      if (['INSERT', 'MODIFY'].includes(eventName)) {
+        console.log('[metrics] metric update:', NewImage);
+        metricPayload.push(Dynamo.normalize(NewImage));
+      }
+    });
+    console.log(
+      `[metrics] sending new metric data to ${clients.length} online clients...`,
+    );
+    await Promise.all(
+      clients.map(async ({ connection_id }) => {
+        const payload = {
+          namespace: 'phone',
+          action: {
+            type: 'action',
+            name: 'getRealtimeMetrics',
+          },
+          meta: {
+            connectionId: connection_id,
+            endpoint: CURRENT_ENDPOINT.ws,
+          },
+          data: {
+            metrics: metricPayload,
+          },
+        };
+        try {
+          await WS.send(payload);
+        } catch (e) {
+          console.log('[metrics] expired client found:', e);
+        }
+      }),
+    );
+    return {
+      statusCode: 200,
+    };
+  },
+);
 
 export const wsConnectionHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
@@ -165,11 +173,13 @@ export const wsConnectionHandler = async (event, context) => {
   };
 };
 
-export const wsHandler = async (event, context) => {
+export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws message', event, context);
   configureEndpoint();
   const { meta, action, data } = WS.parse(event);
+  console.log('[wsHandler] entering action:', action);
+  console.log('[wsHandler] passing args to action:', data);
   const response = await ACTIONS[action]({
     ...data,
     connectionId: meta.connectionId,
@@ -181,9 +191,9 @@ export const wsHandler = async (event, context) => {
   return {
     statusCode: 200,
   };
-};
+});
 
-export default async (event, context, callback) => {
+export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   if (checkWarmup(event)) return callback(null, {});
   // Grab inbound number from event
   const {
@@ -211,4 +221,4 @@ export default async (event, context, callback) => {
   });
   console.log('action complete. returning data:', status, data);
   callback(status || null, data);
-};
+});

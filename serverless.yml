@@ -16,10 +16,17 @@ provider:
     websocket: true
   tracing:
     lambda: true
+  sentry:
+    dsn: SENTRY_DSN=https://3f546c2c910b47dba24e1dcf2dfdc544@o317954.ingest.sentry.io/5213073
   websocketsApiName: crisiscleanup-3-awsconnect-ws
   websocketsApiRouteSelectionExpression: $request.body.action
   iamManagedPolicies:
     - ${cf:serverless-domain-manager-awsconnect.ServerlessDomainManagerDeployPolicyArn}
+    - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+    - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+    - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+    - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+    - arn:aws:iam::aws:policy/AmazonSNSFullAccess
 
   iamRoleStatements:
     - Effect: 'Allow'
@@ -90,6 +97,7 @@ plugins:
   - serverless-dynamodb-local
   - serverless-domain-manager
   - serverless-stack-output
+  - serverless-sentry
   - serverless-offline
 
 custom:
