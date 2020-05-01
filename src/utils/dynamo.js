@@ -67,16 +67,50 @@ export const Expressions = (exps) => {
     ExpressionAttributeNames: {},
     ExpressionAttributeValues: {},
   };
-  exps.forEach((exp) => {
+  exps.forEach(({ valueOnly = false, keyOnly = false, ...exp } = {}) => {
     const result = AttrExpression(exp);
-    finalExp.ExpressionAttributeNames = {
-      ...finalExp.ExpressionAttributeNames,
-      ...result.ExpressionAttributeNames,
-    };
-    finalExp.ExpressionAttributeValues = {
-      ...finalExp.ExpressionAttributeValues,
-      ...result.ExpressionAttributeValues,
-    };
+    if (!valueOnly) {
+      finalExp.ExpressionAttributeNames = {
+        ...finalExp.ExpressionAttributeNames,
+        ...result.ExpressionAttributeNames,
+      };
+    }
+    if (!keyOnly) {
+      finalExp.ExpressionAttributeValues = {
+        ...finalExp.ExpressionAttributeValues,
+        ...result.ExpressionAttributeValues,
+      };
+    }
   });
+  if (!Object.keys(finalExp.ExpressionAttributeNames).length) {
+    return { ExpressionAttributeValues: finalExp.ExpressionAttributeValues };
+  }
+  if (!Object.keys(finalExp.ExpressionAttributeValues).length) {
+    return { ExpressionAttributeNames: finalExp.ExpressionAttributeNames };
+  }
   return finalExp;
+};
+
+// TTL Filter
+export const expiredFilter = (
+  { ExpressionAttributeNames = {}, ExpressionAttributeValues = {} } = {},
+  { condition = false } = {},
+) => {
+  const newExp = {
+    ...Expressions([
+      { key: 'now', value: Math.floor(Date.now() / 1000), valueOnly: true },
+      { key: 'x', name: 'ttl', keyOnly: true },
+    ]),
+  };
+  return {
+    ExpressionAttributeNames: {
+      ...ExpressionAttributeNames,
+      ...newExp.ExpressionAttributeNames,
+    },
+    ExpressionAttributeValues: {
+      ...ExpressionAttributeValues,
+      ...newExp.ExpressionAttributeValues,
+    },
+    [condition ? 'ConditionExpression' : 'FilterExpression']: '#X > :now',
+  };
 };
