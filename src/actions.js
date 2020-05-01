@@ -107,8 +107,7 @@ const setAgentState = async ({
   const resp = await Agent.setState({
     agentId,
     agentState,
-    last_contact_id: initContactId,
-    current_contact_id: currentContactId,
+    current_contact_id: initContactId,
     connection_id: connectionId,
   });
   console.log('agent state response', resp);
@@ -117,7 +116,22 @@ const setAgentState = async ({
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
     console.log('[socket] (SERVER -> CLIENT)', payload);
-    await WS.send(payload);
+    const agentClient = await new Client.Client({ connectionId }).load();
+    try {
+      await agentClient.send({
+        namespace: 'phone',
+        action: {
+          type: 'action',
+          name: 'setAgentState',
+        },
+        data: {
+          state: Agent.getStateDef(agentState)[2],
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      console.log('failed to update agent state!');
+    }
   }
   const callType = currentContactId ? 'INBOUND' : 'OUTBOUND';
   return {
@@ -323,8 +337,13 @@ const findAgent = async ({
 
 export const updateContact = async ({ contactId, action } = {}) => {
   const contact = await new Contact.Contact({ contactId }).load();
-  contact.action = action || contact.action;
-  await contact.setState(contact.State);
+  try {
+    console.log('[updateContact] trying to update contact action to:', action);
+    contact.action = action || contact.action;
+    await contact.setState(contact.State);
+  } catch (e) {
+    console.error(e);
+  }
   return {};
 };
 

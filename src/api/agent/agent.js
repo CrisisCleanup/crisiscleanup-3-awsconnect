@@ -95,7 +95,11 @@ export default class Agent extends ApiModel {
             ],
           },
         };
-        await WS.send(payload);
+        try {
+          await WS.send(payload);
+        } catch (e) {
+          console.error(e);
+        }
       }),
     );
     console.log('[agents] sent results:', results);

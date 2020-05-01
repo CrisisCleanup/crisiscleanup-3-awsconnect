@@ -77,7 +77,7 @@ export const getStateDef = (state) => {
 export const AGENT_ATTRS = Object.freeze({
   STATE: 'state',
   ENTERED: 'entered_timestamp',
-  LAST_CONTACT: 'last_contact_id',
+  // LAST_CONTACT: 'last_contact_id',
   CURRENT_CONTACT: 'current_contact_id',
   CONNECTION: 'connection_id',
   ACTIVE: 'active',
@@ -128,7 +128,13 @@ export const get = async ({ agentId, attributes }) => {
 export const setState = async ({ agentId, agentState, ...attrs }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const additionalAttrs = {};
-  const fetchedAgent = await get({ agentId });
+  let fetchedAgent;
+  try {
+    fetchedAgent = await get({ agentId });
+  } catch (e) {
+    console.log('failed to fetch agent, could be new?');
+    console.log(e);
+  }
 
   const deletedAttrs = [];
   const neededAttrs = [AGENT_ATTRS.CONNECTION];
