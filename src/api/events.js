@@ -57,7 +57,7 @@ export class Event {
   }
 
   log(message) {
-    const title = `event[${this.eventItem.object_id}|${this.eventKey}]`;
+    const title = `event[${this.eventKey}]`;
     console.log(`${title} ${message}`);
   }
 
