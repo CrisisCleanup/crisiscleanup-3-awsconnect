@@ -30,7 +30,6 @@ export class Contact extends ApiModel {
   constructor(params = {}) {
     const { contactId, contactRouted, contactLocale } = params;
     super({ dbTable: Dynamo.TABLES.CONTACTS });
-    this.loggerName = `contact[${this.contactId}|${this.state}]`;
     this.contactId = contactId;
     this.locale = contactLocale || CONTACT_LANG.en_US;
     this.routed = contactRouted || false;
@@ -39,6 +38,7 @@ export class Contact extends ApiModel {
     this.ttl = null;
     this.action = 'enter_ivr';
     this.agentId = 'none';
+    this.loggerName = `contact[${this.contactId}|${this.state}]`;
   }
 
   get localeName() {
@@ -74,7 +74,7 @@ export class Contact extends ApiModel {
 
   async getAll() {
     this.log('fetching all contacts!');
-    const results = await this.db.scan().promise();
+    const results = await this.db.scan(Dynamo.expiredFilter()).promise();
     this.log(`scan results: ${results}`);
     this.log(results);
     const { Items } = results;
@@ -119,7 +119,12 @@ export class Contact extends ApiModel {
     }
     this.log(`found existing contact:`);
     this.log(Item);
-    const { entered_timestamp, priority, state } = Item;
+    const { entered_timestamp, priority, state, ttl } = Item;
+    if (!ttl > Math.floor(Date.now() / 1000)) {
+      this.log('contact is expired! recreating!');
+      await this.delete();
+      return this;
+    }
     this.entered_timestamp = Date.parse(entered_timestamp);
     this.priority = priority;
     this.state = state;

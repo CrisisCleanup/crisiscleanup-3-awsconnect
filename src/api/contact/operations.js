@@ -4,7 +4,7 @@
  * Contact DB Operations
  */
 
-import { Expressions } from '../../utils/dynamo';
+import { expiredFilter, Expressions } from '../../utils/dynamo';
 
 // Create Contact
 export const createContact = ({ contact_id, state }) => ({
@@ -47,7 +47,7 @@ export const updateContact = ({
 
 // Count Contacts in Queue
 export const queryNumByState = ({ state }) => ({
-  ...Expressions([{ name: 'state', value: state }]),
+  ...expiredFilter(Expressions([{ name: 'state', value: state }])),
   KeyConditionExpression: '#S = :S',
   Select: 'COUNT',
   IndexName: 'state-index',
