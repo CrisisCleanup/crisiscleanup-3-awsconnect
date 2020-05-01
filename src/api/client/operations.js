@@ -3,7 +3,7 @@
  * Client Operations
  */
 
-import { Expressions } from '../../utils/dynamo';
+import { expiredFilter, Expressions } from '../../utils/dynamo';
 
 // Get Client
 export const getClient = ({ userId }) => ({
@@ -29,7 +29,16 @@ export const updateClient = ({ connectionId, userId, type }) => ({
 
 // Query by type
 export const queryByType = (query) => ({
-  ...Expressions([{ key: 't', name: 'client_type', value: query }]),
+  ...expiredFilter(
+    Expressions([{ key: 't', name: 'client_type', value: query }]),
+  ),
   KeyConditionExpression: '#T = :t',
   IndexName: 'type-index',
+});
+
+// Delete Client
+export const deleteClient = ({ userId }) => ({
+  Key: {
+    user_id: userId,
+  },
 });

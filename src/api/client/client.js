@@ -5,6 +5,7 @@
  */
 
 import { CURRENT_ENDPOINT, Dynamo } from '../../utils';
+import { expiredFilter } from '../../utils/dynamo';
 import WS from '../../ws';
 import ApiModel from '../api';
 import * as OPS from './operations';
@@ -23,6 +24,11 @@ export class Client extends ApiModel {
     this.loggerName = `client[${this.connectionId}|${this.userId}]`;
   }
 
+  async delete() {
+    this.log('manually flushing client...');
+    await this.db.delete(OPS.deleteClient(this)).promise();
+  }
+
   get isAdmin() {
     return this.type === TYPES.admin;
   }
@@ -36,7 +42,7 @@ export class Client extends ApiModel {
 
   static async all() {
     const dbClient = Dynamo.DynamoClient(Dynamo.TABLES.CLIENTS);
-    const results = await dbClient.scan().promise();
+    const results = await dbClient.scan(expiredFilter()).promise();
     const { Items } = results;
     return Items;
   }
@@ -67,7 +73,17 @@ export class Client extends ApiModel {
       return this;
     }
     this.log('found existing client:', Item);
-    const { connection_id, user_id, client_type } = Item;
+    const { connection_id, user_id, client_type, ttl } = Item;
+    if (!(ttl > Math.floor(Date.now() / 1000))) {
+      this.log('client expired! recreating...');
+      try {
+        await this.delete();
+      } catch (e) {
+        this.log('error occured when trying to delete client:');
+        this.log(e);
+      }
+      return this;
+    }
     this.connectionId = connection_id;
     this.userId = user_id;
     this.type = client_type;
