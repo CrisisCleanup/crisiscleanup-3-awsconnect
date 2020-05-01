@@ -172,6 +172,7 @@ const findAgent = async ({
   worksites,
   ids,
   pdas,
+  // dnisStats
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 10);
@@ -347,6 +348,20 @@ export const updateContact = async ({ contactId, action } = {}) => {
   return {};
 };
 
+export const getContacts = async ({}) => {
+  const contacts = await new Contact.Contact().getAll();
+  return {
+    namespace: 'phone',
+    action: {
+      type: 'action',
+      name: 'setContactMetrics',
+    },
+    data: {
+      contacts,
+    },
+  };
+};
+
 export const getAgents = async ({ connectionId, userId, type }) => {
   console.log('fetching all agents!');
   const agents = await Agent.Agent.getAll();
@@ -386,6 +401,7 @@ export default {
   GET_AGENT_STATE: getAgentState,
   FIND_AGENT: findAgent,
   UPDATE_CONTACT: updateContact,
+  GET_CONTACTS: getContacts,
   CLIENT_HEARTBEAT: clientHeartbeat,
   GET_AGENTS: getAgents,
 };
