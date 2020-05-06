@@ -1,5 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`dynamo should generate expression correctly 1`] = `
+Object {
+  "ExpressionAttributeNames": Object {
+    "#A": "keyOne",
+    "#B": "keyTwo",
+  },
+  "ExpressionAttributeValues": Object {
+    ":a": 1,
+    ":b": 2,
+    ":c": 5,
+  },
+  "IndexName": "fake-index",
+  "KeyConditionExpression": "some exp",
+}
+`;
+
 exports[`utils should set axios defaults correctly 1`] = `
 Object {
   "adapter": [Function],

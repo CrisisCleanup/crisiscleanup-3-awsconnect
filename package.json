@@ -10,6 +10,7 @@
   "scripts": {
     "format": "prettier --write ./{*,**/*}.js **/**/*.js ",
     "logs": "sls logs --env dev --stage dev -f",
+    "logs:staging": "sls logs --env staging --stage staging -f",
     "offline": "sls --env local offline",
     "update": "node internal/scripts/deploy-functions.js",
     "deploy:dev": "sls deploy --env dev --stage dev --aws-s3-accelerate",

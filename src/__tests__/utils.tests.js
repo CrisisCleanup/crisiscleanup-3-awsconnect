@@ -5,7 +5,7 @@
 
 // Environment based tests setup based on:
 // https://stackoverflow.com/a/48042799
-import { configureEndpoint } from '../utils';
+import { configureEndpoint, Dynamo } from '../utils';
 
 describe('utils', () => {
   const OLD_ENV = process.env;
@@ -26,5 +26,25 @@ describe('utils', () => {
     // with only base
     const ax = configureEndpoint();
     expect(ax.defaults).toMatchSnapshot();
+  });
+});
+
+describe('dynamo', () => {
+  it('should generate expression correctly', () => {
+    // const filter = Dynamo.expiredFilter();
+    // expect(filter).toMatchSnapshot();
+    const op = {
+      ...Dynamo.Expressions([
+        { key: 'a', name: 'keyOne', value: 1 },
+        { key: 'b', name: 'keyTwo', value: 2 },
+        { key: 'c', value: 5, valueOnly: true },
+      ]),
+      IndexName: 'fake-index',
+      KeyConditionExpression: 'some exp',
+    };
+    expect(op).toMatchSnapshot();
+    // expect({
+    //   ...Dynamo.filter
+    // })
   });
 });

@@ -211,7 +211,10 @@ describe('contact api', () => {
       state: 'somestate',
       priority: 1,
     });
+    const queryNumOp = Contact.OPERATIONS.queryNumByState({ state: 'routed' });
+
     expect(updateOp).toMatchSnapshot();
+    expect(queryNumOp).toMatchSnapshot();
     clear();
   });
 });

@@ -72,6 +72,14 @@ Object {
 }
 `;
 
+exports[`contact api generates the correct operations 2`] = `
+Object {
+  "IndexName": "state-index",
+  "KeyConditionExpression": "#S = :S",
+  "Select": "COUNT",
+}
+`;
+
 exports[`outbound api creates callback 1`] = `
 Object {
   "config": Object {

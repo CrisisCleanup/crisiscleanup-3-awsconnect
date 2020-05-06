@@ -10,7 +10,7 @@ import {
   Events,
   Inbound,
   Metrics,
-  Outbound,
+  Outbound
 } from './api';
 import WS from './ws';
 
