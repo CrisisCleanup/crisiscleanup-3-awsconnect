@@ -10,22 +10,55 @@ import {
   Events,
   Inbound,
   Metrics,
-  Outbound
+  Outbound,
 } from './api';
 import WS from './ws';
 
-const checkCases = async ({ inboundNumber }) => {
-  const cases = await Outbound.resolveCasesByNumber(inboundNumber);
+const checkCases = async ({
+  inboundNumber,
+  incidentId,
+  worksites,
+  pdas,
+  ids,
+  contactData: { InitialContactId },
+}) => {
+  const contact = await new Contact.Contact({
+    contactId: InitialContactId,
+  }).load();
+  // Don't re-resolve if we already did
+  if (worksites || ids) {
+    console.log('Already resolved cases!');
+    contact.cases = {
+      ids,
+      pdas,
+      worksites,
+    };
+    await contact.setState(Contact.CONTACT_STATES.QUEUED);
+    return {
+      data: contact.cases,
+    };
+  }
+
+  if (contact.cases.worksites || contact.cases.ids) {
+    console.log('falling back to contacts cases!');
+    return {
+      data: contact.cases,
+    };
+  }
+
+  const cases = await Outbound.resolveCasesByNumber(inboundNumber, incidentId);
 
   // Response must be simple string map
-  if (cases.ids.length >= 1) {
+  if (cases.ids.length >= 1 || cases.worksites.length) {
     console.log('Case found!');
+    contact.cases = {
+      ids: cases.ids.join(','),
+      pdas: cases.pdas.join(','),
+      worksites: cases.worksites.join(','),
+    };
+    await contact.setState(Contact.CONTACT_STATES.QUEUED);
     return {
-      data: {
-        ids: cases.ids.join(','),
-        pdas: cases.pdas.join(','),
-        worksites: cases.worksites.join(','),
-      },
+      data: contact.cases,
     };
   }
   // Catch all, 'no ID'

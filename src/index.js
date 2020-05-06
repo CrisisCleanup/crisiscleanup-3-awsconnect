@@ -199,6 +199,7 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   const {
     Details: {
       Parameters: { IS_OFFLINE, isDev, action, ...params },
+      ContactData,
     },
   } = event;
 
@@ -217,6 +218,7 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   // Handlers
   const { status, data } = await ACTIONS[action]({
     ...params,
+    contactData: ContactData,
     client: 'connect',
   });
   console.log('action complete. returning data:', status, data);
