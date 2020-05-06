@@ -38,7 +38,26 @@ export class Contact extends ApiModel {
     this.ttl = null;
     this.action = 'enter_ivr';
     this.agentId = 'none';
+    this.casesData = {
+      pdas: '-1',
+      worksites: '-1',
+      ids: '-1',
+    };
     this.loggerName = `contact[${this.contactId}|${this.state}]`;
+  }
+
+  get cases() {
+    const { pdas, worksites, ids } = this.casesData;
+    return {
+      pdas: pdas === '-1' ? '' : pdas,
+      worksites: worksites === '-1' ? '' : worksites,
+      ids: ids === '-1' ? '' : ids,
+    };
+  }
+
+  set cases({ pdas = '-1', worksites = '-1', ids = '-1' } = {}) {
+    this.casesData = { pdas, worksites, ids };
+    return this.cases;
   }
 
   get localeName() {
@@ -119,7 +138,15 @@ export class Contact extends ApiModel {
     }
     this.log(`found existing contact:`);
     this.log(Item);
-    const { entered_timestamp, priority, state, ttl } = Item;
+    const {
+      entered_timestamp,
+      priority,
+      state,
+      ttl,
+      pdas,
+      worksites,
+      ids,
+    } = Item;
     if (!ttl > Math.floor(Date.now() / 1000)) {
       this.log('contact is expired! recreating!');
       await this.delete();
@@ -128,6 +155,11 @@ export class Contact extends ApiModel {
     this.entered_timestamp = Date.parse(entered_timestamp);
     this.priority = priority;
     this.state = state;
+    this.cases = {
+      pdas,
+      worksites,
+      ids,
+    };
     return this;
   }
 }

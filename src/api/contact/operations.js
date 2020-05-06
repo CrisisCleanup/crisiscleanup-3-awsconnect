@@ -28,6 +28,7 @@ export const updateContact = ({
   priority,
   action,
   agentId,
+  cases: { pdas, worksites, ids },
 }) => ({
   ...Expressions([
     { name: 'state', value: state },
@@ -35,14 +36,19 @@ export const updateContact = ({
     { key: 't', name: 'entered_timestamp', value: new Date().toISOString() },
     { key: 'a', name: 'action', value: action },
     { key: 'i', name: 'agent_id', value: agentId },
-    // expire any contacts that are not updated in 40s
+    { key: 'd', name: 'pdas', value: pdas },
+    { key: 'w', name: 'worksites', value: worksites },
+    { key: 'z', name: 'ids', value: ids },
+    // expire any contacts that are not updated in 60s
     // implying the call has been abandoned
-    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 40 },
+    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
   ]),
   Key: {
     contact_id: contactId,
   },
-  UpdateExpression: `set #S = :s, #P = :p, #T = :t, #A = :a, #I = :i, #E = :e`,
+  UpdateExpression: `set #S = :s, #P = :p, #T = :t, #A = :a, #I = :i, #E = :e${
+    pdas ? ', #D = :d' : ''
+  }${worksites ? ', #W = :w' : ''}${ids ? ', #Z = :z' : ''}`,
 });
 
 // Count Contacts in Queue
