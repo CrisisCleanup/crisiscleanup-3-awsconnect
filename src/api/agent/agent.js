@@ -4,10 +4,8 @@
  * Agent Module
  */
 
-import { CURRENT_ENDPOINT, Dynamo } from '../../utils';
-import WS from '../../ws';
+import { Dynamo } from '../../utils';
 import ApiModel from '../api';
-import Client from '../client';
 import { METRICS, Metrics } from '../metrics';
 import * as OPS from './operations';
 
@@ -57,53 +55,13 @@ export default class Agent extends ApiModel {
     const agentsOnline = await Agent.countByState('online');
     const agentsAvailable = await Agent.countByState('online#routable');
     const agentsOnCall = await Agent.getInCall({ countOnly: true });
-    const metrics = new Metrics();
-    await metrics.update(METRICS.ONLINE, agentsOnline);
-    await metrics.update(METRICS.AVAILABLE, agentsAvailable);
-    await metrics.update(METRICS.ON_CALL, agentsOnCall);
-    const clients = await Client.Client.all();
-    const results = await Promise.all(
-      clients.map(async ({ connection_id, user_id }) => {
-        console.log(`[agents] sending metrics to: ${user_id}`);
-        const payload = {
-          namespace: 'phone',
-          action: {
-            type: 'action',
-            name: 'getRealtimeMetrics',
-          },
-          meta: {
-            connectionId: connection_id,
-            endpoint: CURRENT_ENDPOINT.ws,
-          },
-          data: {
-            metrics: [
-              {
-                name: METRICS.ONLINE,
-                type: 'realtime',
-                value: agentsOnline,
-              },
-              {
-                name: METRICS.AVAILABLE,
-                type: 'realtime',
-                value: agentsAvailable,
-              },
-              {
-                name: METRICS.ON_CALL,
-                type: 'realtime',
-                value: agentsOnCall,
-              },
-            ],
-          },
-        };
-        try {
-          await WS.send(payload);
-        } catch (e) {
-          console.log('ran into an error, is the connection stale?');
-          console.log(e);
-        }
-      }),
-    );
-    console.log('[agents] sent results:', results);
-    return results;
+    try {
+      const metrics = new Metrics();
+      await metrics.update(METRICS.ONLINE, agentsOnline);
+      await metrics.update(METRICS.AVAILABLE, agentsAvailable);
+      await metrics.update(METRICS.ON_CALL, agentsOnCall);
+    } catch (e) {
+      console.log('Ran into an error updating metrics!', e);
+    }
   }
 }

@@ -111,7 +111,12 @@ const setAgentState = async ({
     connection_id: connectionId,
   });
   console.log('agent state response', resp);
-  await Agent.Agent.refreshMetrics();
+  try {
+    await Agent.Agent.refreshMetrics();
+  } catch (e) {
+    console.log('something went wrong refreshing metrics!:', e);
+    console.error(e);
+  }
   if (client !== 'ws') {
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
@@ -382,7 +387,12 @@ export const clientHeartbeat = async ({ connectionId, userId, type }) => {
     type,
   }).load();
   await client.heartbeat();
-  await Agent.Agent.refreshMetrics();
+  try {
+    await Agent.Agent.refreshMetrics();
+  } catch (e) {
+    console.log('ran into error updating metrics!');
+    console.error(e);
+  }
   return {};
 };
 
