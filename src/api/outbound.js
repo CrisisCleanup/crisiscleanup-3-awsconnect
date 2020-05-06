@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /**
  * outbound.js
  * Api Outbound Module
@@ -23,9 +24,26 @@ export const getByPhoneNumber = async (number) => {
   return results;
 };
 
-export const resolveCasesByNumber = async (number) => {
+export const getWorksitesByPhoneNumber = async (number, incidentId) => {
+  // Format number
+  const queryNumber = number.split('+')[1];
+  const response = await axios.get('/worksites', {
+    params: { phone_number: queryNumber, incident: incidentId },
+  });
+  if (!response.status === 200) {
+    console.log('failed to fetch worksites by number!');
+    console.error(number);
+    return [];
+  }
+  console.log(response);
+  const { results } = response.data;
+  return results;
+};
+
+export const resolveCasesByNumber = async (number, incidentId) => {
   // Query outbounds
   const outbounds = await getByPhoneNumber(number);
+  const worksitesByNumber = await getWorksitesByPhoneNumber(number, incidentId);
 
   // Filter for outbounds w/ valid pda/worksite id
   const cases = {
@@ -43,6 +61,16 @@ export const resolveCasesByNumber = async (number) => {
       return cases.pdas.push(pda);
     }
   });
+
+  if (worksitesByNumber && worksitesByNumber.length) {
+    worksitesByNumber.forEach(({ id }) => {
+      if (!cases.worksites.includes(id)) {
+        console.log('adding worksite by number:', id);
+        cases.worksites.push(id);
+      }
+    });
+  }
+
   console.log('cases', cases);
   return cases;
 };
