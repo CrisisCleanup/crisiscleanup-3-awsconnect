@@ -98,7 +98,8 @@ export default class Agent extends ApiModel {
         try {
           await WS.send(payload);
         } catch (e) {
-          console.error(e);
+          console.log('ran into an error, is the connection stale?');
+          console.log(e);
         }
       }),
     );
