@@ -16,8 +16,6 @@ provider:
     websocket: true
   tracing:
     lambda: true
-  sentry:
-    dsn: SENTRY_DSN=https://3f546c2c910b47dba24e1dcf2dfdc544@o317954.ingest.sentry.io/5213073
   websocketsApiName: crisiscleanup-3-awsconnect-ws
   websocketsApiRouteSelectionExpression: $request.body.action
   iamManagedPolicies:
@@ -107,6 +105,8 @@ custom:
     webpackConfig: ./webpack.config.js
     includeModules: true
     packager: 'yarn'
+  sentry:
+    dsn: https://3f546c2c910b47dba24e1dcf2dfdc544@o317954.ingest.sentry.io/5213073
   warmup:
     enabled: false
     events:
@@ -155,8 +155,8 @@ functions:
       - websocket: $default
 
   metricStreamHandler:
-    provisionedConcurrency: 10
-    reservedConcurrency: 15
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
     handler: src/index.metricStreamHandler
     onError: !Ref ConnectErrorsTopic
 
@@ -167,8 +167,8 @@ functions:
     onError: !Ref ConnectErrorsTopic
 
   agentStreamHandler:
-    provisionedConcurrency: 10
-    reservedConcurrency: 15
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
     handler: src/index.agentStreamHandler
     onError: !Ref ConnectErrorsTopic
 
