@@ -250,10 +250,8 @@ const findAgent = async ({
           connectionId: targAgent.connection_id,
         },
         data: {
-          state: {
-            id: targAgent.current_contact_id,
-            attributes,
-          },
+          id: targAgent.current_contact_id,
+          attributes,
         },
       };
       try {
