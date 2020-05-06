@@ -84,7 +84,12 @@ export class Client extends ApiModel {
       }
       return this;
     }
-    this.connectionId = connection_id;
+    if (this.connectionId && this.connectionId !== connection_id) {
+      this.log('newer connection id found, updating!');
+      await this.heartbeat();
+    } else {
+      this.connectionId = connection_id;
+    }
     this.userId = user_id;
     this.type = client_type;
     return this;
