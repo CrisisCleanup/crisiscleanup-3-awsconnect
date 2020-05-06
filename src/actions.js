@@ -210,6 +210,7 @@ const findAgent = async ({
   worksites,
   ids,
   pdas,
+  contactData: { InitialContactId },
   // dnisStats
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
@@ -219,7 +220,7 @@ const findAgent = async ({
   }
   console.log('finding next agent to serve contact too...');
   const inbound = await Inbound.create({
-    initContactId,
+    initContactId: InitialContactId,
     number: inboundNumber,
     incidentId,
     language: userLanguage,
@@ -227,7 +228,7 @@ const findAgent = async ({
   });
   console.log('created inbound: ', inbound);
   const contact = await new Contact.Contact({
-    contactId: initContactId,
+    contactId: InitialContactId,
     priority: inbound.priority,
   }).load();
   await contact.setState(Contact.CONTACT_STATES.QUEUED);
@@ -245,6 +246,7 @@ const findAgent = async ({
           targetAgentId: '',
           targetAgentState: 'PENDING',
           triggerPrompt: newTriggerValue,
+          ...contact.cases,
         },
       };
     }
@@ -271,7 +273,7 @@ const findAgent = async ({
       await inboundEvent.update().save({
         ivr_action: Contact.CONTACT_STATES.ROUTED,
       });
-      const attributes = { worksites, pdas, ids, callerID: inboundNumber };
+      const attributes = { ...contact.cases, callerID: inboundNumber };
       const payload = {
         namespace: 'phone',
         action: {
@@ -283,8 +285,10 @@ const findAgent = async ({
           connectionId: targAgent.connection_id,
         },
         data: {
-          id: targAgent.current_contact_id,
-          attributes,
+          state: {
+            id: targAgent.current_contact_id,
+            attributes,
+          },
         },
       };
       try {
@@ -307,6 +311,7 @@ const findAgent = async ({
               targetAgentId: '',
               targetAgentState: '',
               triggerPrompt: newTriggerValue,
+              ...contact.cases,
             },
           };
         }
@@ -317,6 +322,7 @@ const findAgent = async ({
         targetAgentId: targAgent.agent_id,
         targetAgentState: newState,
         triggerPrompt: newTriggerValue,
+        ...contact.cases,
       },
     };
   }
@@ -329,6 +335,7 @@ const findAgent = async ({
         data: {
           targetAgentState: 'NONE',
           triggerPrompt: newTriggerValue,
+          ...contact.cases,
         },
       };
     }
@@ -342,6 +349,7 @@ const findAgent = async ({
         targetAgentId: '',
         targetAgentState: 'PENDING',
         triggerPrompt: newTriggerValue,
+        ...contact.cases,
       },
     };
   }
@@ -351,7 +359,7 @@ const findAgent = async ({
   await Agent.setState({
     agentId: agent.agent_id,
     agentState: agent.state,
-    current_contact_id: initContactId,
+    current_contact_id: InitialContactId,
     state_ttl: String(stateExpire),
   });
   if (Agent.isRoutable(agent.state)) {
@@ -363,6 +371,7 @@ const findAgent = async ({
       targetAgentId: agent.agent_id,
       targetAgentState: 'PENDING',
       triggerPrompt: newTriggerValue,
+      ...contact.cases,
     },
   };
 };
@@ -372,7 +381,7 @@ export const updateContact = async ({ contactId, action } = {}) => {
   try {
     console.log('[updateContact] trying to update contact action to:', action);
     contact.action = action || contact.action;
-    await contact.setState(contact.State);
+    await contact.setState(contact.state);
   } catch (e) {
     console.error(e);
   }
