@@ -234,11 +234,6 @@ const findAgent = async ({
         ivr_action: Contact.CONTACT_STATES.ROUTED,
       });
       const attributes = { worksites, pdas, ids, callerID: inboundNumber };
-      await inboundEvent.join(agentEvent).save({
-        agent_id: targAgent.agent_id,
-        contact_id: initContactId,
-        ivr_action: 'receive',
-      });
       const payload = {
         namespace: 'phone',
         action: {
