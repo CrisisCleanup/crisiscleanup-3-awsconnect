@@ -253,7 +253,8 @@ const findAgent = async ({
 
     contact.agentId = targAgent.agent_id;
     const newState = Agent.isInRoute(targAgent.state) ? 'READY' : 'PENDING';
-    const hasExpired = Date.now() > Number(targAgent.state_ttl);
+    const hasExpired =
+      Math.floor(Date.now() / 1000) > Number(targAgent.state_ttl);
     if (newState === 'PENDING' && hasExpired) {
       // release the contact id
       console.log(
@@ -355,7 +356,7 @@ const findAgent = async ({
   }
 
   // found a routable and ready agent
-  const stateExpire = Date.now() + 40 * 1000; // expire state if it doesn't change in 40s
+  const stateExpire = Math.floor(Date.now() / 1000) + 70 * 3; // expire state if it doesn't change in 70s
   await Agent.setState({
     agentId: agent.agent_id,
     agentState: agent.state,
