@@ -68,18 +68,20 @@ export const Expressions = (exps) => {
     ExpressionAttributeValues: {},
   };
   exps.forEach(({ valueOnly = false, keyOnly = false, ...exp } = {}) => {
-    const result = AttrExpression(exp);
-    if (!valueOnly) {
-      finalExp.ExpressionAttributeNames = {
-        ...finalExp.ExpressionAttributeNames,
-        ...result.ExpressionAttributeNames,
-      };
-    }
-    if (!keyOnly) {
-      finalExp.ExpressionAttributeValues = {
-        ...finalExp.ExpressionAttributeValues,
-        ...result.ExpressionAttributeValues,
-      };
+    if (exp.value || typeof exp.value === 'number' || keyOnly || valueOnly) {
+      const result = AttrExpression(exp);
+      if (!valueOnly) {
+        finalExp.ExpressionAttributeNames = {
+          ...finalExp.ExpressionAttributeNames,
+          ...result.ExpressionAttributeNames,
+        };
+      }
+      if (!keyOnly) {
+        finalExp.ExpressionAttributeValues = {
+          ...finalExp.ExpressionAttributeValues,
+          ...result.ExpressionAttributeValues,
+        };
+      }
     }
   });
   if (!Object.keys(finalExp.ExpressionAttributeNames).length) {
