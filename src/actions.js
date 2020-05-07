@@ -419,24 +419,39 @@ export const getAgents = async ({ connectionId, userId, type }) => {
   };
   await client.send(payload);
   console.log('send client payload: ', payload);
-  return {};
+  return payload;
 };
 
-export const clientHeartbeat = async ({ connectionId, userId, type }) => {
+export const clientHeartbeat = async ({
+  connectionId,
+  userId,
+  agentId,
+  type,
+}) => {
   console.log('got client heartbeat!');
   const client = await new Client.Client({
     connectionId,
     userId,
     type,
   }).load();
-  await client.heartbeat();
+  await client.heartbeat(agentId);
+  const contacts = await new Contact.Contact().getAll();
   try {
     await Agent.Agent.refreshMetrics();
   } catch (e) {
     console.log('ran into error updating metrics!');
-    console.error(e);
+    console.log(e);
   }
-  return {};
+  return {
+    namespace: 'phone',
+    action: {
+      type: 'action',
+      name: 'setContactMetrics',
+    },
+    data: {
+      contacts,
+    },
+  };
 };
 
 export default {

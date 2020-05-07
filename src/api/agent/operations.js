@@ -27,3 +27,12 @@ export const queryActiveFilter = ({
   Select: selector,
   IndexName: 'state-index',
 });
+
+// Update agent connection id
+export const updateConnectionId = ({ agentId, connectionId }) => ({
+  ...Expressions([{ key: 'c', name: 'connection_id', value: connectionId }]),
+  Key: {
+    agent_id: agentId,
+  },
+  UpdateExpression: 'set #C = :c',
+});

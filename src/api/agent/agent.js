@@ -51,6 +51,13 @@ export default class Agent extends ApiModel {
     return Items;
   }
 
+  static async updateConnection({ agentId, connectionId }) {
+    const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
+    const query = OPS.updateConnectionId({ agentId, connectionId });
+    const results = await db.update(query).promise();
+    return results;
+  }
+
   static async refreshMetrics() {
     const agentsOnline = await Agent.countByState('online');
     const agentsAvailable = await Agent.countByState('online#routable');
