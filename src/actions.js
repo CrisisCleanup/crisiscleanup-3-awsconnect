@@ -144,11 +144,13 @@ const setAgentState = async ({
     connection_id: connectionId,
   });
   console.log('agent state response', resp);
-  try {
-    await Agent.Agent.refreshMetrics();
-  } catch (e) {
-    console.log('something went wrong refreshing metrics!:', e);
-    console.error(e);
+  if (client === 'ws') {
+    try {
+      await Agent.Agent.refreshMetrics();
+    } catch (e) {
+      console.log('something went wrong refreshing metrics!:', e);
+      console.log(e);
+    }
   }
   if (client !== 'ws') {
     console.log('sending data to socket client!');

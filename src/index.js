@@ -185,7 +185,7 @@ export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
     connectionId: meta.connectionId,
     client: 'ws',
   });
-  if (response.action) {
+  if (response && response.action) {
     await WS.send({ meta, ...response });
   }
   return {
@@ -208,7 +208,7 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   if (IS_OFFLINE === '1') {
     process.env.IS_OFFLINE = 'TUNNEL';
     configureEndpoint({
-      ws: 'http://marssocket.crisiscleanup.io',
+      ws: 'https://socket.dev.crisiscleanup.io',
       api: 'http://marsapi.crisiscleanup.io',
     });
   } else {

@@ -39,9 +39,9 @@ export const updateContact = ({
     { key: 'd', name: 'pdas', value: pdas },
     { key: 'w', name: 'worksites', value: worksites },
     { key: 'z', name: 'ids', value: ids },
-    // expire any contacts that are not updated in 60s
+    // expire any contacts that are not updated in 90s
     // implying the call has been abandoned
-    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
+    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 1.5 },
   ]),
   Key: {
     contact_id: contactId,
