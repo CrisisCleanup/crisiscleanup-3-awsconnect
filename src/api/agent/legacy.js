@@ -77,7 +77,6 @@ export const getStateDef = (state) => {
 export const AGENT_ATTRS = Object.freeze({
   STATE: 'state',
   ENTERED: 'entered_timestamp',
-  // LAST_CONTACT: 'last_contact_id',
   CURRENT_CONTACT: 'current_contact_id',
   CONNECTION: 'connection_id',
   ACTIVE: 'active',
@@ -137,7 +136,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   }
 
   const deletedAttrs = [];
-  const neededAttrs = [AGENT_ATTRS.CONNECTION];
+  let neededAttrs = [AGENT_ATTRS.CONNECTION];
 
   const [stateOnline, stateType, subState] = getStateDef(agentState);
   switch (subState) {
@@ -156,10 +155,17 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
     case AGENT_STATES.AGENT_CALLING:
     case AGENT_STATES.AGENT_PENDING:
     case AGENT_STATES.PENDING_CALL:
+    case AGENT_STATES.BUSY:
       console.log('agent requires contact attribute! fetching!');
       neededAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
       neededAttrs.push(AGENT_ATTRS.STATE_TTL);
-      neededAttrs.push(AGENT_ATTRS.CASES);
+      break;
+    case AGENT_STATES.PAUSED:
+      console.log('agent in ACW, remove current contact...');
+      neededAttrs = neededAttrs.filter(
+        (a) => a !== AGENT_ATTRS.CURRENT_CONTACT,
+      );
+      deletedAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
       break;
     default:
       break;
