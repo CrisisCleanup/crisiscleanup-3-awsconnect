@@ -203,6 +203,10 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
     },
   } = event;
 
+  console.log('[awsConnect] entering action:', action);
+  console.log('[awsConnect] event inputs:', event, context);
+  console.log('[awsConnect] contact attributes: ', ContactData.Attributes);
+
   // Use tunneled endpoints for local (sls offline) testing
   // Connect casts any passed attributes as strings
   if (IS_OFFLINE === '1') {
@@ -216,11 +220,13 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   }
 
   // Handlers
-  const { status, data } = await ACTIONS[action]({
+  const actionArgs = {
     ...params,
     contactData: ContactData,
     client: 'connect',
-  });
+  };
+  console.log(`[awsConnect] passing args to action (${action}):`, actionArgs);
+  const { status, data } = await ACTIONS[action](actionArgs);
   console.log('action complete. returning data:', status, data);
   callback(status || null, data);
 });
