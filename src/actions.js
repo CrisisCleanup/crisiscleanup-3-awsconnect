@@ -20,10 +20,10 @@ const checkCases = async ({
   worksites,
   pdas,
   ids,
-  contactData: { InitialContactId },
+  initContactId,
 }) => {
   const contact = await new Contact.Contact({
-    contactId: InitialContactId,
+    contactId: initContactId,
   }).load();
   // Don't re-resolve if we already did
   if (worksites || ids) {
@@ -214,7 +214,6 @@ const findAgent = async ({
   worksites,
   ids,
   pdas,
-  contactData: { InitialContactId },
   // dnisStats
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
@@ -224,7 +223,7 @@ const findAgent = async ({
   }
   console.log('finding next agent to serve contact too...');
   const inbound = await Inbound.create({
-    initContactId: InitialContactId,
+    initContactId,
     number: inboundNumber,
     incidentId,
     language: userLanguage,
@@ -232,7 +231,7 @@ const findAgent = async ({
   });
   console.log('created inbound: ', inbound);
   const contact = await new Contact.Contact({
-    contactId: InitialContactId,
+    contactId: initContactId,
     priority: inbound.priority,
   }).load();
   await contact.setState(Contact.CONTACT_STATES.QUEUED);
@@ -364,7 +363,7 @@ const findAgent = async ({
   await Agent.setState({
     agentId: agent.agent_id,
     agentState: agent.state,
-    current_contact_id: InitialContactId,
+    current_contact_id: initContactId,
     state_ttl: String(stateExpire),
   });
   if (Agent.isRoutable(agent.state)) {
