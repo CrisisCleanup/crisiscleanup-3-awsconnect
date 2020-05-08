@@ -68,6 +68,20 @@ export class Client extends ApiModel {
   async load() {
     this.log('fetching client from database...');
     let response;
+    if (!this.userId && this.connectionId) {
+      this.log('user id is unknown! trying to find client by connection id!');
+      try {
+        response = await this.db.query(OPS.queryByConnection(this)).promise();
+        const { Items } = response;
+        const [clientItem] = Items;
+        if (!clientItem) {
+          throw new Error('no results!');
+        }
+        response = { Item: clientItem };
+      } catch (e) {
+        this.log('could not find client by connection id!');
+      }
+    }
     try {
       response = await this.db.get(OPS.getClient(this)).promise();
     } catch (e) {

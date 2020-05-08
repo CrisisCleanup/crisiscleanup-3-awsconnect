@@ -128,7 +128,7 @@ const setAgentState = async ({
   initContactId = null,
   currentContactId = null,
   connectionId = null,
-}) => {
+} = {}) => {
   console.log(
     'setting agent state: ',
     agentId,
@@ -156,7 +156,9 @@ const setAgentState = async ({
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
     console.log('[socket] (SERVER -> CLIENT)', payload);
-    const agentClient = await new Client.Client({ connectionId }).load();
+    const agentClient = await new Client.Client({
+      connectionId: payload.meta.connectionId,
+    }).load();
     try {
       await agentClient.send({
         namespace: 'phone',

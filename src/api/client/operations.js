@@ -8,7 +8,7 @@ import { expiredFilter, Expressions } from '../../utils/dynamo';
 // Get Client
 export const getClient = ({ userId }) => ({
   Key: {
-    user_id: userId,
+    user_id: String(userId),
   },
 });
 
@@ -41,4 +41,13 @@ export const deleteClient = ({ userId }) => ({
   Key: {
     user_id: userId,
   },
+});
+
+// Query by Connection Id
+export const queryByConnection = ({ connectionId }) => ({
+  ...expiredFilter(
+    Expressions([{ key: 'c', name: 'connection_id', value: connectionId }]),
+  ),
+  IndexName: 'connection-index',
+  KeyConditionExpression: '#C = :c',
 });
