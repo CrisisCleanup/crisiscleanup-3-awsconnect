@@ -41,7 +41,7 @@ export const updateContact = ({
     { key: 'z', name: 'ids', value: ids },
     // expire any contacts that are not updated in 90s
     // implying the call has been abandoned
-    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 1.5 },
+    { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
   ]),
   Key: {
     contact_id: contactId,

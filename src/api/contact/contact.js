@@ -24,26 +24,41 @@ export const CONTACT_ACTIONS = Object.freeze({
   ENTER: 'enter_ivr',
   CONNECTED: 'connected',
   ENDED: 'ended',
+  CONNECTING: 'connecting',
+  ERROR: 'error',
 });
+
+export const actionIsRouted = (action) => action !== CONTACT_ACTIONS.ENTER;
 
 export class Contact extends ApiModel {
   constructor(params = {}) {
-    const { contactId, contactRouted, contactLocale } = params;
+    const { contactId, contactRouted, contactLocale, action, agentId } = params;
     super({ dbTable: Dynamo.TABLES.CONTACTS });
     this.contactId = contactId;
     this.locale = contactLocale || CONTACT_LANG.en_US;
-    this.routed = contactRouted || false;
+    this.currentAction = action || 'enter_ivr';
+    this.routed =
+      contactRouted === undefined ? actionIsRouted(this.action) : contactRouted;
     this.priority = 1;
     this.entered_timestamp = null;
     this.ttl = null;
-    this.action = 'enter_ivr';
-    this.agentId = 'none';
+    this.agentId = agentId || 'none';
     this.casesData = {
       pdas: '-1',
       worksites: '-1',
       ids: '-1',
     };
     this.loggerName = `contact[${this.contactId}|${this.state}]`;
+  }
+
+  get action() {
+    return this.currentAction;
+  }
+
+  set action(value) {
+    this.currentAction = value;
+    this.routed = actionIsRouted(value);
+    return value;
   }
 
   get cases() {
@@ -83,7 +98,7 @@ export class Contact extends ApiModel {
       CONTACT_STATES[routeValue.toUpperCase()] === CONTACT_STATES.ROUTED;
     this.log(
       `updating state -> ${localeValue}#${
-        routed ? CONTACT_STATES.ROUTED : CONTACT_STATES.QUEUED
+        this.routed ? CONTACT_STATES.ROUTED : CONTACT_STATES.QUEUED
       }`,
     );
     this.locale = CONTACT_LANG[localeValue];
@@ -111,8 +126,13 @@ export class Contact extends ApiModel {
   }
 
   async setState(newState) {
-    this.state = newState;
-    const results = await this.db.update(OPS.updateContact(this)).promise();
+    if (newState) {
+      this.state = newState;
+    }
+    const query = OPS.updateContact(this);
+    this.log('generated query:');
+    this.log(query);
+    const results = await this.db.update(query).promise();
     this.log(`updated results: ${results}`);
     return results;
   }
@@ -146,15 +166,28 @@ export class Contact extends ApiModel {
       pdas,
       worksites,
       ids,
+      agent_id,
+      action,
     } = Item;
     if (!ttl > Math.floor(Date.now() / 1000)) {
       this.log('contact is expired! recreating!');
       await this.delete();
+      if (state.includes(CONTACT_STATES.ROUTED)) {
+        this.log('expired contact was routed... respecting!');
+        this.state = state;
+        this.cases = { pdas, worksites, ids };
+        this.agent = agent_id || 'none';
+        this.priority = priority;
+        this.action = action;
+        return this;
+      }
       return this;
     }
     this.entered_timestamp = Date.parse(entered_timestamp);
     this.priority = priority;
+    this.action = action;
     this.state = state;
+
     this.cases = {
       pdas,
       worksites,

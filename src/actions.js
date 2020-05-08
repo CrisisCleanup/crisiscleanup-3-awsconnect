@@ -379,16 +379,31 @@ const findAgent = async ({
   };
 };
 
-export const updateContact = async ({ contactId, action } = {}) => {
-  const contact = await new Contact.Contact({ contactId }).load();
+export const updateContact = async ({ contactId, action, agentId } = {}) => {
+  const contact = await new Contact.Contact({
+    contactId,
+    action,
+    agentId,
+  }).load();
   try {
     console.log('[updateContact] trying to update contact action to:', action);
     contact.action = action || contact.action;
-    await contact.setState(contact.state);
+    await contact.setState();
   } catch (e) {
-    console.error(e);
+    console.log('something went wrong during contact update!');
+    console.log(e);
   }
-  return {};
+  const contacts = await new Contact.Contact().getAll();
+  return {
+    namespace: 'phone',
+    action: {
+      type: 'action',
+      name: 'setContactMetrics',
+    },
+    data: {
+      contacts,
+    },
+  };
 };
 
 export const getContacts = async ({}) => {
