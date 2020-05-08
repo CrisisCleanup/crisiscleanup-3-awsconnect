@@ -22,7 +22,7 @@ const MockEvent = (data = {}) => ({
   },
 });
 
-describe('handler', () => {
+describe.skip('handler', () => {
   it('checks for existing case', async () => {
     Outbound.resolveCasesByNumber = jest.fn();
     Outbound.resolveCasesByNumber.mockResolvedValue({

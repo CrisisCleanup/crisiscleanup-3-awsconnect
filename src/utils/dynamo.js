@@ -19,8 +19,7 @@ const localOptions = () => {
   return opts;
 };
 
-// const dynamoOptions = () => (isLocal ? localOptions() : {});
-const dynamoOptions = () => (isLocal ? {} : {});
+const dynamoOptions = () => (isLocal ? localOptions() : {});
 
 export const TABLES = {
   AGENTS: {

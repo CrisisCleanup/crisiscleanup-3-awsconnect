@@ -21,50 +21,60 @@ Object {
 }
 `;
 
-exports[`agent api sets agent state 1`] = `
-[MockFunction] {
-  "calls": Array [
-    Array [
-      Object {
-        "hash": "agent_id",
-        "name": "connect-agents-table-dev",
-      },
-    ],
-    Array [
-      Object {
-        "hash": "agent_id",
-        "name": "connect-agents-table-dev",
-      },
-    ],
-  ],
-  "results": Array [
-    Object {
-      "type": "return",
-      "value": Object {
-        "putItem": [MockFunction],
-      },
-    },
-    Object {
-      "type": "return",
-      "value": Object {
-        "putItem": [MockFunction],
-      },
-    },
-  ],
+exports[`contact api adjusts state based on action 1`] = `
+Object {
+  "agentId": "none",
+  "casesData": Object {
+    "ids": "-1",
+    "pdas": "-1",
+    "worksites": "-1",
+  },
+  "contactId": "abc",
+  "currentAction": "enter_ivr",
+  "db": Anything,
+  "entered_timestamp": null,
+  "locale": 2,
+  "loggerName": "contact[abc|en_US#queued]",
+  "priority": 1,
+  "routed": false,
+  "ttl": null,
 }
 `;
 
-exports[`agent api sets agent state 2`] = `
+exports[`contact api adjusts state based on action 2`] = `
 Object {
-  "calls": Array [],
-  "instances": Array [],
-  "invocationCallOrder": Array [],
-  "results": Array [],
+  "agentId": "none",
+  "casesData": Object {
+    "ids": "-1",
+    "pdas": "-1",
+    "worksites": "-1",
+  },
+  "contactId": "abc",
+  "currentAction": "connecting",
+  "db": Anything,
+  "entered_timestamp": null,
+  "locale": 2,
+  "loggerName": "contact[abc|en_US#queued]",
+  "priority": 1,
+  "routed": true,
+  "ttl": null,
 }
 `;
 
 exports[`contact api generates the correct operations 1`] = `
 Object {
+  "ExpressionAttributeNames": Object {
+    "#E": "ttl",
+    "#P": "priority",
+    "#S": "state",
+    "#T": "entered_timestamp",
+  },
+  "ExpressionAttributeValues": Object {
+    ":e": 1592629380,
+    ":p": 1,
+    ":s": "somestate",
+    ":t": "2020-06-20T05:00:00.000Z",
+  },
   "Key": Object {
     "contact_id": "xxxx",
   },
@@ -74,6 +84,15 @@ Object {
 
 exports[`contact api generates the correct operations 2`] = `
 Object {
+  "ExpressionAttributeNames": Object {
+    "#S": "state",
+    "#X": "ttl",
+  },
+  "ExpressionAttributeValues": Object {
+    ":now": 1592629200,
+    ":s": "routed",
+  },
+  "FilterExpression": "#X > :now",
   "IndexName": "state-index",
   "KeyConditionExpression": "#S = :S",
   "Select": "COUNT",

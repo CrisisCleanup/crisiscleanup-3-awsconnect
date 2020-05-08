@@ -7,9 +7,8 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { advanceTo, clear } from 'jest-date-mock';
 import { Agent, Contact, Events, Helpers, Outbound } from '../api';
-import { Dynamo } from '../utils';
 
-jest.mock('../utils/dynamo.js');
+// jest.mock('../utils/dynamo.js');
 jest.mock('../ws');
 
 const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
@@ -59,7 +58,14 @@ describe('outbound api', () => {
           MockOutbound({ id: 3, pda: 1 }),
         ],
       });
-    const cases = await Outbound.resolveCasesByNumber('+1234567890');
+    mock
+      .onGet('/worksites', {
+        params: { phone_number: '1234567890', incident: 199 },
+      })
+      .reply(200, {
+        results: [{ id: 99 }],
+      });
+    const cases = await Outbound.resolveCasesByNumber('+1234567890', 199);
     expect(cases).toMatchSnapshot();
   });
 
@@ -140,22 +146,135 @@ describe('agent api', () => {
     expect(itemKeyMap).toMatchSnapshot();
   });
 
-  it('sets agent state', () => {
-    const mockDb = jest.fn();
-    Dynamo.DynamoTable = jest.fn().mockImplementation(() => ({
-      putItem: jest.fn().mockImplementation(() => ({
-        promise: mockDb,
-      })),
-    }));
-    Agent.setState({
+  it('sets agent state', async () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
       agentId: 'xxxx',
       agentState: Agent.AGENT_STATES.ROUTABLE,
-      last_contact_id: 'abc123',
-      current_contact_id: '123abc',
       connection_id: 'zzzz',
     });
-    expect(Dynamo.DynamoTable).toMatchSnapshot();
-    expect(mockDb.mock).toMatchSnapshot();
+    const dbItem = await Agent.get({ agentId: 'xxxx' });
+    expect(dbItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "entered_timestamp": "2020-06-20T05:00:00.000Z",
+        "state": "online#routable#routable",
+      }
+    `);
+    advanceTo(new Date(2020, 5, 20, 1, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.OFFLINE,
+    });
+    const offlineItem = await Agent.get({ agentId: 'xxxx' });
+    expect(offlineItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "entered_timestamp": "2020-06-20T06:00:00.000Z",
+        "state": "offline#not_routable#offline",
+      }
+    `);
+    clear();
+  });
+
+  it('finds next agent for contact', async () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.OFFLINE,
+    });
+    const nextAgent = await Agent.findNextAgent();
+    expect(nextAgent.agent_id).toBe('xxxx');
+    clear();
+  });
+
+  it('handles online but all non-routable agents', async () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.PAUSED,
+    });
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.PAUSED,
+    });
+    const nextAgent = await Agent.findNextAgent();
+    expect(nextAgent).toBeFalsy();
+    clear();
+  });
+
+  it('handles no online agents', async () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.OFFLINE,
+    });
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.OFFLINE,
+    });
+    await expect(Agent.findNextAgent()).rejects.toThrow(Agent.AgentError);
+    clear();
+  });
+
+  it('correctly finds the longest routable agent', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    const nextAgent = await Agent.findNextAgent();
+    expect(nextAgent.agent_id).toBe('xxxx');
+    clear();
+  });
+
+  it('sustains contact id', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.PENDING_CALL,
+      current_contact_id: 'abc',
+    });
+    let agentItem = await Agent.get({ agentId: 'xxxx' });
+    expect(agentItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "current_contact_id": "abc",
+        "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "state": "online#not_routable#PendingBusy",
+      }
+    `);
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.BUSY,
+    });
+    agentItem = await Agent.get({ agentId: 'xxxx' });
+    expect(agentItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "current_contact_id": "abc",
+        "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "state": "online#not_routable#Busy",
+      }
+    `);
+    clear();
   });
 
   it('gets the correct state def', () => {
@@ -191,16 +310,16 @@ describe('agent api', () => {
 });
 
 describe('contact api', () => {
-  it('sets correct contact state', () => {
+  it('sets correct contact state', async () => {
     const contact = new Contact.Contact({ contactId: 'xxxx' });
     expect(contact.state).toBe('en_US#queued');
     expect(contact.routed).toBe(false);
-    contact.setState('en_US#routed');
+    await contact.setState('en_US#routed');
     expect(contact.state).toBe('en_US#routed');
     expect(contact.routed).toBe(true);
-    contact.setState('queued');
+    await contact.setState('queued');
     expect(contact.state).toBe('en_US#queued');
-    contact.setState('es_MX#routed');
+    await contact.setState('es_MX#routed');
     expect(contact.state).toBe('es_MX#routed');
   });
 
@@ -210,11 +329,30 @@ describe('contact api', () => {
       contactId: 'xxxx',
       state: 'somestate',
       priority: 1,
+      cases: {},
     });
     const queryNumOp = Contact.OPERATIONS.queryNumByState({ state: 'routed' });
 
     expect(updateOp).toMatchSnapshot();
     expect(queryNumOp).toMatchSnapshot();
+    clear();
+  });
+
+  it('adjusts state based on action', async () => {
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    let contact = await new Contact.Contact({ contactId: 'abc' }).load();
+    await contact.delete();
+    contact = await new Contact.Contact({ contactId: 'abc' }).load();
+    contact.action = Contact.CONTACT_ACTIONS.ENTER;
+    contact.routed = false;
+    await contact.setState(Contact.CONTACT_STATES.QUEUED);
+    expect(contact).toMatchSnapshot({ db: expect.anything() });
+    contact.action = Contact.CONTACT_ACTIONS.CONNECTING;
+    expect(contact.routed).toBe(true);
+    await contact.setState();
+    expect(contact.routed).toBe(true);
+    expect(contact).toMatchSnapshot({ db: expect.anything() });
+    expect(contact.state).toBe('en_US#routed');
     clear();
   });
 });
