@@ -36,8 +36,8 @@ export const getWorksitesByPhoneNumber = async (number, incidentId) => {
     return [];
   }
   console.log(response);
-  const { results } = response.data;
-  return results;
+  const { data } = response;
+  return data;
 };
 
 export const resolveCasesByNumber = async (number, incidentId) => {
