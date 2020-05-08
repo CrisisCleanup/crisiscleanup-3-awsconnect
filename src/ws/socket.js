@@ -14,12 +14,21 @@ export const send = async ({ meta, ...data }) => {
   const Data = JSON.stringify(data);
   console.log('outgoing payload:', Data);
   console.log('outgoing meta:', meta);
-  const result = await gateway
-    .postToConnection({
-      ConnectionId: connectionId,
-      Data,
-    })
-    .promise();
+  let result;
+  try {
+    result = await gateway
+      .postToConnection({
+        ConnectionId: connectionId,
+        Data,
+      })
+      .promise();
+  } catch (e) {
+    if (!e.statusCode === 410) {
+      throw e;
+    }
+    console.log('connection to client dropped!');
+    console.log(e);
+  }
   return result;
 };
 
