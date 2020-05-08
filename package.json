@@ -12,13 +12,15 @@
     "logs": "sls logs --env dev --stage dev -f",
     "logs:staging": "sls logs --env staging --stage staging -f",
     "offline": "sls --env local offline",
-    "update": "node internal/scripts/deploy-functions.js",
+    "update": "yarn test --silent && node internal/scripts/deploy-functions.js",
     "deploy:dev": "sls deploy --env dev --stage dev --aws-s3-accelerate",
     "deploy:staging": "sls deploy --env staging --stage staging --aws-s3-accelerate",
     "deploy:prod": "sls deploy --env prod --stage prod --aws-s3-accelerate",
+    "studio": "sls studio --stage dev --aws-s3-accelerate",
     "lint": "eslint --fix ./{*,**/*}.js && yarn format",
     "test": "jest",
-    "test:watch": "yarn test --watch"
+    "test:cov": "jest --coverage",
+    "test:watch": "yarn test --watch --silent"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -50,6 +52,7 @@
     "serverless-stack-output": "^0.2.3",
     "serverless-webpack": "^5.3.1",
     "shelljs": "^0.8.3",
+    "thread-loader": "^2.1.3",
     "webpack": "^4.42.1",
     "webpack-node-externals": "^1.7.2"
   },

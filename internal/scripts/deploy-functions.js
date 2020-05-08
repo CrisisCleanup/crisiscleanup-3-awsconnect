@@ -33,7 +33,10 @@ slsFunctions.forEach((func) => {
   shelljs.echo(`- Updating: ${func}`);
   const cmd = `${cmdBase} -f ${func} --aws-s3-accelerate`;
   shelljs.echo(`Executing: ${cmd}`);
-  shelljs.exec(cmd, { shell: curShell });
+  shelljs.exec(cmd, {
+    shell: curShell,
+    env: { SENTRY_BUILD: slsFunctions.indexOf(func) === 0 ? '1' : '0' },
+  });
 });
 
 shelljs.echo('Done!');
