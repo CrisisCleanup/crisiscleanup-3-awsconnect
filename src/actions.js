@@ -445,6 +445,7 @@ export const clientHeartbeat = async ({
   connectionId,
   userId,
   agentId,
+  agentState,
   type,
 }) => {
   console.log('got client heartbeat!');
@@ -453,7 +454,7 @@ export const clientHeartbeat = async ({
     userId,
     type,
   }).load();
-  await client.heartbeat(agentId);
+  await client.heartbeat(agentId, agentState);
   const contacts = await new Contact.Contact().getAll();
   try {
     await Agent.Agent.refreshMetrics();
