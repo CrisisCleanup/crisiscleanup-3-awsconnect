@@ -12,9 +12,13 @@ provider:
   runtime: nodejs12.x
   stage: dev
   region: us-east-1
-  log:
-    websocket: true
+  timeout: 10
+  logRetentionInDays: 14
+  logs:
+    websocket:
+      level: INFO
   tracing:
+    apiGateway: true
     lambda: true
   websocketsApiName: crisiscleanup-3-awsconnect-ws
   websocketsApiRouteSelectionExpression: $request.body.action
@@ -108,7 +112,9 @@ custom:
   sentry:
     dsn: https://3f546c2c910b47dba24e1dcf2dfdc544@o317954.ingest.sentry.io/5213073
   warmup:
-    enabled: false
+    enabled:
+      - staging
+      - prod
     events:
       # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 5:55pm (UTC)
       - schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
@@ -190,6 +196,8 @@ resources:
             KeyType: HASH
           - AttributeName: name
             KeyType: RANGE
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
     agentsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -207,6 +215,8 @@ resources:
         KeySchema:
           - AttributeName: agent_id
             KeyType: HASH
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
         GlobalSecondaryIndexes:
           - IndexName: state-index
             KeySchema:
@@ -235,6 +245,8 @@ resources:
         KeySchema:
           - AttributeName: contact_id
             KeyType: HASH
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
         GlobalSecondaryIndexes:
           - IndexName: state-index
             KeySchema:
@@ -285,3 +297,10 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: AWSConnectErrorTopic-${self:custom.stage}
+    WebsocketApiMapping: ${self:custom.dynamic.resources.apiMapping}
+    LambdaEventSourceMappingMetricsTable: ${self:custom.dynamic.resources.metricsEventMap}
+    LambdaEventSourceMappingContactsTable: ${self:custom.dynamic.resources.contactsEventMap}
+    LambdaEventSourceMappingAgentsTable: ${self:custom.dynamic.resources.agentsEventMap}
+
+
+

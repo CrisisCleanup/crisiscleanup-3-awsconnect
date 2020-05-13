@@ -30,6 +30,50 @@ const DOMAINS = {
   },
 };
 
+const DomainMapping = ({ domainName }) => ({
+  Type: 'AWS::ApiGatewayV2::ApiMapping',
+  Properties: {
+    DomainName: domainName,
+    ApiId: {
+      Ref: 'WebsocketsApi',
+    },
+    Stage: {
+      Ref: 'WebsocketsDeploymentStage',
+    },
+  },
+});
+
+const LambdaEventDynamoMapping = ({ dbRef, lambdaRef }) => ({
+  Type: 'AWS::Lambda::EventSourceMapping',
+  Properties: {
+    BatchSize: 1,
+    EventSourceArn: {
+      'Fn::GetAtt': [dbRef, 'StreamArn'],
+    },
+    FunctionName: {
+      'Fn::GetAtt': [lambdaRef, 'Arn'],
+    },
+    StartingPosition: 'TRIM_HORIZON',
+    Enabled: 'True',
+    ParallelizationFactor: 3,
+  },
+});
+
+const LambdaStreams = {
+  metricsEventMap: {
+    dbRef: 'metricsTable',
+    lambdaRef: 'MetricStreamHandlerLambdaFunction',
+  },
+  contactsEventMap: {
+    dbRef: 'contactsTable',
+    lambdaRef: 'ContactStreamHandlerLambdaFunction',
+  },
+  agentsEventMap: {
+    dbRef: 'agentsTable',
+    lambdaRef: 'AgentStreamHandlerLambdaFunction',
+  },
+};
+
 module.exports = (serverless) => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
@@ -37,5 +81,14 @@ module.exports = (serverless) => {
     process.env.SLS_STAGE,
   );
   const stage = process.env.SLS_STAGE;
-  return { domain: DOMAINS[stage] };
+  const eventMaps = Object.fromEntries(
+    Object.entries(LambdaStreams).map(([key, val]) => [
+      key,
+      LambdaEventDynamoMapping(val),
+    ]),
+  );
+  return {
+    domain: DOMAINS[stage],
+    resources: { apiMapping: DomainMapping(DOMAINS[stage]), ...eventMaps },
+  };
 };
