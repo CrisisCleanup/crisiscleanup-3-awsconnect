@@ -70,8 +70,12 @@ export class Contact extends ApiModel {
     };
   }
 
-  set cases({ pdas = '-1', worksites = '-1', ids = '-1' } = {}) {
-    this.casesData = { pdas, worksites, ids };
+  set cases({ pdas, worksites, ids }) {
+    this.casesData = {
+      pdas: pdas === undefined ? '-1' : pdas,
+      worksites: worksites === undefined ? '-1' : worksites,
+      ids: ids === undefined ? '-1' : ids,
+    };
     return this.cases;
   }
 
@@ -152,7 +156,7 @@ export class Contact extends ApiModel {
       return this;
     }
     const { Item } = response;
-    if (!Item || Item === null) {
+    if (!Item) {
       this.log('could not find contact! assumings its new...');
       return this;
     }

@@ -140,7 +140,7 @@ const setAgentState = async ({
   const resp = await Agent.setState({
     agentId,
     agentState,
-    current_contact_id: initContactId,
+    current_contact_id: initContactId || currentContactId,
     connection_id: connectionId,
   });
   console.log('agent state response', resp);
@@ -217,8 +217,8 @@ const findAgent = async ({
   // dnisStats
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
-  let newTriggerValue = String(Number(triggerPrompt) + 10);
-  if (newTriggerValue >= 130) {
+  let newTriggerValue = String(Number(triggerPrompt) + 25);
+  if (newTriggerValue >= 500) {
     newTriggerValue = 0;
   }
   console.log('finding next agent to serve contact too...');
@@ -234,7 +234,8 @@ const findAgent = async ({
     contactId: initContactId,
     priority: inbound.priority,
   }).load();
-  await contact.setState(Contact.CONTACT_STATES.QUEUED);
+  // await contact.setState(Contact.CONTACT_STATES.QUEUED);
+  await contact.setState();
   const inboundEvent = new Events.Event({ itemId: inbound.id }).object(
     Events.EVENT_OBJECTS.INBOUND,
   );
@@ -243,7 +244,7 @@ const findAgent = async ({
       currentContactId: currentContactId || inbound.session_id,
     });
     const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
-    if (!targAgent || targAgent === null) {
+    if (!targAgent) {
       return {
         data: {
           targetAgentId: '',
