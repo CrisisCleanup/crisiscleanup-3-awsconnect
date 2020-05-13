@@ -1,0 +1,9 @@
+ConnectionHandlerLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-connectionHandler:141'
+AwsConnectLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-awsConnect:180'
+MetricStreamHandlerLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-metricStreamHandler:26'
+WsHandlerLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-wsHandler:135'
+EnterpriseLogAccessIamRole: 'arn:aws:iam::182237011124:role/crisiscleanup-3-awsconnec-EnterpriseLogAccessIamRo-2C8V909M0RDB'
+ContactStreamHandlerLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-contactStreamHandler:23'
+ServiceEndpointWebsocket: 'wss://ouowla27ki.execute-api.us-east-1.amazonaws.com/dev'
+ServerlessDeploymentBucketName: crisiscleanup-3-awsconne-serverlessdeploymentbuck-1jdkajn98dk5i
+AgentStreamHandlerLambdaFunctionQualifiedArn: 'arn:aws:lambda:us-east-1:182237011124:function:crisiscleanup-3-awsconnect-dev-agentStreamHandler:20'

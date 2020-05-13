@@ -11,7 +11,7 @@ import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
 import WS from './ws';
 
 export const checkWarmup = ({ source }) => {
-  if (source === 'serverless-warmup-plugin') {
+  if (source === 'serverless-plugin-warmup') {
     console.log('Warmup! Lambda is warm.');
     return true;
   }
