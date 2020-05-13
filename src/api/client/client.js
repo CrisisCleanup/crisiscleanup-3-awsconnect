@@ -7,7 +7,6 @@
 import { CURRENT_ENDPOINT, Dynamo } from '../../utils';
 import { expiredFilter } from '../../utils/dynamo';
 import WS from '../../ws';
-import LegacyAgent from '../agent';
 import Agent from '../agent/agent';
 import ApiModel from '../api';
 import * as OPS from './operations';
@@ -49,7 +48,7 @@ export class Client extends ApiModel {
     return Items;
   }
 
-  async heartbeat(agentId, agentState) {
+  async heartbeat(agentId) {
     this.log('heartbeat received!');
     this.log('client type:', this.type);
     const query = OPS.updateClient(this);
@@ -57,13 +56,10 @@ export class Client extends ApiModel {
     const results = await this.db.update(query).promise();
     this.log('results:');
     this.log(results);
-    if (agentId) {
-      await Agent.updateConnection({
-        agentId,
-        connectionId: this.connectionId,
-        agentState: LegacyAgent.getStateDef(agentState).join('#'),
-      });
-    }
+    await Agent.updateConnection({
+      agentId,
+      connectionId: this.connectionId,
+    });
     return results;
   }
 
