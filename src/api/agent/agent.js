@@ -51,10 +51,20 @@ export default class Agent extends ApiModel {
     return Items;
   }
 
-  static async updateConnection({ agentId, connectionId }) {
+  static async updateConnection({ agentId, connectionId, agentState }) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
     const query = OPS.updateConnectionId({ agentId, connectionId });
+    console.log('[agents] updating connection:', query);
     const results = await db.update(query).promise();
+    if (agentState) {
+      const agStateQuery = OPS.updateStateByHeartbeat({ agentId, agentState });
+      console.log('[agents] updating state by connection:', agStateQuery);
+      try {
+        await db.update(agStateQuery).promise();
+      } catch (e) {
+        console.log(e);
+      }
+    }
     return results;
   }
 

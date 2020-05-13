@@ -34,5 +34,15 @@ export const updateConnectionId = ({ agentId, connectionId }) => ({
   Key: {
     agent_id: agentId,
   },
-  UpdateExpression: 'set #C = :c',
+  UpdateExpression: `set #C = :c`,
+});
+
+// Update agent state if it doesnt have contact id
+export const updateStateByHeartbeat = ({ agentId, agentState }) => ({
+  ...Expressions([{ key: 'as', name: 'state', value: agentState }]),
+  Key: {
+    agent_id: agentId,
+  },
+  UpdateExpression: 'set #AS = :as',
+  ConditionExpression: 'attribute_not_exists(current_contact_id)',
 });

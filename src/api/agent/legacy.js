@@ -149,7 +149,6 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
         );
         deletedAttrs.push(AGENT_ATTRS.CURRENT_CONTACT);
         deletedAttrs.push(AGENT_ATTRS.STATE_TTL);
-        deletedAttrs.push(AGENT_STATES.CASES);
       }
       break;
     case AGENT_STATES.AGENT_CALLING:

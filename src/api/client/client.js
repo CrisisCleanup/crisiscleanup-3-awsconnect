@@ -61,10 +61,8 @@ export class Client extends ApiModel {
       await Agent.updateConnection({
         agentId,
         connectionId: this.connectionId,
+        agentState: LegacyAgent.getStateDef(agentState).join('#'),
       });
-      if (agentState) {
-        await LegacyAgent.setState({ agentId, agentState });
-      }
     }
     return results;
   }
