@@ -56,10 +56,12 @@ export class Client extends ApiModel {
     const results = await this.db.update(query).promise();
     this.log('results:');
     this.log(results);
-    await Agent.updateConnection({
-      agentId,
-      connectionId: this.connectionId,
-    });
+    if (agentId) {
+      await Agent.updateConnection({
+        agentId,
+        connectionId: this.connectionId,
+      });
+    }
     return results;
   }
 
