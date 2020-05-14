@@ -24,6 +24,8 @@ export const send = async ({ meta, ...data }) => {
       .promise();
   } catch (e) {
     if (!e.statusCode === 410) {
+      console.log('failed to send data to client!');
+      console.log(e);
       throw e;
     }
     console.log('connection to client dropped!');

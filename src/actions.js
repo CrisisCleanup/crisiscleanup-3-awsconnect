@@ -445,7 +445,6 @@ export const clientHeartbeat = async ({
   connectionId,
   userId,
   agentId,
-  agentState,
   type,
 }) => {
   console.log('got client heartbeat!');

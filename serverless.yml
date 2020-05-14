@@ -152,15 +152,14 @@ functions:
           route: $connect
       - websocket:
           route: $disconnect
+
   wsHandler:
     provisionedConcurrency: 3
     reservedConcurrency: 5
     handler: src/index.wsHandler
     onError: !Ref ConnectErrorsTopic
     events:
-      - websocket:
-          route: $default
-          routeResponseSelectionExpression: $default
+      - websocket: $default
 
   metricStreamHandler:
     provisionedConcurrency: 3

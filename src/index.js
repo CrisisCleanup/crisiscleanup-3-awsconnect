@@ -178,11 +178,17 @@ export const wsConnectionHandler = async (event, context) => {
   };
 };
 
-export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
+export const wsHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws message', event, context);
   configureEndpoint();
   const { meta, action, data } = WS.parse(event);
+  if (!action) {
+    console.log('[wsHandler] no action specified!');
+    return {
+      statusCode: 200,
+    };
+  }
   console.log('[wsHandler] entering action:', action);
   console.log('[wsHandler] passing args to action:', data);
   try {
@@ -191,6 +197,7 @@ export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
       connectionId: meta.connectionId,
       client: 'ws',
     });
+    console.log('[wsHandler] action completed, response:', response);
     if (response && response.action) {
       await WS.send({ meta, ...response });
     }
@@ -198,16 +205,11 @@ export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
     console.log('[wsHandler] failed!');
     console.log('[wsHandler] exception raised: ', e);
     context.serverlessSdk.captureError(e);
-    return {
-      statusCode: 500,
-      body: String(e),
-    };
   }
   return {
     statusCode: 200,
-    body: response,
   };
-});
+};
 
 export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   if (checkWarmup(event)) return callback(null, {});
