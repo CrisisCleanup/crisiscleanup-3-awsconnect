@@ -158,7 +158,9 @@ functions:
     handler: src/index.wsHandler
     onError: !Ref ConnectErrorsTopic
     events:
-      - websocket: $default
+      - websocket:
+          route: $default
+          routeResponseSelectionExpression: $default
 
   metricStreamHandler:
     provisionedConcurrency: 3

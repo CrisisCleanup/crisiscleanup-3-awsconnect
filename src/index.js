@@ -10,6 +10,9 @@ import { Client, Metrics } from './api';
 import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
 import WS from './ws';
 
+// Configure during lambda init
+configureEndpoint();
+
 export const checkWarmup = ({ source }) => {
   if (source === 'serverless-plugin-warmup') {
     console.log('Warmup! Lambda is warm.');
@@ -60,7 +63,7 @@ export const agentStreamHandler = RavenWrapper.handler(Raven, async (event) => {
 
 export const contactStreamHandler = RavenWrapper.handler(
   Raven,
-  async (event) => {
+  async (event, context) => {
     if (checkWarmup(event)) return { statusCode: 200 };
     const { Records } = event;
     console.log('[contacts] incoming contacts update:', Records);
@@ -103,6 +106,7 @@ export const contactStreamHandler = RavenWrapper.handler(
         WS.send(payload);
       } catch (e) {
         console.log('[metrics] expired client found:', e);
+        context.serverlessSdk.captureError(e);
       }
     });
     return {
@@ -149,6 +153,7 @@ export const metricStreamHandler = RavenWrapper.handler(
           await WS.send(payload);
         } catch (e) {
           console.log('[metrics] expired client found:', e);
+          context.serverlessSdk.captureError(e);
         }
       }),
     );
@@ -180,16 +185,27 @@ export const wsHandler = RavenWrapper.handler(Raven, async (event, context) => {
   const { meta, action, data } = WS.parse(event);
   console.log('[wsHandler] entering action:', action);
   console.log('[wsHandler] passing args to action:', data);
-  const response = await ACTIONS[action]({
-    ...data,
-    connectionId: meta.connectionId,
-    client: 'ws',
-  });
-  if (response && response.action) {
-    await WS.send({ meta, ...response });
+  try {
+    const response = await ACTIONS[action]({
+      ...data,
+      connectionId: meta.connectionId,
+      client: 'ws',
+    });
+    if (response && response.action) {
+      await WS.send({ meta, ...response });
+    }
+  } catch (e) {
+    console.log('[wsHandler] failed!');
+    console.log('[wsHandler] exception raised: ', e);
+    context.serverlessSdk.captureError(e);
+    return {
+      statusCode: 500,
+      body: String(e),
+    };
   }
   return {
     statusCode: 200,
+    body: response,
   };
 });
 
@@ -207,17 +223,7 @@ export default RavenWrapper.handler(Raven, async (event, context, callback) => {
   console.log('[awsConnect] event inputs:', event, context);
   console.log('[awsConnect] contact attributes: ', ContactData.Attributes);
 
-  // Use tunneled endpoints for local (sls offline) testing
-  // Connect casts any passed attributes as strings
-  if (IS_OFFLINE === '1') {
-    process.env.IS_OFFLINE = 'TUNNEL';
-    configureEndpoint({
-      ws: 'https://socket.dev.crisiscleanup.io',
-      api: 'http://marsapi.crisiscleanup.io',
-    });
-  } else {
-    configureEndpoint();
-  }
+  configureEndpoint();
 
   // Handlers
   const actionArgs = {

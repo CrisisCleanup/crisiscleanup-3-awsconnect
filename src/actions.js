@@ -454,7 +454,7 @@ export const clientHeartbeat = async ({
     userId,
     type,
   }).load();
-  await client.heartbeat(agentId, agentState);
+  await client.heartbeat(agentId);
   const contacts = await new Contact.Contact().getAll();
   try {
     await Agent.Agent.refreshMetrics();
