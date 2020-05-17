@@ -19,12 +19,12 @@ export const EVENT_ACTIONS = Object.freeze({
 export class Event {
   constructor({ itemId = null } = {}) {
     this.eventItem = {
-      object_id: itemId,
+      patient_id: itemId,
       attr: { __source: 'awsconnect' },
     };
     this.eventDef = {
       action: null,
-      object: null,
+      patient: null,
       joined: null,
     };
     this.logObjs = [];
@@ -39,13 +39,13 @@ export class Event {
   }
 
   get eventKey() {
-    const { object, action, joined } = this.eventDef;
+    const { patient, action, joined } = this.eventDef;
     if (action === 'join' && joined) {
       // eslint-disable-next-line no-underscore-dangle
       this.eventItem.attr.__joined_id = joined.recent;
-      return `${action}_${object}_to_${joined.eventDef.object}`;
+      return `${action}_${patient}_to_${joined.eventDef.patient}`;
     }
-    return `${action}_${object}`;
+    return `${action}_${patient}`;
   }
 
   get recent() {
@@ -62,13 +62,13 @@ export class Event {
   }
 
   object(value) {
-    console.log(`setting current object: ${value}`);
-    this.eventDef.object = value;
+    this.log(`setting current object: ${value}`);
+    this.eventDef.patient = value;
     return this;
   }
 
   join(event) {
-    console.log(`joining event to ${event}`);
+    this.log(`joining event to:`.event);
     this.eventDef.action = 'join';
     this.eventDef.joined = event;
     return this;
@@ -77,6 +77,7 @@ export class Event {
   async save(attrs = {}) {
     this.eventItem.event_key = this.eventKey;
     this.eventItem.attr = { ...this.eventItem.attr, ...attrs };
+    this.log('generating event:', this.eventItem);
     const resp = await axios.post('/event_logs', this.eventItem);
     this.logObjs.push(resp.data);
     return this;
