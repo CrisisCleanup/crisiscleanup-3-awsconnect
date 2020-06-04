@@ -10,3 +10,9 @@ Crisis Cleanup works best in a collaborative environment where multiple voluntar
 # AWS Connect Integration
 
 This repository hosts Crisis Cleanup's lambda integrations with AWS Connect.
+
+## High Level Architecture
+
+Visual overview of critical communication paths.
+
+<img src="docs/diagrams/architecture.svg" align="center" />
