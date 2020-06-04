@@ -15,4 +15,4 @@ This repository hosts Crisis Cleanup's lambda integrations with AWS Connect.
 
 Visual overview of critical communication paths.
 
-<img src="docs/diagrams/architecture.svg" align="center" />
+<img src="docs/diagrams/architecture.png" align="center" />

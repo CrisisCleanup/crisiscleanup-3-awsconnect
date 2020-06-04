@@ -9,19 +9,12 @@ from diagrams.aws.analytics import Kinesis
 from diagrams.aws.database import Dynamodb
 from pathlib import Path
 
-ICONS = Path(__file__).parent / "icons"
-
-graph_attrs = {
-    "pad": "3.0",
-}
-
 with Diagram(
     "CC3 AWS Connect High Level Architecture",
     filename="architecture",
-    outformat="svg",
+    outformat="png",
     show=False,
     direction="BT",
-    graph_attr=graph_attrs,
 ):
     connect = Connect("Connect")
     connectLambda = Lambda("awsConnect")
