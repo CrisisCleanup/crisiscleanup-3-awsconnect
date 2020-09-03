@@ -6,6 +6,8 @@
 // Environment based tests setup based on:
 // https://stackoverflow.com/a/48042799
 import { configureEndpoint, Dynamo } from '../utils';
+import MockAdapter from 'axios-mock-adapter';
+import axios from 'axios';
 
 describe('utils', () => {
   const OLD_ENV = process.env;
@@ -17,6 +19,22 @@ describe('utils', () => {
 
   afterEach(() => {
     process.env = OLD_ENV;
+  });
+
+  it('should configure offline dynamo endpoint correctly', async () => {
+    process.env.SLS_STAGE = 'local';
+    expect(Dynamo.dynamoOptions()).toMatchInlineSnapshot(`
+      Object {
+        "endpoint": "http://localhost:4566",
+        "region": "localhost",
+      }
+    `);
+  });
+
+  it('should use default dynamo endpoint if not offline', async () => {
+    process.env.IS_OFFLINE = undefined;
+    process.env.SLS_STAGE = 'prod';
+    expect(Dynamo.dynamoOptions()).toMatchInlineSnapshot(`Object {}`);
   });
 
   it('should set axios defaults correctly', () => {
