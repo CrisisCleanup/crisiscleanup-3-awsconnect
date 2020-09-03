@@ -13,6 +13,7 @@ import {
   Outbound,
 } from './api';
 import WS from './ws';
+import RESP from './ws/response';
 
 const checkCases = async ({
   inboundNumber,
@@ -124,6 +125,9 @@ const denyCallback = async ({ inboundNumber, agentId, client }) => {
 const setAgentState = async ({
   agentId,
   agentState,
+  state,
+  routeState,
+  contactState,
   client,
   initContactId = null,
   currentContactId = null,
@@ -132,14 +136,28 @@ const setAgentState = async ({
   console.log(
     'setting agent state: ',
     agentId,
-    agentState,
+    state,
+    routeState,
+    contactState,
     initContactId,
     currentContactId,
     connectionId,
   );
+  let fullState = agentState;
+  if (!fullState) {
+    let _fullState = Agent.getStateDef(
+      [state, routeState, contactState].join('#'),
+    );
+    const agent = await Agent.get({ agentId });
+    if (!contactState) {
+      const curContactState = Agent.getStateDef(agent.state)[2];
+      _fullState = [_fullState[0], _fullState[1], curContactState];
+    }
+    fullState = _fullState.join('#');
+  }
   const resp = await Agent.setState({
     agentId,
-    agentState,
+    agentState: fullState,
     current_contact_id: initContactId || currentContactId,
     connection_id: connectionId,
   });
@@ -160,16 +178,29 @@ const setAgentState = async ({
       connectionId: payload.meta.connectionId,
     }).load();
     try {
+      const [stateOnline, routeState, contactState] = Agent.getStateDef(
+        agentState,
+      );
       await agentClient.send({
-        namespace: 'phone',
-        action: {
-          type: 'action',
-          name: 'setAgentState',
-        },
-        data: {
-          state: Agent.getStateDef(agentState)[2],
-        },
+        ...RESP.UPDATE_AGENT({
+          state: stateOnline,
+          routeState,
+        }),
       });
+      const agent = await Agent.get({ agentId });
+
+      if (agent.current_contact_id) {
+        const contact = await new Contact.Contact({
+          contactId: agent.current_contact_id,
+        }).load();
+        await agentClient.send(
+          RESP.UPDATE_CONTACT({
+            contactId: contact.contactId,
+            state: contact.routeState,
+            action: contact.action,
+          }),
+        );
+      }
     } catch (e) {
       console.error(e);
       console.log('failed to update agent state!');
@@ -189,16 +220,10 @@ const getAgentState = async ({ agentId, client }) => {
   console.log('got agent:', agent);
   if (client === 'ws' && agent) {
     const [stateOnline, stateType, subState] = Agent.getStateDef(agent.state);
-    return {
-      namespace: 'phone',
-      action: {
-        type: 'action',
-        name: 'setAgentState',
-      },
-      data: {
-        state: subState,
-      },
-    };
+    return RESP.UPDATE_AGENT({
+      state: stateOnline,
+      routeState: stateType,
+    });
   }
 };
 
@@ -210,11 +235,13 @@ const findAgent = async ({
   callAni,
   currentContactId,
   targetAgentId,
+  targetInboundId,
   triggerPrompt,
   worksites,
   ids,
   pdas,
-  // dnisStats
+  // dnisStats,
+  contactData,
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 25);
@@ -222,26 +249,34 @@ const findAgent = async ({
     newTriggerValue = 0;
   }
   console.log('finding next agent to serve contact too...');
-  const inbound = await Inbound.create({
-    initContactId,
-    number: inboundNumber,
-    incidentId,
-    language: userLanguage,
-    ani: callAni,
-  });
-  console.log('created inbound: ', inbound);
+  let inbound;
+  let inboundId = targetInboundId;
+  if (!targetAgentId) {
+    inbound = await Inbound.create({
+      initContactId,
+      number: inboundNumber,
+      incidentId,
+      language: userLanguage,
+      ani: callAni,
+    });
+    console.log('created inbound: ', inbound);
+    inboundId = inbound.id;
+  }
   const contact = await new Contact.Contact({
     contactId: initContactId,
-    priority: inbound.priority,
+    priority: 1,
   }).load();
+  if (inbound) {
+    contact.priority = inbound.priority || contact.priority;
+  }
   // await contact.setState(Contact.CONTACT_STATES.QUEUED);
   await contact.setState();
-  const inboundEvent = new Events.Event({ itemId: inbound.id }).object(
+  const inboundEvent = new Events.Event({ itemId: inboundId }).object(
     Events.EVENT_OBJECTS.INBOUND,
   );
   if (targetAgentId) {
     const targAgent = await Agent.getTargetAgent({
-      currentContactId: currentContactId || inbound.session_id,
+      currentContactId: initContactId,
     });
     const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
     if (!targAgent) {
@@ -249,6 +284,7 @@ const findAgent = async ({
         data: {
           targetAgentId: '',
           targetAgentState: 'PENDING',
+          targetInboundId: inboundId,
           triggerPrompt: newTriggerValue,
           ...contact.cases,
         },
@@ -257,12 +293,13 @@ const findAgent = async ({
 
     contact.agentId = targAgent.agent_id;
     const newState = Agent.isInRoute(targAgent.state) ? 'READY' : 'PENDING';
+    const isOnline = Agent.isOnline(targAgent.state);
     const hasExpired =
       Math.floor(Date.now() / 1000) > Number(targAgent.state_ttl);
-    if (newState === 'PENDING' && hasExpired) {
+    if ((newState === 'PENDING' && hasExpired) || !isOnline) {
       // release the contact id
       console.log(
-        'agent state ttl has expired! setting offline and relasing contact...',
+        'agent state ttl has expired or agent is offline! setting offline and relasing contact...',
       );
       await Agent.setState({
         agentId: targAgent.agent_id,
@@ -278,23 +315,19 @@ const findAgent = async ({
       await inboundEvent.update().save({
         ivr_action: Contact.CONTACT_STATES.ROUTED,
       });
-      const attributes = { ...contact.cases, callerID: inboundNumber };
+      // const attributes = { ...contact.cases, callerID: inboundNumber };
       const payload = {
-        namespace: 'phone',
-        action: {
-          type: 'action',
-          name: 'setContactState',
-        },
         meta: {
           endpoint: process.env.WS_CALLBACK_URL,
           connectionId: targAgent.connection_id,
         },
-        data: {
-          state: {
-            id: targAgent.current_contact_id,
-            attributes,
-          },
-        },
+        ...RESP.UPDATE_CONTACT({
+          contactId: targAgent.current_contact_id,
+          agentId: targAgent.agent_id,
+          state: contact.routeState,
+          action: contact.action,
+          attributes: { ...contactData.Attributes, ...contact.cases },
+        }),
       };
       try {
         await WS.send(payload);
@@ -316,6 +349,7 @@ const findAgent = async ({
               targetAgentId: '',
               targetAgentState: '',
               triggerPrompt: newTriggerValue,
+              targetInboundId: inboundId,
               ...contact.cases,
             },
           };
@@ -327,6 +361,7 @@ const findAgent = async ({
         targetAgentId: targAgent.agent_id,
         targetAgentState: newState,
         triggerPrompt: newTriggerValue,
+        targetInboundId: inboundId,
         ...contact.cases,
       },
     };
@@ -340,6 +375,7 @@ const findAgent = async ({
         data: {
           targetAgentState: 'NONE',
           triggerPrompt: newTriggerValue,
+          targetInboundId: inboundId,
           ...contact.cases,
         },
       };
@@ -353,6 +389,7 @@ const findAgent = async ({
       data: {
         targetAgentId: '',
         targetAgentState: 'PENDING',
+        targetInboundId: inboundId,
         triggerPrompt: newTriggerValue,
         ...contact.cases,
       },
@@ -367,15 +404,27 @@ const findAgent = async ({
     current_contact_id: initContactId,
     state_ttl: String(stateExpire),
   });
-  if (Agent.isRoutable(agent.state)) {
+  if (Agent.isRoutable(agent.state) && Agent.isOnline(agent.state)) {
     console.log('agent is routable! calling now...');
-    await Inbound.prompt({ inboundId: inbound.id, agentId: agent.agent_id });
+    const agentClient = await new Client.Client({
+      connectionId: agent.connection_id,
+    }).load();
+    await agentClient.send(
+      RESP.UPDATE_CONTACT({
+        contactId: contact.contactId,
+        state: contact.routeState,
+        action: contact.action,
+        attributes: { ...contactData.Attributes, ...contact.cases },
+      }),
+    );
+    await Inbound.prompt({ inboundId: inboundId, agentId: agent.agent_id });
   }
   return {
     data: {
       targetAgentId: agent.agent_id,
       targetAgentState: 'PENDING',
       triggerPrompt: newTriggerValue,
+      targetInboundId: inboundId,
       ...contact.cases,
     },
   };
@@ -397,28 +446,18 @@ export const updateContact = async ({ contactId, action, agentId } = {}) => {
   }
   const contacts = await new Contact.Contact().getAll();
   return {
-    namespace: 'phone',
-    action: {
-      type: 'action',
-      name: 'setContactMetrics',
-    },
-    data: {
+    ...RESP.UPDATE_CONTACT_METRICS({
       contacts,
-    },
+    }),
   };
 };
 
 export const getContacts = async ({}) => {
   const contacts = await new Contact.Contact().getAll();
   return {
-    namespace: 'phone',
-    action: {
-      type: 'action',
-      name: 'setContactMetrics',
-    },
-    data: {
+    ...RESP.UPDATE_CONTACT_METRICS({
       contacts,
-    },
+    }),
   };
 };
 
@@ -427,14 +466,7 @@ export const getAgents = async ({ connectionId, userId, type }) => {
   const agents = await Agent.Agent.getAll();
   const client = await new Client.Client({ connectionId, userId, type }).load();
   const payload = {
-    namespace: 'phone',
-    action: {
-      type: 'action',
-      name: 'getAgentMetrics',
-    },
-    data: {
-      agents,
-    },
+    ...RESP.UPDATE_AGENT_METRICS({ agents }),
   };
   await client.send(payload);
   console.log('send client payload: ', payload);
@@ -462,14 +494,9 @@ export const clientHeartbeat = async ({
     console.log(e);
   }
   return {
-    namespace: 'phone',
-    action: {
-      type: 'action',
-      name: 'setContactMetrics',
-    },
-    data: {
+    ...RESP.UPDATE_CONTACT_METRICS({
       contacts,
-    },
+    }),
   };
 };
 
