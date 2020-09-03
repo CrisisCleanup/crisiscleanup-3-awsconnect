@@ -20,9 +20,15 @@ const MockOutbound = ({ id, phoneNumber, pda, worksite } = {}) => ({
   external_platform: 'connect',
 });
 
+const getAxios = () => {
+  const mock = new MockAdapter(axios);
+  // mock.onHead('http://localhost:8000/shell').reply(200);
+  return mock;
+};
+
 describe('outbound api', () => {
   it('retrieves outbound by number', async () => {
-    const mock = new MockAdapter(axios);
+    const mock = getAxios();
     mock
       .onGet('/phone_outbound', {
         params: { phone_number: '1234567890' },
@@ -36,7 +42,7 @@ describe('outbound api', () => {
   });
 
   it('throws error on no results', async () => {
-    const mock = new MockAdapter(axios);
+    const mock = getAxios();
     mock
       .onGet('/phone_outbound', {
         params: { phone_number: '1234567890' },
@@ -48,7 +54,7 @@ describe('outbound api', () => {
   });
 
   it('resolves cases by number', async () => {
-    const mock = new MockAdapter(axios);
+    const mock = getAxios();
     mock
       .onGet('/phone_outbound', { params: { phone_number: '1234567890' } })
       .reply(200, {
@@ -70,20 +76,12 @@ describe('outbound api', () => {
   });
 
   it('creates callback', async () => {
-    const mock = new MockAdapter(axios);
-    mock.onGet('/languages').reply(200, {
-      results: [
-        {
-          id: 5,
-          subtag: 'en-US',
-        },
-      ],
-    });
+    const mock = getAxios();
     mock
       .onPost('/phone_outbound', {
         dnis1: '+10000000000',
         call_type: 'callback',
-        language: 5,
+        language: 2,
         incident_id: ['199'],
         external_id: '123abc',
         external_platform: 'connect',
@@ -95,11 +93,40 @@ describe('outbound api', () => {
       '199',
       '123abc',
     );
-    expect(resp).toMatchSnapshot();
+    expect(resp).toMatchInlineSnapshot(`
+      Object {
+        "config": Object {
+          "data": "{\\"dnis1\\":\\"+10000000000\\",\\"call_type\\":\\"callback\\",\\"language\\":2,\\"incident_id\\":[\\"199\\"],\\"external_id\\":\\"123abc\\",\\"external_platform\\":\\"connect\\"}",
+          "headers": Object {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          "maxContentLength": -1,
+          "method": "post",
+          "timeout": 0,
+          "transformRequest": Array [
+            [Function],
+          ],
+          "transformResponse": Array [
+            [Function],
+          ],
+          "url": "/phone_outbound",
+          "validateStatus": [Function],
+          "xsrfCookieName": "XSRF-TOKEN",
+          "xsrfHeaderName": "X-XSRF-TOKEN",
+        },
+        "data": undefined,
+        "headers": undefined,
+        "request": Object {
+          "responseUrl": "/phone_outbound",
+        },
+        "status": 201,
+      }
+    `);
   });
 
   it('unlocks the latest callback', async () => {
-    const mock = new MockAdapter(axios);
+    const mock = getAxios();
     mock
       .onGet('/phone_outbound', { params: { phone_number: '10001112222' } })
       .reply(200, {
@@ -111,18 +138,8 @@ describe('outbound api', () => {
   });
 
   it('gets the language id', async () => {
-    const mock = new MockAdapter(axios);
-    mock.onGet('/languages').reply(200, {
-      results: [
-        {
-          id: 5,
-          subtag: 'en-US',
-        },
-      ],
-    });
-
     const result = await Helpers.getLanguageId('en_US');
-    expect(result).toBe(5);
+    expect(result).toBe(2);
     const defaultResult = await Helpers.getLanguageId('abc');
     expect(defaultResult).toBe(2);
   });
