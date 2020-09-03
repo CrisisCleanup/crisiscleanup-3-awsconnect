@@ -110,6 +110,14 @@ export class Contact extends ApiModel {
     return this.state;
   }
 
+  get routeState() {
+    if (this.state.includes('#')) {
+      const [, routeState] = this.state.split('#');
+      return routeState;
+    }
+    return this.state;
+  }
+
   async getAll() {
     this.log('fetching all contacts!');
     const results = await this.db.scan(Dynamo.expiredFilter()).promise();
