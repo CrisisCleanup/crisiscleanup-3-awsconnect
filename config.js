@@ -87,8 +87,20 @@ module.exports = (serverless) => {
       LambdaEventDynamoMapping(val),
     ]),
   );
-  return {
-    domain: DOMAINS[stage],
-    resources: { apiMapping: DomainMapping(DOMAINS[stage]), ...eventMaps },
-  };
+  let config = {};
+  if (stage === 'local') {
+    config = {
+      resources: { ...eventMaps },
+      domain: {
+        enabled: false,
+      },
+    };
+  } else {
+    config = {
+      domain: DOMAINS[stage],
+      resources: { apiMapping: DomainMapping(DOMAINS[stage]), ...eventMaps },
+    };
+  }
+  serverless.cli.consoleLog(config);
+  return config;
 };

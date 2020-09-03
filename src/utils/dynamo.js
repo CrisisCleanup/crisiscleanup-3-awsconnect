@@ -5,21 +5,21 @@
 
 import AWS from 'aws-sdk';
 
-const isLocal = process.env.IS_OFFLINE; // serverless-offline
-
-const localOptions = () => {
-  const opts = {
-    region: 'localhost',
-    endpoint:
-      process.env.IS_OFFLINE === 'TUNNEL'
-        ? 'http://marsdynamo.crisiscleanup.io'
-        : 'http://localhost:8000',
-  };
+export const dynamoOptions = () => {
+  const isLocal = process.env.SLS_STAGE === 'local'; // serverless-offline
+  let opts = {};
+  if (isLocal) {
+    opts = {
+      region: 'localhost',
+      endpoint:
+        process.env.IS_OFFLINE === 'TUNNEL'
+          ? 'http://marsdynamo.crisiscleanup.io'
+          : 'http://localhost:4566',
+    };
+  }
   console.log('Dynamo Endpoints configured:', opts);
   return opts;
 };
-
-const dynamoOptions = () => (isLocal ? localOptions() : {});
 
 export const TABLES = {
   AGENTS: {
