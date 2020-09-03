@@ -6,6 +6,7 @@
 
 import { Dynamo } from '../../utils';
 import AgentV2 from './agent';
+import RESP from '../../ws/response';
 
 export const Agent = AgentV2;
 
@@ -52,6 +53,7 @@ export const isRoutable = (state) =>
   ROUTABLE_STATES.includes(state.split('#')[2] || state);
 export const isInRoute = (state) =>
   INROUTE_STATES.includes(state.split('#')[2] || state);
+export const isOnline = (state) => state.split('#')[0] === 'online';
 
 export const getStateDef = (state) => {
   if (!state || state === null || typeof state !== 'string') {
@@ -234,14 +236,10 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   console.log('resulting set agent:', agent);
 
   return {
-    namespace: 'phone',
-    action: {
-      type: 'action',
-      name: 'setAgentState',
-      data: {
-        state: subState,
-      },
-    },
+    ...RESP.UPDATE_AGENT({
+      state: stateOnline,
+      routeState: stateType,
+    }),
   };
 };
 
@@ -317,17 +315,17 @@ export const findNextAgent = async () => {
 export const createStateWSPayload = async ({ agentId, agentState }) => {
   const agent = await get({ agentId });
   return {
-    namespace: 'phone',
+    namespace: 'phone.streams',
     action: {
       type: 'action',
-      name: 'setAgentState',
+      name: 'updateAgentClient',
     },
     meta: {
       endpoint: process.env.WS_CALLBACK_URL,
       connectionId: agent.connection_id,
     },
     data: {
-      state: getStateDef(agentState)[2] || getStateDef(agent.state)[2],
+      routeState: getStateDef(agentState)[2] || getStateDef(agent.state)[2],
     },
   };
 };
