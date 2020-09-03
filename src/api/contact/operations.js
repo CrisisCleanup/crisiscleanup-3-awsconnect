@@ -32,7 +32,7 @@ export const updateContact = ({
 }) => ({
   ...Expressions([
     { name: 'state', value: state },
-    { key: 'p', name: 'priority', value: priority },
+    { key: 'p', name: 'priority', value: String(priority || 1) },
     { key: 't', name: 'entered_timestamp', value: new Date().toISOString() },
     { key: 'a', name: 'action', value: action },
     { key: 'i', name: 'agent_id', value: agentId },
