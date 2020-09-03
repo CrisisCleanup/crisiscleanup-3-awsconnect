@@ -5,13 +5,17 @@
 
 import axios from 'axios';
 
+const LANGUAGE = {
+  en_US: 2,
+  es_MX: 7,
+};
+
 export const getLanguageId = async (subtag) => {
-  const response = await axios.get('/languages');
-  const { results } = response.data;
-  const tag = subtag.replace('_', '-');
-  const id = results.filter((r) => (r.subtag === tag ? r.id : null));
-  if (!id.length) {
-    return 2; // en-US default
+   if(subtag.includes('-')) {
+     return getLanguageId(subtag.replace('-', '_'))
+   }
+  if (Object.keys(LANGUAGE).includes(subtag)) {
+    return LANGUAGE[subtag];
   }
-  return id[0].id;
+  return 2;
 };
