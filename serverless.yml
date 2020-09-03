@@ -1,5 +1,3 @@
-name: crisiscleanup-3-awsconnect
-
 service: crisiscleanup-3-awsconnect
 app: crisiscleanup-3-awsconnect
 org: crisiscleanup
@@ -12,7 +10,6 @@ provider:
   runtime: nodejs12.x
   stage: dev
   region: us-east-1
-  timeout: 10
   logRetentionInDays: 14
   logs:
     websocket:
@@ -98,6 +95,7 @@ plugins:
   - serverless-prune-plugin
   - serverless-dynamodb-local
   - serverless-domain-manager
+  - serverless-localstack
   - serverless-stack-output
   - serverless-sentry
   - serverless-offline
@@ -116,13 +114,13 @@ custom:
       - staging
       - prod
     events:
-      # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 5:55pm (UTC)
-      - schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
+      # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 8:55pm (UTC)
+      - schedule: 'cron(0/5 8-20 ? * MON-FRI *)'
     prewarm: true
     concurrency: 1
   prune:
     automatic: true
-    number: 5
+    number: 2
   dynamodb:
     stages:
       - dev
@@ -133,6 +131,10 @@ custom:
   customDomain: ${self:custom.dynamic.domain}
   output:
     file: .build/stack.yml
+  localstack:
+    stages:
+      - local
+    autostart: true
 
 functions:
   awsConnect:
