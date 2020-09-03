@@ -11,9 +11,9 @@ const LANGUAGE = {
 };
 
 export const getLanguageId = async (subtag) => {
-   if(subtag.includes('-')) {
-     return getLanguageId(subtag.replace('-', '_'))
-   }
+  if (subtag.includes('-')) {
+    return getLanguageId(subtag.replace('-', '_'));
+  }
   if (Object.keys(LANGUAGE).includes(subtag)) {
     return LANGUAGE[subtag];
   }
