@@ -14,6 +14,7 @@ import {
 } from './api';
 import WS from './ws';
 import RESP from './ws/response';
+import { LANGUAGE } from './api/helpers';
 
 const checkCases = async ({
   inboundNumber,
@@ -133,6 +134,7 @@ const setAgentState = async ({
   state,
   routeState,
   contactState,
+  locale,
   client,
   contactData,
   initContactId = null,
@@ -166,6 +168,7 @@ const setAgentState = async ({
     agentState: fullState,
     current_contact_id: initContactId || currentContactId,
     connection_id: connectionId,
+    locale,
   });
   console.log('agent state response', resp);
   if (client === 'ws') {
@@ -272,6 +275,7 @@ const findAgent = async ({
   const contact = await new Contact.Contact({
     contactId: initContactId,
     priority: 1,
+    contactLocale: userLanguage,
   }).load();
   if (inbound) {
     contact.priority = inbound.priority || contact.priority;
@@ -375,7 +379,7 @@ const findAgent = async ({
   }
   let agent;
   try {
-    agent = await Agent.findNextAgent();
+    agent = await Agent.findNextAgent(contact.locale);
   } catch (e) {
     if (e instanceof Agent.AgentError) {
       return {

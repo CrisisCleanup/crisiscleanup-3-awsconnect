@@ -6,8 +6,8 @@
 import axios from 'axios';
 
 export const LANGUAGE = {
-  en_US: 'en_US',
-  es_MX: 'es_MX',
+  en_US: 'en-US',
+  es_MX: 'es-MX',
 };
 
 const LANGUAGE_IDS = {

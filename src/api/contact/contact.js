@@ -7,6 +7,7 @@
 import { Dynamo } from '../../utils';
 import ApiModel from '../api';
 import * as OPS from './operations';
+import { LANGUAGE } from '../helpers';
 
 export const OPERATIONS = OPS;
 
@@ -35,7 +36,7 @@ export class Contact extends ApiModel {
     const { contactId, contactRouted, contactLocale, action, agentId } = params;
     super({ dbTable: Dynamo.TABLES.CONTACTS });
     this.contactId = contactId;
-    this.locale = contactLocale || CONTACT_LANG.en_US;
+    this.locale = contactLocale === undefined ? 'en_US' : contactLocale;
     this.currentAction = action || 'enter_ivr';
     this.routed =
       contactRouted === undefined ? actionIsRouted(this.action) : contactRouted;
@@ -80,8 +81,9 @@ export class Contact extends ApiModel {
   }
 
   get localeName() {
-    return Object.keys(CONTACT_LANG).find(
-      (k) => CONTACT_LANG[k] === this.locale,
+    return (
+      Object.keys(LANGUAGE).find((k) => LANGUAGE[k] === this.locale) ||
+      this.locale
     );
   }
 
@@ -105,7 +107,9 @@ export class Contact extends ApiModel {
         this.routed ? CONTACT_STATES.ROUTED : CONTACT_STATES.QUEUED
       }`,
     );
-    this.locale = CONTACT_LANG[localeValue];
+    this.locale = Object.keys(LANGUAGE).includes(localeValue)
+      ? LANGUAGE[localeValue]
+      : localeValue;
     this.routed = routed;
     return this.state;
   }
@@ -120,10 +124,12 @@ export class Contact extends ApiModel {
 
   async getAll() {
     this.log('fetching all contacts!');
-    const results = await this.db.scan({
-      TableName: Dynamo.TABLES.CONTACTS.name,
-      ...Dynamo.expiredFilter()
-    }).promise();
+    const results = await this.db
+      .scan({
+        TableName: Dynamo.TABLES.CONTACTS.name,
+        ...Dynamo.expiredFilter(),
+      })
+      .promise();
     this.log(`scan results: ${results}`);
     this.log(results);
     const { Items } = results;
@@ -134,7 +140,12 @@ export class Contact extends ApiModel {
     console.log('[contacts] counting num contacts in queue...');
     const db = Dynamo.DynamoClient(Dynamo.TABLES.CONTACTS);
     const results = await db
-      .query(OPS.queryNumByState({ dbTable: Dynamo.TABLES.CONTACTS.name, state: 'en_US#queued' }))
+      .query(
+        OPS.queryNumByState({
+          dbTable: Dynamo.TABLES.CONTACTS.name,
+          state: 'en-US#queued',
+        }),
+      )
       .promise();
     const { Count } = results;
     return Count;
@@ -174,7 +185,6 @@ export class Contact extends ApiModel {
     this.log(`found existing contact:`);
     this.log(Item);
     const {
-      // locale,
       entered_timestamp,
       priority,
       state,
@@ -203,7 +213,6 @@ export class Contact extends ApiModel {
     this.priority = priority;
     this.action = action;
     this.state = state;
-    // this.locale = locale;
 
     this.cases = {
       pdas,

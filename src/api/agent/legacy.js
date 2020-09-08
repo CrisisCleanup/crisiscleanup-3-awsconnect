@@ -308,6 +308,9 @@ export const findNextAgent = async (language) => {
   };
   console.log('querying agents table with:', params);
   const { Items } = await db.query(params).promise();
+  if (!Items) {
+    throw new AgentError('No agents are available!');
+  }
   const normalizedItems = Items.map((m) => Dynamo.normalize(m));
   console.log('resulting items:', normalizedItems);
   if (!normalizedItems.length) {
