@@ -1,0 +1,44 @@
+Resources:
+  CCUConCluster:
+    Type: AWS::DAX::Cluster
+    Properties:
+      ClusterName: ${self:custom.prefix}
+      Description: Cluster CCU Connect
+      IAMRoleARN: !GetAtt CCUConDaxRole.Arn
+      NodeType: dax.t2.small
+      ReplicationFactor: 1
+      SecurityGroupIds:
+        - !GetAtt ProfileServiceSecurityGroup.GroupId
+      SubnetGroupName: !Ref CCUConSubnetGroup
+
+  CCUConDaxRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - dax.amazonaws.com
+        Version: '2012-10-17'
+      RoleName: ${self:custom.prefix}-dax-role
+      Policies:
+        - PolicyName: DAXAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Resource: '*'
+                Action:
+                  - 'dax:*'
+                  - 'dynamodb:DescribeTable'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:GetItem'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
