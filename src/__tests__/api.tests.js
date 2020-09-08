@@ -65,13 +65,14 @@ describe('outbound api', () => {
         ],
       });
     mock
-      .onGet('/worksites', {
-        params: { phone_number: '1234567890', incident: 199 },
+      .onPost('/phone_connect/resolve_cases', {
+        contact_id: 'abc123',
+        phone_number: '1234567890',
       })
       .reply(200, {
         results: [{ id: 99 }],
       });
-    const cases = await Outbound.resolveCasesByNumber('+1234567890', 199);
+    const cases = await Outbound.resolveCasesByNumber('abc123', '+1234567890');
     expect(cases).toMatchSnapshot();
   });
 
@@ -101,6 +102,7 @@ describe('outbound api', () => {
             "Accept": "application/json, text/plain, */*",
             "Content-Type": "application/json;charset=utf-8",
           },
+          "maxBodyLength": -1,
           "maxContentLength": -1,
           "method": "post",
           "timeout": 0,

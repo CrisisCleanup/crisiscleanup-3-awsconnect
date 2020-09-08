@@ -38,6 +38,7 @@ Object {
       "Content-Type": "application/x-www-form-urlencoded",
     },
   },
+  "maxBodyLength": -1,
   "maxContentLength": -1,
   "timeout": 0,
   "transformRequest": Array [
