@@ -7,7 +7,8 @@
 import { expiredFilter, Expressions } from '../../utils/dynamo';
 
 // Create Contact
-export const createContact = ({ contact_id, state }) => ({
+export const createContact = ({ dbTable, contact_id, state }) => ({
+  TableName: dbTable,
   Key: {
     contact_id,
     state,
@@ -15,7 +16,8 @@ export const createContact = ({ contact_id, state }) => ({
 });
 
 // Get Contact
-export const getContact = ({ contactId }) => ({
+export const getContact = ({ dbTable, contactId }) => ({
+  TableName: dbTable,
   Key: {
     contact_id: contactId,
   },
@@ -23,6 +25,7 @@ export const getContact = ({ contactId }) => ({
 
 // Update Contact
 export const updateContact = ({
+  dbTable,
   contactId,
   state,
   priority,
@@ -30,6 +33,7 @@ export const updateContact = ({
   agentId,
   cases: { pdas, worksites, ids },
 }) => ({
+  TableName: dbTable,
   ...Expressions([
     { name: 'state', value: state },
     { key: 'p', name: 'priority', value: String(priority || 1) },
@@ -52,7 +56,8 @@ export const updateContact = ({
 });
 
 // Count Contacts in Queue
-export const queryNumByState = ({ state }) => ({
+export const queryNumByState = ({ dbTable, state }) => ({
+  TableName: dbTable,
   ...expiredFilter(Expressions([{ name: 'state', value: state }])),
   KeyConditionExpression: '#S = :S',
   Select: 'COUNT',
@@ -60,7 +65,8 @@ export const queryNumByState = ({ state }) => ({
 });
 
 // Delete Contact
-export const deleteContact = ({ contactId }) => ({
+export const deleteContact = ({ dbTable, contactId }) => ({
+  TableName: dbTable,
   Key: {
     contact_id: contactId,
   },

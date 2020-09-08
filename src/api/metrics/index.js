@@ -24,7 +24,7 @@ export class Metrics extends ApiModel {
   async increment(metric, amount = 1) {
     this.log(`incrementing metric: ${metric}`);
     const results = await this.db
-      .update(OPS.incrementMetric({ name: metric, amount }))
+      .update(OPS.incrementMetric({ dbTable: this.dbTable, name: metric, amount }))
       .promise();
     this.log('results:', results);
     return results;
@@ -33,7 +33,7 @@ export class Metrics extends ApiModel {
   async decrement(metric, amount = 1) {
     this.log(`decrementing metric: ${metric}`);
     const results = await this.db
-      .update(OPS.decrementValue({ name: metric, amount }))
+      .update(OPS.decrementValue({ dbTable: this.dbTable, name: metric, amount }))
       .promise();
     this.log('results:', results);
     return results;
@@ -42,7 +42,7 @@ export class Metrics extends ApiModel {
   async update(metric, value) {
     this.log(`setting metric: [${metric}] => ${value}`);
     const results = await this.db
-      .update(OPS.setValue({ name: metric, value }))
+      .update(OPS.setValue({dbTable: this.dbTable, name: metric, value }))
       .promise();
     this.log('results:', results);
     return results;

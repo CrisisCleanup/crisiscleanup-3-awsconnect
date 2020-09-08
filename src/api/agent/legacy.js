@@ -103,6 +103,7 @@ export const get = async ({ agentId, attributes }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const projExp = attributes || Object.values(AGENT_ATTRS);
   const params = {
+    TableName: TABLE.name,
     ...KeyMap({
       agentId,
     }),
@@ -213,6 +214,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   });
   const finalAgentState = `${stateOnline}#${stateType}#${subState}`;
   const params = {
+    TableName: TABLE.name,
     ...KeyMap({
       mapName: 'Item',
       agentId,
@@ -246,6 +248,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
 export const getTargetAgent = async ({ currentContactId }) => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
+    TableName: TABLE.name,
     IndexName: 'contact-index',
     ExpressionAttributeValues: {
       ':contactId': {
@@ -271,6 +274,7 @@ export class AgentError extends Error {}
 export const findNextAgent = async () => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
+    TableName: TABLE.name,
     ExpressionAttributeNames: {
       '#S': 'state',
       '#O': 'active',
@@ -336,6 +340,7 @@ export const activeAgents = async () => {
     .query({
       ...Dynamo.Expressions([{ name: 'active', value: 'y' }]),
       KeyConditionExpression: '#S = :s',
+      TableName: TABLE.name,
     })
     .promise();
   const { Items } = results;

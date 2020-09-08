@@ -6,14 +6,16 @@
 import { expiredFilter, Expressions } from '../../utils/dynamo';
 
 // Get Client
-export const getClient = ({ userId }) => ({
+export const getClient = ({ dbTable, userId }) => ({
+  TableName: dbTable,
   Key: {
     user_id: String(userId),
   },
 });
 
 // Update Client
-export const updateClient = ({ connectionId, userId, type }) => ({
+export const updateClient = ({ dbTable, connectionId, userId, type }) => ({
+  TableName: dbTable,
   ...Expressions([
     { key: 'c', name: 'connection_id', value: connectionId },
     { key: 't', name: 'client_type', value: type },
@@ -28,7 +30,8 @@ export const updateClient = ({ connectionId, userId, type }) => ({
 });
 
 // Query by type
-export const queryByType = (query) => ({
+export const queryByType = (dbTable, query) => ({
+  TableName: dbTable,
   ...expiredFilter(
     Expressions([{ key: 't', name: 'client_type', value: query }]),
   ),
@@ -37,14 +40,16 @@ export const queryByType = (query) => ({
 });
 
 // Delete Client
-export const deleteClient = ({ userId }) => ({
+export const deleteClient = ({ dbTable, userId }) => ({
+  TableName: dbTable,
   Key: {
     user_id: userId,
   },
 });
 
 // Query by Connection Id
-export const queryByConnection = ({ connectionId }) => ({
+export const queryByConnection = ({ dbTable, connectionId }) => ({
+  TableName: dbTable,
   ...expiredFilter(
     Expressions([{ key: 'c', name: 'connection_id', value: connectionId }]),
   ),

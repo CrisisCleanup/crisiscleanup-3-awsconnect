@@ -36,14 +36,17 @@ export class Client extends ApiModel {
 
   static async allAdmins() {
     const dbClient = Dynamo.DynamoClient(Dynamo.TABLES.CLIENTS);
-    const results = await dbClient.query(OPS.queryByType('admin')).promise();
+    const results = await dbClient.query(OPS.queryByType(Dynamo.TABLES.CLIENTS.name, 'admin')).promise();
     const { Items } = results;
     return Items;
   }
 
   static async all() {
     const dbClient = Dynamo.DynamoClient(Dynamo.TABLES.CLIENTS);
-    const results = await dbClient.scan(expiredFilter()).promise();
+    const results = await dbClient.scan({
+      TableName: Dynamo.TABLES.CLIENTS.name,
+      ...expiredFilter()
+    }).promise();
     const { Items } = results;
     return Items;
   }

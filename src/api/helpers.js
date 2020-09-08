@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const LANGUAGE = {
+export const LANGUAGE = {
   en_US: 2,
   es_MX: 7,
 };

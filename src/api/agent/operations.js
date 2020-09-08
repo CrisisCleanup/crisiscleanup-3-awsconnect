@@ -6,7 +6,8 @@
 import { Expressions } from '../../utils/dynamo';
 
 // Query agents by state
-export const queryAgentsByState = ({ state, selector = 'ALL_ATTRIBUTES' }) => ({
+export const queryAgentsByState = ({ dbTable, state, selector = 'ALL_ATTRIBUTES' }) => ({
+  TableName: dbTable,
   ...Expressions([
     { key: 'a', name: 'active', value: 'y' },
     { key: 's', name: 'state', value: state },
@@ -18,9 +19,11 @@ export const queryAgentsByState = ({ state, selector = 'ALL_ATTRIBUTES' }) => ({
 
 // Query by active w/ filter
 export const queryActiveFilter = ({
+  dbTable,
   selector = 'ALL_ATTRIBUTES',
   filter,
 } = {}) => ({
+  TableName: dbTable,
   ...Expressions([{ key: 'a', name: 'active', value: 'y' }]),
   KeyConditionExpression: '#A = :a',
   FilterExpression: filter,
@@ -29,7 +32,8 @@ export const queryActiveFilter = ({
 });
 
 // Update agent connection id
-export const updateConnectionId = ({ agentId, connectionId }) => ({
+export const updateConnectionId = ({ dbTable, agentId, connectionId }) => ({
+  TableName: dbTable,
   ...Expressions([{ key: 'c', name: 'connection_id', value: connectionId }]),
   Key: {
     agent_id: agentId,
@@ -38,7 +42,8 @@ export const updateConnectionId = ({ agentId, connectionId }) => ({
 });
 
 // Update agent state if it doesnt have contact id
-export const updateStateByHeartbeat = ({ agentId, agentState }) => ({
+export const updateStateByHeartbeat = ({ dbTable, agentId, agentState }) => ({
+  TableName: dbTable,
   ...Expressions([{ key: 'as', name: 'state', value: agentState }]),
   Key: {
     agent_id: agentId,

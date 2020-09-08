@@ -12,7 +12,8 @@ const MetricExpressions = (amount) =>
   ]);
 
 // Update Realtime Metrics
-export const incrementMetric = ({ name, amount } = {}) => ({
+export const incrementMetric = ({ dbTable, name, amount } = {}) => ({
+  TableName: dbTable,
   ...MetricExpressions(amount),
   UpdateExpression: 'set #V = #V + :v',
   Key: {
@@ -21,7 +22,8 @@ export const incrementMetric = ({ name, amount } = {}) => ({
   },
 });
 
-export const decrementValue = ({ name, amount } = {}) => ({
+export const decrementValue = ({ dbTable, name, amount } = {}) => ({
+  TableName: dbTable,
   ...MetricExpressions(amount),
   UpdateExpression: 'set #V = #V - :v',
   Key: {
@@ -30,7 +32,8 @@ export const decrementValue = ({ name, amount } = {}) => ({
   },
 });
 
-export const setValue = ({ name, value }) => ({
+export const setValue = ({ dbTable, name, value }) => ({
+  TableName: dbTable,
   ...MetricExpressions(value),
   UpdateExpression: 'set #V = :v',
   Key: {

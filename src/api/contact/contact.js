@@ -120,7 +120,10 @@ export class Contact extends ApiModel {
 
   async getAll() {
     this.log('fetching all contacts!');
-    const results = await this.db.scan(Dynamo.expiredFilter()).promise();
+    const results = await this.db.scan({
+      TableName: Dynamo.TABLES.CONTACTS.name,
+      ...Dynamo.expiredFilter()
+    }).promise();
     this.log(`scan results: ${results}`);
     this.log(results);
     const { Items } = results;
@@ -131,7 +134,7 @@ export class Contact extends ApiModel {
     console.log('[contacts] counting num contacts in queue...');
     const db = Dynamo.DynamoClient(Dynamo.TABLES.CONTACTS);
     const results = await db
-      .query(OPS.queryNumByState({ state: 'en_US#queued' }))
+      .query(OPS.queryNumByState({ dbTable: Dynamo.TABLES.CONTACTS.name, state: 'en_US#queued' }))
       .promise();
     const { Count } = results;
     return Count;
@@ -171,6 +174,7 @@ export class Contact extends ApiModel {
     this.log(`found existing contact:`);
     this.log(Item);
     const {
+      // locale,
       entered_timestamp,
       priority,
       state,
@@ -199,6 +203,7 @@ export class Contact extends ApiModel {
     this.priority = priority;
     this.action = action;
     this.state = state;
+    // this.locale = locale;
 
     this.cases = {
       pdas,
