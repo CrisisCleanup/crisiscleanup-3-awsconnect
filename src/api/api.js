@@ -6,7 +6,6 @@
 import { Dynamo } from '../utils';
 
 export default class ApiModel {
-
   constructor({ loggerName = '', dbTable } = {}) {
     this.loggerName = loggerName;
     this.dbTable = dbTable.name;
@@ -19,5 +18,4 @@ export default class ApiModel {
     console.log(`${this.loggerName} `, message, ...params);
     return this;
   }
-
 }

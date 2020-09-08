@@ -7,6 +7,7 @@
 import { Dynamo } from '../../utils';
 import AgentV2 from './agent';
 import RESP from '../../ws/response';
+import { LANGUAGE } from '../helpers';
 
 export const Agent = AgentV2;
 
@@ -83,6 +84,7 @@ export const AGENT_ATTRS = Object.freeze({
   CONNECTION: 'connection_id',
   ACTIVE: 'active',
   STATE_TTL: 'state_ttl',
+  LOCALE: 'locale',
 });
 
 export const KeyMap = ({
@@ -123,6 +125,11 @@ export const get = async ({ agentId, attributes }) => {
   if (!Item) {
     return Item;
   }
+  if (!Item[AGENT_ATTRS.LOCALE]) {
+    Item[AGENT_ATTRS.LOCALE] = {
+      S: LANGUAGE.en_US,
+    };
+  }
   console.log('fetched item:', Item);
   return Dynamo.normalize(Item);
 };
@@ -139,7 +146,7 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   }
 
   const deletedAttrs = [];
-  let neededAttrs = [AGENT_ATTRS.CONNECTION];
+  let neededAttrs = [AGENT_ATTRS.CONNECTION, AGENT_ATTRS.LOCALE];
 
   const [stateOnline, stateType, subState] = getStateDef(agentState);
   switch (subState) {
@@ -180,6 +187,9 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   } else {
     deletedAttrs.push(AGENT_ATTRS.ACTIVE);
   }
+  additionalAttrs[AGENT_ATTRS.LOCALE] = {
+    S: LANGUAGE.en_US, // default english
+  };
 
   console.log('originally passed additional attrs:', attrs);
   const reqKeys = Object.keys(attrs);
@@ -271,13 +281,14 @@ export const getTargetAgent = async ({ currentContactId }) => {
 
 export class AgentError extends Error {}
 
-export const findNextAgent = async () => {
+export const findNextAgent = async (language) => {
   const db = Dynamo.DynamoTable(TABLE);
   const params = {
     TableName: TABLE.name,
     ExpressionAttributeNames: {
       '#S': 'state',
       '#O': 'active',
+      '#L': 'locale',
     },
     ExpressionAttributeValues: {
       ':t': {
@@ -286,8 +297,12 @@ export const findNextAgent = async () => {
       ':a': {
         S: 'y',
       },
+      ':e': {
+        S: String(language),
+      },
     },
     KeyConditionExpression: '#O = :a AND begins_with (#S, :t)',
+    FilterExpression: 'contains (#L, :e)',
     IndexName: 'state-index',
     Select: 'ALL_ATTRIBUTES',
   };

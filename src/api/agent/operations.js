@@ -6,7 +6,11 @@
 import { Expressions } from '../../utils/dynamo';
 
 // Query agents by state
-export const queryAgentsByState = ({ dbTable, state, selector = 'ALL_ATTRIBUTES' }) => ({
+export const queryAgentsByState = ({
+  dbTable,
+  state,
+  selector = 'ALL_ATTRIBUTES',
+}) => ({
   TableName: dbTable,
   ...Expressions([
     { key: 'a', name: 'active', value: 'y' },
