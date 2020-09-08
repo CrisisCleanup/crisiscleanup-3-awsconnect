@@ -19,14 +19,19 @@ export default class Agent extends ApiModel {
 
   static async getAll() {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
-    const results = await db.scan({ TableName: Dynamo.TABLES.AGENTS.name }).promise();
+    const results = await db
+      .scan({ TableName: Dynamo.TABLES.AGENTS.name })
+      .promise();
     const { Items } = results;
     return Items;
   }
 
   static async countByState(state) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
-    const query = OPS.queryAgentsByState({ dbTable: Dynamo.TABLES.AGENTS.name, selector: 'COUNT' });
+    const query = OPS.queryAgentsByState({
+      dbTable: Dynamo.TABLES.AGENTS.name,
+      selector: 'COUNT',
+    });
     console.log('[agents] making query:', query);
     const results = await db.query(query).promise();
     const { Count } = results;
@@ -54,11 +59,19 @@ export default class Agent extends ApiModel {
 
   static async updateConnection({ agentId, connectionId, agentState }) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
-    const query = OPS.updateConnectionId({ dbTable: Dynamo.TABLES.AGENTS.name, agentId, connectionId });
+    const query = OPS.updateConnectionId({
+      dbTable: Dynamo.TABLES.AGENTS.name,
+      agentId,
+      connectionId,
+    });
     console.log('[agents] updating connection:', query);
     const results = await db.update(query).promise();
     if (agentState) {
-      const agStateQuery = OPS.updateStateByHeartbeat({ dbTable: Dynamo.TABLES.AGENTS.name, agentId, agentState });
+      const agStateQuery = OPS.updateStateByHeartbeat({
+        dbTable: Dynamo.TABLES.AGENTS.name,
+        agentId,
+        agentState,
+      });
       console.log('[agents] updating state by connection:', agStateQuery);
       try {
         await db.update(agStateQuery).promise();

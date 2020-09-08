@@ -7,6 +7,7 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { advanceTo, clear } from 'jest-date-mock';
 import { Agent, Contact, Events, Helpers, Outbound } from '../api';
+import { LANGUAGE } from '../api/helpers';
 
 // jest.mock('../utils/dynamo.js');
 jest.mock('../ws');
@@ -178,6 +179,7 @@ describe('agent api', () => {
         "active": "y",
         "connection_id": "zzzz",
         "entered_timestamp": "2020-06-20T05:00:00.000Z",
+        "locale": "en_US",
         "state": "online#routable#routable",
       }
     `);
@@ -192,6 +194,7 @@ describe('agent api', () => {
         "active": "y",
         "connection_id": "zzzz",
         "entered_timestamp": "2020-06-20T06:00:00.000Z",
+        "locale": "en_US",
         "state": "offline#not_routable#offline",
       }
     `);
@@ -208,7 +211,7 @@ describe('agent api', () => {
       agentId: 'yyyy',
       agentState: Agent.AGENT_STATES.OFFLINE,
     });
-    const nextAgent = await Agent.findNextAgent();
+    const nextAgent = await Agent.findNextAgent(LANGUAGE.en_US);
     expect(nextAgent.agent_id).toBe('xxxx');
     clear();
   });
@@ -223,7 +226,7 @@ describe('agent api', () => {
       agentId: 'yyyy',
       agentState: Agent.AGENT_STATES.PAUSED,
     });
-    const nextAgent = await Agent.findNextAgent();
+    const nextAgent = await Agent.findNextAgent(LANGUAGE.en_US);
     expect(nextAgent).toBeFalsy();
     clear();
   });
@@ -238,7 +241,9 @@ describe('agent api', () => {
       agentId: 'yyyy',
       agentState: Agent.AGENT_STATES.OFFLINE,
     });
-    await expect(Agent.findNextAgent()).rejects.toThrow(Agent.AgentError);
+    await expect(Agent.findNextAgent(LANGUAGE.en_US)).rejects.toThrow(
+      Agent.AgentError,
+    );
     clear();
   });
 
@@ -253,8 +258,63 @@ describe('agent api', () => {
       agentId: 'yyyy',
       agentState: Agent.AGENT_STATES.ROUTABLE,
     });
-    const nextAgent = await Agent.findNextAgent();
+    const nextAgent = await Agent.findNextAgent(LANGUAGE.en_US);
     expect(nextAgent.agent_id).toBe('xxxx');
+    clear();
+  });
+
+  it('correctly filters next agent by language', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      locale: LANGUAGE.en_US,
+    });
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      locale: LANGUAGE.es_MX,
+    });
+    const nextAgent = await Agent.findNextAgent(LANGUAGE.es_MX);
+    expect(nextAgent.agent_id).toBe('yyyy');
+    clear();
+  });
+
+  it('correctly filters next agent by language bilingual', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      locale: `${LANGUAGE.en_US}#${LANGUAGE.es_MX}`,
+    });
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      locale: LANGUAGE.es_MX,
+    });
+    const nextAgent = await Agent.findNextAgent(LANGUAGE.es_MX);
+    expect(nextAgent.agent_id).toBe('xxxx');
+    clear();
+  });
+
+  it('correctly finds no agent if none are online with contact locale', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      locale: LANGUAGE.en_US,
+    });
+    advanceTo(new Date(2020, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'yyyy',
+      agentState: Agent.AGENT_STATES.OFFLINE,
+      locale: LANGUAGE.es_MX,
+    });
+    await expect(Agent.findNextAgent(LANGUAGE.es_MX)).rejects.toThrow(
+      Agent.AgentError,
+    );
     clear();
   });
 
@@ -276,6 +336,7 @@ describe('agent api', () => {
         "connection_id": "zzzz",
         "current_contact_id": "abc",
         "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "locale": "en_US",
         "state": "online#not_routable#PendingBusy",
       }
     `);
@@ -290,6 +351,7 @@ describe('agent api', () => {
         "connection_id": "zzzz",
         "current_contact_id": "abc",
         "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "locale": "en_US",
         "state": "online#not_routable#Busy",
       }
     `);
