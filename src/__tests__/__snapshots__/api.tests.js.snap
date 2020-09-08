@@ -32,6 +32,7 @@ Object {
   "contactId": "abc",
   "currentAction": "enter_ivr",
   "db": Anything,
+  "dbTable": "connect-contacts-table-local",
   "entered_timestamp": null,
   "locale": 2,
   "loggerName": "contact[abc|en_US#queued]",
@@ -52,6 +53,7 @@ Object {
   "contactId": "abc",
   "currentAction": "connecting",
   "db": Anything,
+  "dbTable": "connect-contacts-table-local",
   "entered_timestamp": null,
   "locale": 2,
   "loggerName": "contact[abc|en_US#queued]",
@@ -78,6 +80,7 @@ Object {
   "Key": Object {
     "contact_id": "xxxx",
   },
+  "TableName": undefined,
   "UpdateExpression": "set #S = :s, #P = :p, #T = :t, #A = :a, #I = :i, #E = :e",
 }
 `;
@@ -96,6 +99,7 @@ Object {
   "IndexName": "state-index",
   "KeyConditionExpression": "#S = :S",
   "Select": "COUNT",
+  "TableName": undefined,
 }
 `;
 
