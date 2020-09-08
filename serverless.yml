@@ -97,7 +97,6 @@ plugins:
   - serverless-domain-manager
   - serverless-localstack
   - serverless-stack-output
-  - serverless-sentry
   - serverless-offline
 
 custom:
@@ -107,8 +106,6 @@ custom:
     webpackConfig: ./webpack.config.js
     includeModules: true
     packager: 'yarn'
-  sentry:
-    dsn: https://3f546c2c910b47dba24e1dcf2dfdc544@o317954.ingest.sentry.io/5213073
   warmup:
     enabled:
       - staging
