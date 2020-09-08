@@ -4,6 +4,9 @@
  */
 
 import AWS from 'aws-sdk';
+import AmazonDaxClient from 'amazon-dax-client';
+
+let daxClient, ddbClient, dynamoClient;
 
 export const dynamoOptions = () => {
   const isLocal = process.env.SLS_STAGE === 'local'; // serverless-offline
@@ -18,6 +21,7 @@ export const dynamoOptions = () => {
     };
   }
   console.log('Dynamo Endpoints configured:', opts);
+  console.log('DAX EP:', process.env.AWS_DAX_ENDPOINT);
   return opts;
 };
 
@@ -37,18 +41,44 @@ export const TABLES = {
   },
 };
 
-export const DynamoTable = ({ name }) =>
-  new AWS.DynamoDB({
-    params: { TableName: name },
-    apiVersion: '2012-08-10',
-    ...dynamoOptions(),
-  });
+export const DynamoTable = ({ name } = {}) => {
+  const isLocal = process.env.SLS_STAGE === 'local'; // serverless-offline
+  if (isLocal) {
+    if (!dynamoClient) {
+      dynamoClient = new AWS.DynamoDB({
+        ...dynamoOptions(),
+      });
+    }
+    return dynamoClient;
+  }
+  if (!daxClient) {
+    daxClient = new AmazonDaxClient({
+      endpoints: [process.env.AWS_DAX_ENDPOINT],
+    });
+  }
+  return daxClient;
+};
 
-export const DynamoClient = ({ name }) =>
-  new AWS.DynamoDB.DocumentClient({
-    params: { TableName: name },
-    ...dynamoOptions(),
-  });
+export const DynamoClient = ({ name } = {}) => {
+  if (!daxClient) {
+    DynamoTable();
+  }
+  if (dynamoClient) {
+    if (!ddbClient) {
+      ddbClient = new AWS.DynamoDB.DocumentClient({
+        ...dynamoOptions(),
+      });
+    }
+    return ddbClient;
+  }
+  if (!ddbClient) {
+    ddbClient = new AWS.DynamoDB.DocumentClient({
+      service: daxClient,
+      ...dynamoOptions(),
+    });
+  }
+  return ddbClient;
+};
 
 export const normalize = (record) => AWS.DynamoDB.Converter.unmarshall(record);
 
