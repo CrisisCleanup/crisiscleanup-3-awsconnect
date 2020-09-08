@@ -22,17 +22,18 @@ const checkCases = async ({
   pdas,
   ids,
   initContactId,
+  contactData,
 }) => {
   const contact = await new Contact.Contact({
     contactId: initContactId,
   }).load();
   // Don't re-resolve if we already did
-  if (worksites || ids) {
+  if (contactData.WORKSITES || contactData.PDAS) {
     console.log('Already resolved cases!');
     contact.cases = {
-      ids,
-      pdas,
-      worksites,
+      ids: contactData.OUTBOUND_IDS,
+      pdas: contactData.PDAS,
+      worksites: contactData.WORKSITES,
     };
     await contact.setState(Contact.CONTACT_STATES.QUEUED);
     return {
@@ -47,7 +48,11 @@ const checkCases = async ({
     };
   }
 
-  const cases = await Outbound.resolveCasesByNumber(inboundNumber, incidentId);
+  const cases = await Outbound.resolveCasesByNumber(
+    initContactId,
+    inboundNumber,
+    incidentId,
+  );
 
   // Response must be simple string map
   if (cases.ids.length >= 1 || cases.worksites.length) {
@@ -129,6 +134,7 @@ const setAgentState = async ({
   routeState,
   contactState,
   client,
+  contactData,
   initContactId = null,
   currentContactId = null,
   connectionId = null,
@@ -198,6 +204,7 @@ const setAgentState = async ({
             contactId: contact.contactId,
             state: contact.routeState,
             action: contact.action,
+            attributes: { ...contactData.Attributes, ...contact.cases },
           }),
         );
       }

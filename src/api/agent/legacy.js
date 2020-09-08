@@ -56,7 +56,7 @@ export const isInRoute = (state) =>
 export const isOnline = (state) => state.split('#')[0] === 'online';
 
 export const getStateDef = (state) => {
-  if (!state || state === null || typeof state !== 'string') {
+  if (!state || typeof state !== 'string') {
     console.log(`state ${state} is not a supported type!`);
     return getStateDef(AGENT_STATES.OFFLINE);
   }

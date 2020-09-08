@@ -14,7 +14,7 @@ export const getByPhoneNumber = async (number) => {
   const response = await axios.get('/phone_outbound', {
     params: { phone_number: queryNumber },
   });
-  if (!response.status === 200) {
+  if (response.status !== 200) {
     // Throw exception to trigger 'no ID' path in connect
     console.error(number);
     throw new Error('failed to query outbound calls by phone number:');
@@ -24,13 +24,18 @@ export const getByPhoneNumber = async (number) => {
   return results;
 };
 
-export const getWorksitesByPhoneNumber = async (number, incidentId) => {
+export const getWorksitesByPhoneNumber = async (
+  contactId,
+  number,
+  incidentId = -1,
+) => {
   // Format number
   const queryNumber = number.split('+')[1];
-  const response = await axios.get('/worksites', {
-    params: { phone_number: queryNumber, incident: incidentId },
+  const response = await axios.post('/phone_connect/resolve_cases', {
+    phone_number: queryNumber,
+    contact_id: contactId,
   });
-  if (!response.status === 200) {
+  if (response.status !== 200) {
     console.log('failed to fetch worksites by number!');
     console.error(number);
     return [];
@@ -40,11 +45,13 @@ export const getWorksitesByPhoneNumber = async (number, incidentId) => {
   return data;
 };
 
-export const resolveCasesByNumber = async (number, incidentId) => {
+export const resolveCasesByNumber = async (contactId, number, incidentId) => {
   // Query outbounds
-  const outbounds = await getByPhoneNumber(number);
-  const worksitesByNumber = await getWorksitesByPhoneNumber(number, incidentId);
+  await getWorksitesByPhoneNumber(contactId, number, incidentId);
 
+  // DEPRECATED: This is only here cause old connect
+  // flows expect it to be. Cases are now resolved
+  // asynchronously by the api.
   // Filter for outbounds w/ valid pda/worksite id
   const cases = {
     pdas: [],
@@ -52,26 +59,6 @@ export const resolveCasesByNumber = async (number, incidentId) => {
     ids: [],
   };
 
-  outbounds.forEach(({ id, pda, worksite }) => {
-    cases.ids.push(id);
-    if (worksite !== null) {
-      return cases.worksites.push(worksite);
-    }
-    if (pda !== null) {
-      return cases.pdas.push(pda);
-    }
-  });
-
-  if (worksitesByNumber && worksitesByNumber.length) {
-    worksitesByNumber.forEach(({ id }) => {
-      if (!cases.worksites.includes(id)) {
-        console.log('adding worksite by number:', id);
-        cases.worksites.push(id);
-      }
-    });
-  }
-
-  console.log('cases', cases);
   return cases;
 };
 
