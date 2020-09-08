@@ -1,6 +1,5 @@
 const nodeExternals = require('webpack-node-externals');
 const slsw = require('serverless-webpack');
-const SentryWebpack = require('@sentry/webpack-plugin');
 const threadLoader = require('thread-loader');
 
 const poolConfig = {
@@ -15,17 +14,6 @@ module.exports = {
   target: 'node',
   mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
   externals: [nodeExternals()],
-  plugins:
-    process.env.SENTRY_BUILD === '1'
-      ? [
-          new SentryWebpack({
-            include: '.',
-            ignoreFile: '.gitignore',
-            configFile: 'sentry.properties',
-            ignore: ['node_modules'],
-          }),
-        ]
-      : [],
   module: {
     rules: [
       {
