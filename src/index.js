@@ -9,6 +9,8 @@ import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
 import WS from './ws';
 import RESP from './ws/response';
 import { LANGUAGE } from './api/helpers';
+import Agent from './api/agent';
+import { METRICS } from './api/metrics';
 
 // Configure during lambda init
 configureEndpoint();
@@ -27,8 +29,43 @@ export const agentStreamHandler = async (event) => {
   console.log('[agents] incoming agents update:', Records);
   const clients = await Client.Client.all();
   const newImages = [];
-  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+  const metricUpdates = {
+    [METRICS.ONLINE]: {
+      all: 0,
+    },
+    [METRICS.AVAILABLE]: {
+      all: 0,
+    },
+  };
+  Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
     if (['INSERT', 'MODIFY'].includes(eventName)) {
+      const oldItem = Dynamo.normalize(OldImage);
+      const newItem = Dynamo.normalize(NewImage);
+      const wasOnline = Agent.isOnline(oldItem.state);
+      const wasRoutable = Agent.isRoutable(oldItem.state);
+      const isOnline = Agent.isOnline(newItem.state);
+      const isRoutable = Agent.isRoutable(newItem.state);
+
+      if (wasOnline === false && isOnline === true) {
+        // Agent OFFLINE -> ONLINE
+        metricUpdates[METRICS.ONLINE][newItem.locale] =
+          (metricUpdates[METRICS.ONLINE][newItem.locale] || 0) + 1;
+      }
+      if (wasOnline === true && isOnline === false) {
+        // Agent ONLINE -> OFFLINE
+        metricUpdates[METRICS.ONLINE][newItem.locale] =
+          (metricUpdates[METRICS.ONLINE][newItem.locale] || 0) - 1;
+      }
+      if (wasRoutable === false && isRoutable === true) {
+        // Agent NOT_ROUTABLE -> ROUTABLE
+        metricUpdates[METRICS.AVAILABLE][newItem.locale] =
+          (metricUpdates[METRICS.AVAILABLE][newItem.locale] || 0) + 1;
+      }
+      if (wasRoutable === true && isRoutable === false) {
+        // Agent ROUTABLE -> NOT_ROUTABLE
+        metricUpdates[METRICS.AVAILABLE][newItem.locale] =
+          (metricUpdates[METRICS.AVAILABLE][newItem.locale] || 0) - 1;
+      }
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
@@ -48,6 +85,32 @@ export const agentStreamHandler = async (event) => {
       }
     }),
   );
+
+  const metric = new Metrics.Metrics();
+  await Promise.all(
+    Object.keys(metricUpdates[METRICS.ONLINE]).map((localeK) => {
+      const val = metricUpdates[METRICS.ONLINE][localeK];
+      if (val >= 1) {
+        return metric.increment(METRICS.ONLINE, val, localeK);
+      }
+      if (val < 0) {
+        return metric.decrement(METRICS.ONLINE, Math.abs(val), localeK);
+      }
+    }),
+  );
+
+  await Promise.all(
+    Object.keys(metricUpdates[METRICS.AVAILABLE]).map((localeK) => {
+      const val = metricUpdates[METRICS.AVAILABLE][localeK];
+      if (val >= 1) {
+        return metric.increment(METRICS.AVAILABLE, val, localeK);
+      }
+      if (val < 0) {
+        return metric.decrement(METRICS.AVAILABLE, Math.abs(val), localeK);
+      }
+    }),
+  );
+
   return {
     statusCode: 200,
   };

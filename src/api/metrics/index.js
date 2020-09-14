@@ -24,15 +24,25 @@ export class Metrics extends ApiModel {
 
   async performUpdate(operation, { locale, metric, ...args }) {
     const locales = locale.split('#');
-    return locales.map((l) => {
-      const op = operation({
-        dbTable: this.dbTable,
-        name: `${metric}#${l}`,
-        ...args,
-      });
-      this.log('performing update operation:', op);
-      return this.db.update(op).promise();
+    const results = await Promise.all(
+      locales.map((l) => {
+        const op = operation({
+          dbTable: this.dbTable,
+          name: `${metric}#${l}`,
+          ...args,
+        });
+        this.log('performing update operation:', op);
+        return this.db.update(op).promise();
+      }),
+    );
+    const op = operation({
+      dbTable: this.dbTable,
+      name: metric,
+      ...args,
     });
+    this.log('performing total update:', op);
+    await this.db.update(op).promise();
+    return results;
   }
 
   async increment(metric, amount = 1, locale = LANGUAGE.en_US) {

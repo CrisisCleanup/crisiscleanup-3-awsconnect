@@ -206,33 +206,6 @@ const setAgentState = async ({
     locale,
   });
   console.log('agent state response', resp);
-  if (client === 'ws') {
-    const metric = new Metrics.Metrics();
-    try {
-      const isOnline = Agent.isOnline(fullState);
-      const isRoutable = Agent.isRoutable(fullState);
-      if (agentPrevOnline === false && isOnline === true) {
-        // Agent OFFLINE -> ONLINE
-        await metric.increment(METRICS.ONLINE, 1, locale);
-      }
-      if (agentPrevOnline === true && isOnline === false) {
-        // Agent ONLINE -> OFFLINE
-        await metric.decrement(METRICS.ONLINE, 1, locale);
-      }
-      if (agentPrevRoutable === false && isRoutable === true) {
-        // Agent NOT_ROUTABLE -> ROUTABLE
-        await metric.increment(METRICS.AVAILABLE, 1, locale);
-      }
-      if (agentPrevRoutable === true && isRoutable === false) {
-        // Agent ROUTABLE -> NOT_ROUTABLE
-        await metric.decrement(METRICS.AVAILABLE, 1, locale);
-      }
-    } catch (e) {
-      console.log('something went wrong refreshing metrics!:', e);
-      console.log(e);
-      throw e;
-    }
-  }
   if (client !== 'ws') {
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
