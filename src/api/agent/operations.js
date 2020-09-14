@@ -5,6 +5,15 @@
 
 import { Expressions } from '../../utils/dynamo';
 
+// Scan agents by state
+export const scanAgentsByState = ({ dbTable, state, selector = 'COUNT' }) => ({
+  TableName: dbTable,
+  Select: selector,
+  ConsistentRead: true,
+  ...Expressions([{ key: 's', name: 'state', value: state }]),
+  FilterExpression: 'begins_with(#S, :s)',
+});
+
 // Query agents by state
 export const queryAgentsByState = ({
   dbTable,
@@ -33,6 +42,18 @@ export const queryActiveFilter = ({
   FilterExpression: filter,
   Select: selector,
   IndexName: 'state-index',
+});
+
+// Scan w/ filter
+export const scanFilter = ({
+  dbTable,
+  selector = 'ALL_ATTRIBUTES',
+  filter,
+}) => ({
+  TableName: dbTable,
+  FilterExpression: filter,
+  Select: selector,
+  ConsistentRead: true,
 });
 
 // Update agent connection id

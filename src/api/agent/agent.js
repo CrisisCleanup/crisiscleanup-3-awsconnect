@@ -28,8 +28,9 @@ export default class Agent extends ApiModel {
 
   static async countByState(state) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
-    const query = OPS.queryAgentsByState({
+    const query = OPS.scanAgentsByState({
       dbTable: Dynamo.TABLES.AGENTS.name,
+      state,
       selector: 'COUNT',
     });
     console.log('[agents] making query:', query);
@@ -41,7 +42,7 @@ export default class Agent extends ApiModel {
 
   static async getInCall({ countOnly = true } = {}) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
-    const query = OPS.queryActiveFilter({
+    const query = OPS.scanFilter({
       dbTable: Dynamo.TABLES.AGENTS.name,
       filter: 'attribute_exists(current_contact_id)',
       selector: countOnly ? 'COUNT' : 'ALL_ATTRIBUTES',
@@ -91,6 +92,11 @@ export default class Agent extends ApiModel {
       await metrics.update(METRICS.ONLINE, agentsOnline);
       await metrics.update(METRICS.AVAILABLE, agentsAvailable);
       await metrics.update(METRICS.ON_CALL, agentsOnCall);
+      return {
+        [METRICS.ONLINE]: agentsOnline,
+        [METRICS.AVAILABLE]: agentsAvailable,
+        [METRICS.ON_CALL]: agentsOnCall,
+      };
     } catch (e) {
       console.log('Ran into an error updating metrics!', e);
     }
