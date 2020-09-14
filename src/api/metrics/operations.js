@@ -41,3 +41,13 @@ export const setValue = ({ dbTable, name, value }) => ({
     name,
   },
 });
+
+export const getRealtime = ({ dbTable }) => ({
+  TableName: dbTable,
+  ...Expressions([
+    { key: 't', name: 'type', value: 'realtime' },
+    { key: 'n', name: 'name', value: 'AGENTS' },
+  ]),
+  KeyConditionExpression: '#T = :t and begins_with(#N, :n)',
+  Select: 'ALL_ATTRIBUTES',
+});

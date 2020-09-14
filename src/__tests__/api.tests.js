@@ -393,15 +393,15 @@ describe('agent api', () => {
 describe('contact api', () => {
   it('sets correct contact state', async () => {
     const contact = new Contact.Contact({ contactId: 'xxxx' });
-    expect(contact.state).toBe('en_US#queued');
+    expect(contact.state).toBe('en-US#queued');
     expect(contact.routed).toBe(false);
-    await contact.setState('en_US#routed');
-    expect(contact.state).toBe('en_US#routed');
+    await contact.setState('en-US#routed');
+    expect(contact.state).toBe('en-US#routed');
     expect(contact.routed).toBe(true);
     await contact.setState('queued');
-    expect(contact.state).toBe('en_US#queued');
-    await contact.setState('es_MX#routed');
-    expect(contact.state).toBe('es_MX#routed');
+    expect(contact.state).toBe('en-US#queued');
+    await contact.setState('es-MX#routed');
+    expect(contact.state).toBe('es-MX#routed');
   });
 
   it('generates the correct operations', () => {
@@ -433,7 +433,7 @@ describe('contact api', () => {
     await contact.setState();
     expect(contact.routed).toBe(true);
     expect(contact).toMatchSnapshot({ db: expect.anything() });
-    expect(contact.state).toBe('en_US#routed');
+    expect(contact.state).toBe('en-US#routed');
     clear();
   });
 });
