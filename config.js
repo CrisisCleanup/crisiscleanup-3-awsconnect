@@ -74,6 +74,21 @@ const LambdaStreams = {
   },
 };
 
+const DAXConfig = {
+  dev: {
+    nodeType: 'dax.t2.small',
+    replicationFactor: 3,
+  },
+  staging: {
+    nodeType: 'dax.t2.medium',
+    replicationFactor: 2,
+  },
+  prod: {
+    nodeType: 'dax.r4.large',
+    replicationFactor: 3,
+  },
+};
+
 module.exports = (serverless) => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
@@ -94,11 +109,13 @@ module.exports = (serverless) => {
       domain: {
         enabled: false,
       },
+      dax: DAXConfig.dev,
     };
   } else {
     config = {
       domain: DOMAINS[stage],
       resources: { apiMapping: DomainMapping(DOMAINS[stage]), ...eventMaps },
+      dax: DAXConfig[stage],
     };
   }
   serverless.cli.consoleLog(config);

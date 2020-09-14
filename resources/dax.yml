@@ -5,8 +5,8 @@ Resources:
       ClusterName: ${self:custom.prefix}
       Description: Cluster CCU Connect
       IAMRoleARN: !GetAtt CCUConDaxRole.Arn
-      NodeType: dax.t2.small
-      ReplicationFactor: 1
+      NodeType: ${self:custom.dax.nodeType}
+      ReplicationFactor: ${self:custom.dax.replicationFactor}
       SecurityGroupIds:
         - !GetAtt ProfileServiceSecurityGroup.GroupId
       SubnetGroupName: !Ref CCUConSubnetGroup
