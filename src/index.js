@@ -8,6 +8,7 @@ import { Client, Metrics } from './api';
 import { configureEndpoint, CURRENT_ENDPOINT, Dynamo } from './utils';
 import WS from './ws';
 import RESP from './ws/response';
+import { LANGUAGE } from './api/helpers';
 
 // Configure during lambda init
 configureEndpoint();
@@ -24,7 +25,6 @@ export const agentStreamHandler = async (event) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;
   console.log('[agents] incoming agents update:', Records);
-  configureEndpoint();
   const clients = await Client.Client.all();
   const newImages = [];
   Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
@@ -61,22 +61,28 @@ export const contactStreamHandler = async (event, context) => {
   const adminClients = await Client.Client.allAdmins();
   const newImages = [];
   const metrics = new Metrics.Metrics();
-  let queueCount = 0;
+  const queueCounts = {
+    [LANGUAGE.en_US]: 0,
+    [LANGUAGE.es_MX]: 0,
+  };
   Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
+    const contactLocale = NewImage['locale'] || LANGUAGE.en_US;
     if (eventName === 'INSERT') {
-      queueCount += 1;
+      queueCounts[contactLocale] += 1;
     } else if (eventName === 'DELETE') {
-      queueCount -= 1;
+      queueCounts[contactLocale] -= 1;
     }
     if (['INSERT', 'MODIFY', 'DELETE'].includes(eventName)) {
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
-  if (queueCount >= 0) {
-    await metrics.increment(Metrics.METRICS.QUEUED, queueCount);
-  } else {
-    await metrics.decrement(Metrics.METRICS.QUEUED, queueCount);
-  }
+  await Object.keys(queueCounts).map((k) => {
+    if (queueCounts[k] >= 0) {
+      metrics.increment(Metrics.METRICS.QUEUED, queueCounts[k], k);
+    } else {
+      metrics.decrement(Metrics.METRICS.QUEUED, queueCounts[k], k);
+    }
+  });
   await adminClients.forEach(({ connection_id }) => {
     const payload = {
       meta: {
@@ -101,7 +107,6 @@ export const metricStreamHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;
   console.log('[metrics] incoming metric update:', Records);
-  configureEndpoint();
   const clients = await Client.Client.all();
   const metricPayload = [];
   Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
