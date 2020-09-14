@@ -43,7 +43,13 @@ const DomainMapping = ({ domainName }) => ({
   },
 });
 
-const LambdaEventDynamoMapping = ({ dbRef, lambdaRef }) => ({
+const StreamsPFactor = {
+  dev: 3,
+  staging: 5,
+  prod: 10,
+};
+
+const LambdaEventDynamoMapping = ({ dbRef, lambdaRef }, stage) => ({
   Type: 'AWS::Lambda::EventSourceMapping',
   Properties: {
     BatchSize: 1,
@@ -55,7 +61,10 @@ const LambdaEventDynamoMapping = ({ dbRef, lambdaRef }) => ({
     },
     StartingPosition: 'TRIM_HORIZON',
     Enabled: 'True',
-    ParallelizationFactor: 3,
+    ParallelizationFactor: StreamsPFactor[stage],
+    MaximumRetryAttempts: 1000,
+    MaximumRecordAgeInSeconds: 120,
+    MaximumBatchingWindowInSeconds: 0,
   },
 });
 

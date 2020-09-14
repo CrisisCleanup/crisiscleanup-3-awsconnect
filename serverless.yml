@@ -71,7 +71,7 @@ custom:
       # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 8:55pm (UTC)
       - schedule: 'cron(0/5 8-20 ? * MON-FRI *)'
     prewarm: true
-    concurrency: 1
+    concurrency: ${self:custom.lambda.warmupConcurrency}
   prune:
     automatic: true
     number: 2
