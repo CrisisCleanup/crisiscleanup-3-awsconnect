@@ -1,9 +1,7 @@
 Policies:
-  - ${cf:serverless-domain-manager-awsconnect.ServerlessDomainManagerDeployPolicyArn}
   - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
   - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
   - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-  - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
   - arn:aws:iam::aws:policy/AmazonSNSFullAccess
 RoleStatements:
   - Effect: 'Allow'
@@ -60,6 +58,14 @@ RoleStatements:
       - 'dynamodb:GetItem'
       - 'dynamodb:BatchGetItem'
       - 'dynamodb:DescribeTable'
+      - 'dynamodb:DescribeStream'
+      - 'dynamodb:BatchWriteItem'
+      - 'dynamodb:GetShardIterator'
+      - 'dynamodb:ListStreams'
+      - 'dynamodb:GetRecords'
+      - 'dynamodb:UpdateTimeToLive'
+      - 'dynamodb:ConditionCheckItem'
+      - 'dynamodb:DescribeTimeToLive'
     Resource:
       - 'Fn::Join':
           - ':'
