@@ -3,7 +3,14 @@ app: crisiscleanup-3-awsconnect
 org: crisiscleanup
 
 package:
-  individually: true
+  individually: false
+  exclude:
+    - node_modules/**
+    - '!node_modules/node-fetch/**'
+    - ./**
+    - '!src/**'
+    - '!package.json'
+    - '!yarn.lock'
 
 provider:
   name: aws
