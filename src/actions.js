@@ -551,7 +551,7 @@ export const clientHeartbeat = async ({
     type,
   }).load();
   await client.heartbeat(agentId);
-  return RESP.PONG()
+  return RESP.PONG();
 };
 
 export default {

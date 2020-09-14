@@ -3,7 +3,7 @@
  */
 
 const buildAction = ({ namespace, actionName }) => {
-  const withData = (data={}) => ({
+  const withData = (data = {}) => ({
     namespace,
     action: {
       type: 'action',
@@ -40,8 +40,8 @@ const STREAMS_ACTIONS = {
   }),
   PONG: buildAction({
     namespace: STREAMS,
-    actionName: 'receivePong'
-  })
+    actionName: 'receivePong',
+  }),
 };
 
 export default {
