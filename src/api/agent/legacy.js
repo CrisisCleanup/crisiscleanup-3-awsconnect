@@ -110,6 +110,7 @@ export const get = async ({ agentId, attributes }) => {
       agentId,
     }),
     ProjectionExpression: projExp.join(','),
+    ConsistentRead: true,
   };
   if (projExp.includes('state')) {
     // state is a dynamodb reserved key word
@@ -180,15 +181,11 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
       break;
   }
 
-  if (stateOnline) {
-    additionalAttrs[AGENT_ATTRS.ACTIVE] = {
-      S: 'y',
-    };
-  } else {
-    deletedAttrs.push(AGENT_ATTRS.ACTIVE);
-  }
   additionalAttrs[AGENT_ATTRS.LOCALE] = {
     S: LANGUAGE.en_US, // default english
+  };
+  additionalAttrs[AGENT_ATTRS.ACTIVE] = {
+    S: 'y',
   };
 
   console.log('originally passed additional attrs:', attrs);
@@ -282,7 +279,7 @@ export const getTargetAgent = async ({ currentContactId }) => {
 export class AgentError extends Error {}
 
 export const findNextAgent = async (language) => {
-  const db = Dynamo.DynamoTable(TABLE);
+  const db = Dynamo.DynamoTable({ ...TABLE, bypassCache: true });
   const params = {
     TableName: TABLE.name,
     ExpressionAttributeNames: {
