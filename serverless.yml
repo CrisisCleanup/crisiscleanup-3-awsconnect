@@ -77,11 +77,11 @@ custom:
     number: 2
   dynamodb:
     stages:
-      - dev
+      - local
     start:
-      port: 8000
-      inMemory: true
+      port: 4566
       migration: true
+      noStart: true
   customDomain: ${self:custom.dynamic.domain}
   dax: ${self:custom.dynamic.dax}
   lambda: ${self:custom.dynamic.lambda}
@@ -90,7 +90,7 @@ custom:
   localstack:
     stages:
       - local
-    autostart: true
+    autostart: false
 
 functions:
   awsConnect:

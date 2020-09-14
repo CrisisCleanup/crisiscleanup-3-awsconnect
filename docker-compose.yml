@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  deploy:
+    init: true
+    build:
+      context: .
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      SLS_STAGE: ${SLS_STAGE}
+      CC_API_BASE_URL: ${CC_API_BASE_URL}
+      CC_AUTH_TOKEN: ${CC_AUTH_TOKEN}
+      WS_CALLBACK_URL: ${WS_CALLBACK_URL}
+      AWS_DAX_ENDPOINT: ${AWS_DAX_ENDPOINT}
+      RELIC_API_KEY: ${RELIC_API_KEY}
+      LOGGING_ENABLED: ${LOGGING_ENABLED}
+      SERVERLESS_ACCESS_KEY: ${SERVERLESS_ACCESS_KEY}
