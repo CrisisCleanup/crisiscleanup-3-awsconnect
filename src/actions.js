@@ -490,25 +490,14 @@ export const clientHeartbeat = async ({
   agentId,
   type,
 }) => {
-  console.log('got client heartbeat!');
+  console.log('pong! got client heartbeat!');
   const client = await new Client.Client({
     connectionId,
     userId,
     type,
   }).load();
   await client.heartbeat(agentId);
-  const contacts = await new Contact.Contact().getAll();
-  try {
-    await Agent.Agent.refreshMetrics();
-  } catch (e) {
-    console.log('ran into error updating metrics!');
-    console.log(e);
-  }
-  return {
-    ...RESP.UPDATE_CONTACT_METRICS({
-      contacts,
-    }),
-  };
+  return RESP.PONG()
 };
 
 export default {
