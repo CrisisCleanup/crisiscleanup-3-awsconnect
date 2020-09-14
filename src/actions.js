@@ -106,15 +106,44 @@ const createCallback = async ({
   };
 };
 
-const denyCallback = async ({ inboundNumber, agentId, client }) => {
+const denyCallback = async ({
+  inboundNumber,
+  agentId,
+  client,
+  contactData,
+}) => {
   console.log('setting agent state to offline...');
   const newState = {
     agentId,
-    agentState: Agent.AGENT_STATES.OFFLINE,
+    agentState: 'offline#not_routable#not_routable',
   };
+  const agent = Agent.getTargetAgent({
+    currentContactId: contactData.Attributes.CONTACT_ID,
+  });
+
+  const contact = await new Contact.Contact({
+    contactId: agent.current_contact_id,
+  }).load();
+
   const agentResp = await Agent.setState(newState);
   const payload = await Agent.createStateWSPayload(newState);
-  await WS.send(payload);
+
+  const agentClient = await new Client.Client({
+    connectionId: payload.meta.connectionId,
+  }).load();
+
+  await agentClient.send({
+    ...RESP.UPDATE_AGENT({
+      state: Agent.AGENT_STATES.OFFLINE,
+      routeState: AGENT_STATES.NOT_ROUTABLE,
+    }),
+  });
+  await agentClient.send({
+    ...RESP.UPDATE_CONTACT({
+      contactId: contact.contactId,
+      actions: CONTACT_ACTIONS.MISSED,
+    }),
+  });
   console.log('unlocking callback for:', inboundNumber);
   const resp = await Outbound.unlock(inboundNumber);
   if (!resp.status === 200) {
