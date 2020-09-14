@@ -51,7 +51,7 @@ export const AGENT_STATE_GROUPS = Object.freeze({
 });
 
 export const isRoutable = (state) =>
-  ROUTABLE_STATES.includes(state.split('#')[2] || state);
+  ROUTABLE_STATES.includes(state.split('#')[1] || state);
 export const isInRoute = (state) =>
   INROUTE_STATES.includes(state.split('#')[2] || state);
 export const isOnline = (state) => state.split('#')[0] === 'online';

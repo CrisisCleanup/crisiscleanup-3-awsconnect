@@ -152,11 +152,14 @@ const setAgentState = async ({
     connectionId,
   );
   let fullState = agentState;
+  const agent = await Agent.get({ agentId });
+  const agentPrevOnline = Agent.isOnline(agent.state);
+  const agentPrevRoutable = Agent.isRoutable(agent.state);
   if (!fullState) {
     let _fullState = Agent.getStateDef(
       [state, routeState, contactState].join('#'),
     );
-    const agent = await Agent.get({ agentId });
+
     if (!contactState) {
       const curContactState = Agent.getStateDef(agent.state)[2];
       _fullState = [_fullState[0], _fullState[1], curContactState];
@@ -172,11 +175,30 @@ const setAgentState = async ({
   });
   console.log('agent state response', resp);
   if (client === 'ws') {
+    const metric = new Metrics.Metrics();
     try {
-      await Agent.Agent.refreshMetrics();
+      const isOnline = Agent.isOnline(fullState);
+      const isRoutable = Agent.isRoutable(fullState);
+      if (agentPrevOnline === false && isOnline === true) {
+        // Agent OFFLINE -> ONLINE
+        await metric.increment(METRICS.ONLINE, 1, locale);
+      }
+      if (agentPrevOnline === true && isOnline === false) {
+        // Agent ONLINE -> OFFLINE
+        await metric.decrement(METRICS.ONLINE, 1, locale);
+      }
+      if (agentPrevRoutable === false && isRoutable === true) {
+        // Agent NOT_ROUTABLE -> ROUTABLE
+        await metric.increment(METRICS.AVAILABLE, 1, locale);
+      }
+      if (agentPrevRoutable === true && isRoutable === false) {
+        // Agent ROUTABLE -> NOT_ROUTABLE
+        await metric.decrement(METRICS.AVAILABLE, 1, locale);
+      }
     } catch (e) {
       console.log('something went wrong refreshing metrics!:', e);
       console.log(e);
+      throw e;
     }
   }
   if (client !== 'ws') {
@@ -275,7 +297,7 @@ const findAgent = async ({
   const contact = await new Contact.Contact({
     contactId: initContactId,
     priority: 1,
-    contactLocale: userLanguage,
+    contactLocale: contactData.Attributes.USER_LANGUAGE,
   }).load();
   if (inbound) {
     contact.priority = inbound.priority || contact.priority;
