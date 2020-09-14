@@ -83,6 +83,8 @@ custom:
       inMemory: true
       migration: true
   customDomain: ${self:custom.dynamic.domain}
+  dax: ${self:custom.dynamic.dax}
+  lambda: ${self:custom.dynamic.lambda}
   output:
     file: .build/stack.yml
   localstack:
@@ -92,17 +94,15 @@ custom:
 
 functions:
   awsConnect:
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.awsConnect.provisioned}
+    reservedConcurrency: ${self:custom.lambda.awsConnect.reserved}
     handler: src/index.default
-    onError: !Ref ConnectErrorsTopic
 
   connectionHandler:
     handler: src/index.wsConnectionHandler
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.provisioned}
+    reservedConcurrency: ${self:custom.lambda.reserved}
     memorySize: 512
-    onError: !Ref ConnectErrorsTopic
     events:
       - websocket:
           route: $connect
@@ -110,30 +110,26 @@ functions:
           route: $disconnect
 
   wsHandler:
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.wsHandler.provisioned}
+    reservedConcurrency: ${self:custom.lambda.wsHandler.reserved}
     handler: src/index.wsHandler
-    onError: !Ref ConnectErrorsTopic
     events:
       - websocket: $default
 
   metricStreamHandler:
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.provisioned}
+    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.metricStreamHandler
-    onError: !Ref ConnectErrorsTopic
 
   contactStreamHandler:
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.provisioned}
+    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.contactStreamHandler
-    onError: !Ref ConnectErrorsTopic
 
   agentStreamHandler:
-    provisionedConcurrency: 3
-    reservedConcurrency: 5
+    provisionedConcurrency: ${self:custom.lambda.provisioned}
+    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.agentStreamHandler
-    onError: !Ref ConnectErrorsTopic
 
 resources:
   - Resources:
@@ -250,10 +246,7 @@ resources:
             AttributeName: ttl
             Enabled: true
 
-      ConnectErrorsTopic:
-        Type: AWS::SNS::Topic
-        Properties:
-          TopicName: AWSConnectErrorTopic-${self:custom.stage}
+  - Resources:
       WebsocketApiMapping: ${self:custom.dynamic.resources.apiMapping}
       LambdaEventSourceMappingMetricsTable: ${self:custom.dynamic.resources.metricsEventMap}
       LambdaEventSourceMappingContactsTable: ${self:custom.dynamic.resources.contactsEventMap}
@@ -263,5 +256,3 @@ resources:
   - ${file(resources/vpc.yml)}
   # DAX Config
   - ${file(resources/dax.yml)}
-
-

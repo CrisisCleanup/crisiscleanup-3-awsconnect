@@ -89,6 +89,48 @@ const DAXConfig = {
   },
 };
 
+const LambdaConfig = {
+  dev: {
+    warmupConcurrency: 0,
+    provisioned: 3,
+    reserved: 5,
+    wsHandler: {
+      provisioned: 10,
+      reserved: 15,
+    },
+    awsConnect: {
+      provisioned: 5,
+      reserved: 8,
+    },
+  },
+  staging: {
+    warmupConcurrency: 1,
+    provisioned: 10,
+    reserved: 20,
+    wsHandler: {
+      provisioned: 30,
+      reserved: 60,
+    },
+    awsConnect: {
+      provisioned: 15,
+      reserved: 20,
+    },
+  },
+  prod: {
+    warmupConcurrency: 5,
+    provisioned: 15,
+    reserved: 30,
+    wsHandler: {
+      provisioned: 30,
+      reserved: 100,
+    },
+    awsConnect: {
+      provisioned: 30,
+      reserved: 100,
+    },
+  },
+};
+
 module.exports = (serverless) => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
@@ -99,23 +141,28 @@ module.exports = (serverless) => {
   const eventMaps = Object.fromEntries(
     Object.entries(LambdaStreams).map(([key, val]) => [
       key,
-      LambdaEventDynamoMapping(val),
+      LambdaEventDynamoMapping(val, stage),
     ]),
   );
   let config = {};
   if (stage === 'local') {
     config = {
-      resources: { ...eventMaps },
+      resources: { ...eventMaps, apiMapping: DomainMapping(DOMAINS.dev) },
       domain: {
         enabled: false,
       },
       dax: DAXConfig.dev,
+      lambda: LambdaConfig.dev,
     };
   } else {
     config = {
       domain: DOMAINS[stage],
-      resources: { apiMapping: DomainMapping(DOMAINS[stage]), ...eventMaps },
+      resources: {
+        apiMapping: DomainMapping(DOMAINS[stage]),
+        ...eventMaps,
+      },
       dax: DAXConfig[stage],
+      lambda: LambdaConfig[stage],
     };
   }
   serverless.cli.consoleLog(config);
