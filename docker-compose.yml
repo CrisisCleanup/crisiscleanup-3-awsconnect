@@ -1,5 +1,16 @@
 version: "3.8"
 
+x-deploy:
+  &default-deploy
+  init: true
+  build:
+    context: .
+  environment:
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  env_file:
+    - .env
+
 services:
   deploy:
     init: true
@@ -15,4 +26,40 @@ services:
       AWS_DAX_ENDPOINT: ${AWS_DAX_ENDPOINT}
       RELIC_API_KEY: ${RELIC_API_KEY}
       LOGGING_ENABLED: ${LOGGING_ENABLED}
-      SERVERLESS_ACCESS_KEY: ${SERVERLESS_ACCESS_KEY}
+
+  deploy-dev:
+    <<: *default-deploy
+    command: ["deploy:dev"]
+    env_file:
+      - .env
+      - .env.dev
+
+  deploy-staging:
+    <<: *default-deploy
+    command: ["deploy:staging"]
+    env_file:
+      - .env
+      - .env.staging
+
+  deploy-prod:
+    <<: *default-deploy
+    command: ["deploy:prod"]
+    env_file:
+      - .env
+      - .env.prod
+
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      SERVICES: 'serverless'
+      START_WEB: '0'
+
+  tester:
+    <<: *default-deploy
+    command: ["test:watch"]
+    depends_on:
+      - localstack
+    env_file:
+      - .env
+      - .env.test
+
