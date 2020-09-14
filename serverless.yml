@@ -1,6 +1,4 @@
 service: crisiscleanup-3-awsconnect
-app: crisiscleanup-3-awsconnect
-org: crisiscleanup
 
 package:
   individually: false
@@ -17,13 +15,13 @@ provider:
   runtime: nodejs12.x
   stage: dev
   region: us-east-1
-  logRetentionInDays: 14
+  logRetentionInDays: 30
   timeout: 10
   logs:
     websocket:
       level: INFO
   tracing:
-    apiGateway: true
+    apiGateway: false
     lambda: true
   websocketsApiName: crisiscleanup-3-awsconnect-ws
   websocketsApiRouteSelectionExpression: $request.body.action
@@ -34,7 +32,7 @@ provider:
       - !Ref PrivateSubnet1
       - !Ref PrivateSubnet2
   deploymentBucket:
-    name: sls-bucket-awsconnect
+    name: sls-bucket-awsconnect-${self:custom.stage}
   iamManagedPolicies: ${file(resources/roles.yml):Policies}
   iamRoleStatements: ${file(resources/roles.yml):RoleStatements}
 
@@ -42,6 +40,7 @@ plugins:
   - serverless-webpack
   - serverless-plugin-warmup
   - serverless-dotenv-plugin
+  - serverless-newrelic-lambda-layers
   - serverless-prune-plugin
   - serverless-dynamodb-local
   - serverless-domain-manager
@@ -58,6 +57,12 @@ custom:
     webpackConfig: ./webpack.config.js
     includeModules: true
     packager: 'yarn'
+  newRelic:
+    enableIntegration: true
+    accountId: 2727761
+    logEnabled: true
+    cloudWatchFilter: '*'
+    apiKey: ${env:RELIC_API_KEY}
   warmup:
     enabled:
       - staging
