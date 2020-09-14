@@ -17,7 +17,7 @@ export const dynamoOptions = () => {
       endpoint:
         process.env.IS_OFFLINE === 'TUNNEL'
           ? 'http://marsdynamo.crisiscleanup.io'
-          : 'http://localhost:4566',
+          : 'http://localstack:4566',
     };
   }
   console.log('Dynamo Endpoints configured:', opts);
@@ -41,9 +41,9 @@ export const TABLES = {
   },
 };
 
-export const DynamoTable = ({ name } = {}) => {
+export const DynamoTable = ({ name, bypassCache = false } = {}) => {
   const isLocal = process.env.SLS_STAGE === 'local'; // serverless-offline
-  if (isLocal) {
+  if (isLocal || bypassCache) {
     if (!dynamoClient) {
       dynamoClient = new AWS.DynamoDB({
         ...dynamoOptions(),
@@ -51,11 +51,9 @@ export const DynamoTable = ({ name } = {}) => {
     }
     return dynamoClient;
   }
-  if (!daxClient) {
-    daxClient = new AmazonDaxClient({
-      endpoints: [process.env.AWS_DAX_ENDPOINT],
-    });
-  }
+  daxClient = new AmazonDaxClient({
+    endpoints: [process.env.AWS_DAX_ENDPOINT],
+  });
   return daxClient;
 };
 
