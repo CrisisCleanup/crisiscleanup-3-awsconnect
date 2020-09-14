@@ -27,6 +27,8 @@ export const CONTACT_ACTIONS = Object.freeze({
   ENDED: 'ended',
   CONNECTING: 'connecting',
   ERROR: 'error',
+  DESTROYED: 'destroyed',
+  MISSED: 'missed'
 });
 
 export const actionIsRouted = (action) => action !== CONTACT_ACTIONS.ENTER;
@@ -36,7 +38,7 @@ export class Contact extends ApiModel {
     const { contactId, contactRouted, contactLocale, action, agentId } = params;
     super({ dbTable: Dynamo.TABLES.CONTACTS });
     this.contactId = contactId;
-    this.locale = contactLocale === undefined ? 'en_US' : contactLocale;
+    this.locale = contactLocale === undefined ? 'en-US' : contactLocale.replace('_', '-');
     this.currentAction = action || 'enter_ivr';
     this.routed =
       contactRouted === undefined ? actionIsRouted(this.action) : contactRouted;
@@ -81,10 +83,7 @@ export class Contact extends ApiModel {
   }
 
   get localeName() {
-    return (
-      Object.keys(LANGUAGE).find((k) => LANGUAGE[k] === this.locale) ||
-      this.locale
-    );
+    return this.locale.replace('_', '-')
   }
 
   get state() {
@@ -107,9 +106,7 @@ export class Contact extends ApiModel {
         this.routed ? CONTACT_STATES.ROUTED : CONTACT_STATES.QUEUED
       }`,
     );
-    this.locale = Object.keys(LANGUAGE).includes(localeValue)
-      ? LANGUAGE[localeValue]
-      : localeValue;
+    this.locale = localeValue.replace('_', '-');
     this.routed = routed;
     return this.state;
   }
