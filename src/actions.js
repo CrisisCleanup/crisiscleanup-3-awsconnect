@@ -15,6 +15,9 @@ import {
 import WS from './ws';
 import RESP from './ws/response';
 import { LANGUAGE } from './api/helpers';
+import { METRICS } from './api/metrics';
+import { AGENT_STATES } from './api/agent/legacy';
+import { CONTACT_ACTIONS } from './api/contact/contact';
 
 const checkCases = async ({
   inboundNumber,
@@ -97,8 +100,8 @@ const createCallback = async ({
   }).load();
   await contact.delete();
   const metrics = new Metrics.Metrics();
-  await metrics.decrement(Metrics.METRICS.QUEUED);
-  await metrics.increment(Metrics.METRICS.CALLBACKS);
+  await metrics.decrement(Metrics.METRICS.QUEUED, 1, contact.locale);
+  await metrics.increment(Metrics.METRICS.CALLBACKS, 1, contact.locale);
   return {
     data: {
       status: 'CREATED',
