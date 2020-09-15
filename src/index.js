@@ -120,7 +120,6 @@ export const contactStreamHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;
   console.log('[contacts] incoming contacts update:', Records);
-  configureEndpoint();
   const adminClients = await Client.Client.allAdmins();
   const newImages = [];
   const metrics = new Metrics.Metrics();
@@ -128,14 +127,19 @@ export const contactStreamHandler = async (event, context) => {
     [LANGUAGE.en_US]: 0,
     [LANGUAGE.es_MX]: 0,
   };
-  Records.forEach(({ eventName, dynamodb: { NewImage } }) => {
-    const contactLocale = NewImage['locale'] || LANGUAGE.en_US;
+  Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
+    let contactLocale = LANGUAGE.en_US;
+    if (eventName === 'DELETE' || eventName === 'REMOVE') {
+      contactLocale = OldImage ? OldImage['locale'] : contactLocale;
+    } else {
+      contactLocale = NewImage ? NewImage['locale'] : contactLocale;
+    }
     if (eventName === 'INSERT') {
       queueCounts[contactLocale] += 1;
-    } else if (eventName === 'DELETE') {
+    } else if (eventName === 'DELETE' || eventName === 'REMOVE') {
       queueCounts[contactLocale] -= 1;
     }
-    if (['INSERT', 'MODIFY', 'DELETE'].includes(eventName)) {
+    if (['INSERT', 'MODIFY', 'REMOVE', 'DELETE'].includes(eventName)) {
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
