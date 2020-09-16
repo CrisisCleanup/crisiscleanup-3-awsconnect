@@ -9,7 +9,6 @@ import { Expressions } from '../../utils/dynamo';
 export const scanAgentsByState = ({ dbTable, state, selector = 'COUNT' }) => ({
   TableName: dbTable,
   Select: selector,
-  ConsistentRead: true,
   ...Expressions([{ key: 's', name: 'state', value: state }]),
   FilterExpression: 'begins_with(#S, :s)',
 });
