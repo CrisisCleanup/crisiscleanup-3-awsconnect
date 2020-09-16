@@ -11,6 +11,7 @@ import RESP from './ws/response';
 import { LANGUAGE } from './api/helpers';
 import Agent from './api/agent';
 import { METRICS } from './api/metrics';
+import { AGENT_ATTRS } from './api/agent/legacy';
 
 // Configure during lambda init
 configureEndpoint();
@@ -41,10 +42,14 @@ export const agentStreamHandler = async (event) => {
     if (['INSERT', 'MODIFY'].includes(eventName)) {
       const oldItem = Dynamo.normalize(OldImage);
       const newItem = Dynamo.normalize(NewImage);
+
       const wasOnline = Agent.isOnline(oldItem.state);
       const wasRoutable = Agent.isRoutable(oldItem.state);
       const isOnline = Agent.isOnline(newItem.state);
       const isRoutable = Agent.isRoutable(newItem.state);
+
+      const wasConnected = Object.keys(oldItem).includes(AGENT_ATTRS.CURRENT_CONTACT)
+      const isConnected = Object.keys(newItem).includes(AGENT_ATTRS.CURRENT_CONTACT)
 
       if (wasOnline === false && isOnline === true) {
         // Agent OFFLINE -> ONLINE
@@ -65,6 +70,16 @@ export const agentStreamHandler = async (event) => {
         // Agent ROUTABLE -> NOT_ROUTABLE
         metricUpdates[METRICS.AVAILABLE][newItem.locale] =
           (metricUpdates[METRICS.AVAILABLE][newItem.locale] || 0) - 1;
+      }
+      if(wasConnected === true && isConnected === false) {
+        // Agent on phone -> off phone
+        metricUpdates[METRICS.ON_CALL][newItem.locale] =
+          (metricUpdates[METRICS.ON_CALL][newItem.locale] || 0) - 1;
+      }
+      if(wasConnected === false && isConnected === true) {
+        // Agent off phone -> on phone
+        metricUpdates[METRICS.ON_CALL][newItem.locale] =
+          (metricUpdates[METRICS.ON_CALL][newItem.locale] || 0) + 1;
       }
       newImages.push(Dynamo.normalize(NewImage));
     }
