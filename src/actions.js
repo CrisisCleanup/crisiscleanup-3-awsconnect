@@ -226,8 +226,9 @@ const setAgentState = async ({
       const agent = await Agent.get({ agentId });
 
       if (agent.current_contact_id) {
+        let contactId = agent.current_contact_id;
         const contact = await new Contact.Contact({
-          contactId: agent.current_contact_id,
+          contactId,
         }).load();
         await agentClient.send(
           RESP.UPDATE_CONTACT({
@@ -243,10 +244,9 @@ const setAgentState = async ({
       console.log('failed to update agent state!');
     }
   }
-  const callType = currentContactId ? 'INBOUND' : 'OUTBOUND';
   return {
     data: {
-      promptCallType: callType,
+      promptCallType: currentContactId ? 'INBOUND' : 'OUTBOUND',
     },
   };
 };
