@@ -131,6 +131,11 @@ export const get = async ({ agentId, attributes }) => {
       S: LANGUAGE.en_US,
     };
   }
+  if (!Item[AGENT_ATTRS.ACTIVE]) {
+    Item[AGENT_ATTRS.ACTIVE] = {
+      S: 'y',
+    };
+  }
   console.log('fetched item:', Item);
   return Dynamo.normalize(Item);
 };
@@ -147,7 +152,11 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
   }
 
   const deletedAttrs = [];
-  let neededAttrs = [AGENT_ATTRS.CONNECTION, AGENT_ATTRS.LOCALE];
+  let neededAttrs = [
+    AGENT_ATTRS.CONNECTION,
+    AGENT_ATTRS.LOCALE,
+    AGENT_ATTRS.ACTIVE,
+  ];
 
   const [stateOnline, stateType, subState] = getStateDef(agentState);
   switch (subState) {
@@ -183,9 +192,6 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
 
   additionalAttrs[AGENT_ATTRS.LOCALE] = {
     S: LANGUAGE.en_US, // default english
-  };
-  additionalAttrs[AGENT_ATTRS.ACTIVE] = {
-    S: 'y',
   };
 
   console.log('originally passed additional attrs:', attrs);
@@ -232,6 +238,9 @@ export const setState = async ({ agentId, agentState, ...attrs }) => {
         },
         entered_timestamp: {
           S: new Date().toISOString(),
+        },
+        active: {
+          S: 'y',
         },
         ...additionalAttrs,
       },
