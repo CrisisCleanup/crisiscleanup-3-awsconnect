@@ -22,26 +22,54 @@ export class Metrics extends ApiModel {
     this.loggerName = '[metrics]';
   }
 
-  async performUpdate(operation, { locale, metric, ...args }) {
+  async performUpdate(operation, { locale, metric, amount, ...args }) {
     const locales = locale.split('#');
     const results = await Promise.all(
       locales.map((l) => {
         const op = operation({
           dbTable: this.dbTable,
           name: `${metric}#${l}`,
+          amount,
           ...args,
         });
         this.log('performing update operation:', op);
-        return this.db.update(op).promise();
+        let results;
+        try {
+          results = this.db.update(op).promise();
+        } catch (e) {
+          this.log('failed to update metric!', op);
+          const setOp = OPS.setValue({
+            dbTable: this.dbTable,
+            name: `${metric}#${l}`,
+            value: amount,
+            ...args,
+          });
+          this.log('did value exist? setting it!', setOp);
+          results = this.db.update(setOp);
+        }
+        return results;
       }),
     );
     const op = operation({
       dbTable: this.dbTable,
       name: metric,
+      amount,
       ...args,
     });
     this.log('performing total update:', op);
-    await this.db.update(op).promise();
+    try {
+      await this.db.update(op).promise();
+    } catch (e) {
+      this.log('failed to update metric!', op);
+      const setOp = OPS.setValue({
+        dbTable: this.dbTable,
+        name: metric,
+        value: amount,
+        ...args,
+      });
+      this.log('did value exist? setting it!', setOp);
+      await this.db.update(setOp);
+    }
     return results;
   }
 
