@@ -6,26 +6,12 @@
 import { Expressions } from '../../utils/dynamo';
 
 const MetricExpressions = (amount) =>
-  Expressions([
-    // { key: 't', name: 'type', value: 'realtime' },
-    { key: 'v', name: 'value', value: amount },
-  ]);
+  Expressions([{ key: 'v', name: 'value', value: amount }]);
 
-// Update Realtime Metrics
-export const incrementMetric = ({ dbTable, name, amount } = {}) => ({
+export const addValue = ({ dbTable, name, amount }) => ({
   TableName: dbTable,
   ...MetricExpressions(amount),
-  UpdateExpression: 'set #V = #V + :v',
-  Key: {
-    type: 'realtime',
-    name,
-  },
-});
-
-export const decrementValue = ({ dbTable, name, amount } = {}) => ({
-  TableName: dbTable,
-  ...MetricExpressions(amount),
-  UpdateExpression: 'set #V = #V - :v',
+  UpdateExpression: 'ADD #V :v',
   Key: {
     type: 'realtime',
     name,

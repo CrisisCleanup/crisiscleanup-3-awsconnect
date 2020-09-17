@@ -22,60 +22,32 @@ export class Metrics extends ApiModel {
     this.loggerName = '[metrics]';
   }
 
-  async performUpdate(operation, { locale, metric, amount, ...args }) {
+  async performUpdate(operation, { locale, metric, ...args }) {
     const locales = locale.split('#');
     const results = await Promise.all(
       locales.map((l) => {
         const op = operation({
           dbTable: this.dbTable,
           name: `${metric}#${l}`,
-          amount,
           ...args,
         });
         this.log('performing update operation:', op);
-        let results;
-        try {
-          results = this.db.update(op).promise();
-        } catch (e) {
-          this.log('failed to update metric!', op);
-          const setOp = OPS.setValue({
-            dbTable: this.dbTable,
-            name: `${metric}#${l}`,
-            value: amount,
-            ...args,
-          });
-          this.log('did value exist? setting it!', setOp);
-          results = this.db.update(setOp);
-        }
-        return results;
+        return this.db.update(op).promise();
       }),
     );
     const op = operation({
       dbTable: this.dbTable,
       name: metric,
-      amount,
       ...args,
     });
     this.log('performing total update:', op);
-    try {
-      await this.db.update(op).promise();
-    } catch (e) {
-      this.log('failed to update metric!', op);
-      const setOp = OPS.setValue({
-        dbTable: this.dbTable,
-        name: metric,
-        value: amount,
-        ...args,
-      });
-      this.log('did value exist? setting it!', setOp);
-      await this.db.update(setOp);
-    }
+    await this.db.update(op).promise();
     return results;
   }
 
   async increment(metric, amount = 1, locale = LANGUAGE.en_US) {
     this.log(`incrementing metric: ${metric}`);
-    const results = await this.performUpdate(OPS.incrementMetric, {
+    const results = await this.performUpdate(OPS.addValue, {
       locale,
       metric,
       amount,
@@ -86,10 +58,14 @@ export class Metrics extends ApiModel {
 
   async decrement(metric, amount = 1, locale = LANGUAGE.en_US) {
     this.log(`decrementing metric: ${metric}`);
-    const results = await this.performUpdate(OPS.decrementValue, {
+    let _amount = amount;
+    if (_amount > 0) {
+      _amount = _amount * -1;
+    }
+    const results = await this.performUpdate(OPS.addValue, {
       locale,
       metric,
-      amount,
+      amount: _amount,
     });
     this.log('results:', results);
     return results;
