@@ -36,17 +36,21 @@ export class Client extends ApiModel {
 
   static async allAdmins() {
     const dbClient = Dynamo.DynamoClient(Dynamo.TABLES.CLIENTS);
-    const results = await dbClient.query(OPS.queryByType(Dynamo.TABLES.CLIENTS.name, 'admin')).promise();
+    const results = await dbClient
+      .query(OPS.queryByType(Dynamo.TABLES.CLIENTS.name, 'admin'))
+      .promise();
     const { Items } = results;
     return Items;
   }
 
   static async all() {
     const dbClient = Dynamo.DynamoClient(Dynamo.TABLES.CLIENTS);
-    const results = await dbClient.scan({
-      TableName: Dynamo.TABLES.CLIENTS.name,
-      ...expiredFilter()
-    }).promise();
+    const results = await dbClient
+      .scan({
+        TableName: Dynamo.TABLES.CLIENTS.name,
+        ...expiredFilter(),
+      })
+      .promise();
     const { Items } = results;
     return Items;
   }
@@ -60,10 +64,14 @@ export class Client extends ApiModel {
     this.log('results:');
     this.log(results);
     if (agentId) {
-      await Agent.updateConnection({
-        agentId,
-        connectionId: this.connectionId,
-      });
+      try {
+        await Agent.updateConnection({
+          agentId,
+          connectionId: this.connectionId,
+        });
+      } catch (e) {
+        this.log('failed to update agent connection, does it exist?');
+      }
     }
     return results;
   }
@@ -92,7 +100,7 @@ export class Client extends ApiModel {
       return this;
     }
     const { Item } = response;
-    if (!Item || Item === null) {
+    if (!Item) {
       this.log('could not find client! assuming its new...');
       return this;
     }

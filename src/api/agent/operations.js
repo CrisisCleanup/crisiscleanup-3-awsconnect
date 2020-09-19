@@ -63,6 +63,7 @@ export const updateConnectionId = ({ dbTable, agentId, connectionId }) => ({
     agent_id: agentId,
   },
   UpdateExpression: `set #C = :c`,
+  ConditionExpression: 'attribute_exists(agent_id)'
 });
 
 // Update agent state if it doesnt have contact id
