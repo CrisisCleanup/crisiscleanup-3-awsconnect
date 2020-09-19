@@ -8,6 +8,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { advanceTo, clear } from 'jest-date-mock';
 import { Agent, Contact, Events, Helpers, Outbound } from '../api';
 import { LANGUAGE } from '../api/helpers';
+import Client from '../api/client';
 
 // jest.mock('../utils/dynamo.js');
 jest.mock('../ws');
@@ -195,7 +196,7 @@ describe('agent api', () => {
         "connection_id": "zzzz",
         "entered_timestamp": "2020-06-20T06:00:00.000Z",
         "locale": "en-US",
-        "state": "offline#not_routable#offline",
+        "state": "offline#not_routable#not_routable",
       }
     `);
     clear();
@@ -365,7 +366,7 @@ describe('agent api', () => {
     expect(Agent.getStateDef('offline')).toStrictEqual([
       'offline',
       'not_routable',
-      'offline',
+      'not_routable',
     ]);
     expect(Agent.getStateDef(Agent.AGENT_STATES.NOT_ROUTABLE)).toStrictEqual([
       'online',
@@ -385,7 +386,20 @@ describe('agent api', () => {
     expect(Agent.getStateDef(undefined)).toStrictEqual([
       'offline',
       'not_routable',
-      'offline',
+      'not_routable',
+    ]);
+    expect(Agent.getStateDef(Agent.AGENT_STATES.BUSY)).toStrictEqual([
+      'online',
+      'not_routable',
+      'Busy',
+    ]);
+    expect(
+      Agent.getStateDef('offline#not_routable#not_routable'),
+    ).toStrictEqual(['offline', 'not_routable', 'not_routable']);
+    expect(Agent.getStateDef('online')).toStrictEqual([
+      'online',
+      'routable',
+      'routable',
     ]);
   });
 });
