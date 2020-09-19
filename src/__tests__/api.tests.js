@@ -449,3 +449,19 @@ describe('events api', () => {
     expect(callEvent.eventKey).toBe('join_inbound-call_to_agent');
   });
 });
+
+describe('clients api', () => {
+  it('client heartbeat handles new agent', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    const client = await new Client.Client({
+      connectionId: 'connectid123',
+      userId: '1234',
+      type: 'user',
+    }).load();
+    await client.heartbeat('agentthatdoesntexist');
+    const agents = await Agent.Agent.getAll();
+    const agentIds = agents.map((a) => a.agent_id);
+    expect(agentIds.includes('agentthatdoesntexist')).toBe(false);
+    clear();
+  });
+});
