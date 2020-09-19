@@ -6,7 +6,6 @@
 import { Agent, Outbound } from '../api';
 import Handler from '../index';
 
-jest.mock('../api');
 jest.mock('../ws');
 
 const MockEvent = (data = {}) => ({
@@ -18,6 +17,9 @@ const MockEvent = (data = {}) => ({
       userLanguage: 'en_US',
       incidentId: '199',
       ...data,
+    },
+    ContactData: {
+      Attributes: {},
     },
   },
 });
@@ -73,5 +75,125 @@ describe.skip('handler', () => {
     );
     expect(Agent.setState).toMatchSnapshot();
     expect(callback).toMatchSnapshot();
+  });
+});
+
+describe('SET_AGENT_STATE', () => {
+  const setState = async (params, getParams = null) => {
+    Agent.setState = jest.fn();
+    Agent.get = jest.fn(() => getParams);
+    const callback = jest.fn();
+    await Handler(
+      MockEvent({ action: 'SET_AGENT_STATE', ...params }),
+      {},
+      callback,
+    );
+  };
+
+  it('correctly sets agent state for new agent', async () => {
+    const params = {
+      agentId: 'xxxx',
+      contactState: 'routable',
+      routeState: 'routable',
+      state: 'online',
+      locale: 'en-US',
+    };
+    await setState(params);
+    expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "agentId": "xxxx",
+          "agentState": "online#routable#routable",
+          "connection_id": null,
+          "current_contact_id": null,
+          "locale": "en-US",
+        },
+      ]
+    `);
+  });
+  it('correctly resolves contact state for new agent', async () => {
+    const params = {
+      agentId: 'xxxx',
+      routeState: 'not_routable',
+      state: 'offline',
+      locale: 'en-US',
+    };
+    await setState(params);
+    expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "agentId": "xxxx",
+          "agentState": "offline#not_routable#not_routable",
+          "connection_id": null,
+          "current_contact_id": null,
+          "locale": "en-US",
+        },
+      ]
+    `);
+  });
+  it('correctly resolves full state for new agent', async () => {
+    const params = {
+      agentId: 'xxxx',
+      agentState: 'online#routable#routable',
+      locale: 'en-US',
+    };
+    await setState(params);
+    expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "agentId": "xxxx",
+          "agentState": "online#routable#routable",
+          "connection_id": null,
+          "current_contact_id": null,
+          "locale": "en-US",
+        },
+      ]
+    `);
+  });
+  it('correctly sets agent state for existing agent', async () => {
+    const params = {
+      agentId: 'xxxx',
+      routeState: 'not_routable',
+      state: 'online',
+      locale: 'en-US',
+    };
+    const existing = {
+      agent_id: 'xxxx',
+      state: 'online#not_routable#PendingBusy',
+    };
+    await setState(params, existing);
+    expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "agentId": "xxxx",
+          "agentState": "online#not_routable#PendingBusy",
+          "connection_id": null,
+          "current_contact_id": null,
+          "locale": "en-US",
+        },
+      ]
+    `);
+  });
+  it('correctly sets agent state from only new contact state', async () => {
+    const params = {
+      agentId: 'xxxx',
+      agentState: 'PendingBusy',
+    };
+    const existing = {
+      agent_id: 'xxxx',
+      state: 'online#not_routable#pending',
+    };
+    await setState(params, existing);
+    expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "agentId": "xxxx",
+          "agentState": "PendingBusy",
+          "connection_id": null,
+          "current_contact_id": null,
+          "locale": undefined,
+        },
+      ]
+    `);
   });
 });
