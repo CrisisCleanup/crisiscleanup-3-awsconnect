@@ -37,6 +37,9 @@ export const agentStreamHandler = async (event) => {
     [METRICS.AVAILABLE]: {
       all: 0,
     },
+    [METRICS.ON_CALL]: {
+      all: 0,
+    },
   };
   Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
     if (['INSERT', 'MODIFY'].includes(eventName)) {
@@ -48,8 +51,12 @@ export const agentStreamHandler = async (event) => {
       const isOnline = Agent.isOnline(newItem.state);
       const isRoutable = Agent.isRoutable(newItem.state);
 
-      const wasConnected = Object.keys(oldItem).includes(AGENT_ATTRS.CURRENT_CONTACT)
-      const isConnected = Object.keys(newItem).includes(AGENT_ATTRS.CURRENT_CONTACT)
+      const wasConnected = Object.keys(oldItem).includes(
+        AGENT_ATTRS.CURRENT_CONTACT,
+      );
+      const isConnected = Object.keys(newItem).includes(
+        AGENT_ATTRS.CURRENT_CONTACT,
+      );
 
       if (wasOnline === false && isOnline === true) {
         // Agent OFFLINE -> ONLINE
@@ -71,12 +78,12 @@ export const agentStreamHandler = async (event) => {
         metricUpdates[METRICS.AVAILABLE][newItem.locale] =
           (metricUpdates[METRICS.AVAILABLE][newItem.locale] || 0) - 1;
       }
-      if(wasConnected === true && isConnected === false) {
+      if (wasConnected === true && isConnected === false) {
         // Agent on phone -> off phone
         metricUpdates[METRICS.ON_CALL][newItem.locale] =
           (metricUpdates[METRICS.ON_CALL][newItem.locale] || 0) - 1;
       }
-      if(wasConnected === false && isConnected === true) {
+      if (wasConnected === false && isConnected === true) {
         // Agent off phone -> on phone
         metricUpdates[METRICS.ON_CALL][newItem.locale] =
           (metricUpdates[METRICS.ON_CALL][newItem.locale] || 0) + 1;
