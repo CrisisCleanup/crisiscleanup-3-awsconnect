@@ -7,12 +7,12 @@ module.exports = {
 
   collectCoverage: false,
   collectCoverageFrom: [
-    '*.js',
-    '**/*.js',
+    'src/**/*.js',
     '!*.config.js',
     '!**/*.config.js',
     '!**/coverage/**',
     '!**/node_modules/**',
+    '!**/internal/',
   ],
 
   setupFiles: ['<rootDir>/.jest/setEnvVars.js', 'jest-date-mock'],
