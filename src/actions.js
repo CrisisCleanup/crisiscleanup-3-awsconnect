@@ -185,16 +185,23 @@ const setAgentState = async ({
   );
   let fullState = agentState;
   const agent = await Agent.get({ agentId });
-  const agentPrevOnline = Agent.isOnline(agent.state);
-  const agentPrevRoutable = Agent.isRoutable(agent.state);
   if (!fullState) {
     let _fullState = Agent.getStateDef(
       [state, routeState, contactState].join('#'),
     );
 
     if (!contactState) {
-      const curContactState = Agent.getStateDef(agent.state)[2];
-      _fullState = [_fullState[0], _fullState[1], curContactState];
+      if (agent) {
+        // incoming data did not provide a contact state,
+        // but an existing agent does exist in the database
+        const curContactState = Agent.getStateDef(agent.state)[2];
+        _fullState = [_fullState[0], _fullState[1], curContactState];
+      } else {
+        // incoming data did not provide a contact state,
+        // and the agent is new and/or does not exist in db.
+        const curContactState = Agent.getStateDef(_fullState[1])[2];
+        _fullState = [_fullState[0], _fullState[1], curContactState];
+      }
     }
     fullState = _fullState.join('#');
   }
