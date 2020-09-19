@@ -85,16 +85,16 @@ const LambdaStreams = {
 
 const DAXConfig = {
   dev: {
-    nodeType: 'dax.t2.small',
-    replicationFactor: 3,
+    nodeType: 'dax.r4.large',
+    replicationFactor: 1,
   },
   staging: {
-    nodeType: 'dax.t2.medium',
+    nodeType: 'dax.r4.large',
     replicationFactor: 2,
   },
   prod: {
     nodeType: 'dax.r4.large',
-    replicationFactor: 3,
+    replicationFactor: 4,
   },
 };
 
