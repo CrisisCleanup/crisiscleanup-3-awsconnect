@@ -22,6 +22,7 @@ export const AGENT_STATES = Object.freeze({
   BUSY: 'Busy',
   ON_CALL: 'Busy',
   OFFLINE: 'offline',
+  ONLINE: 'online',
   DISCONNECTED: 'ended',
   PAUSED: 'AfterCallWork',
 });
@@ -36,7 +37,6 @@ const ROUTABLE_STATES = [AGENT_STATES.ROUTABLE];
 const NOT_ROUTABLE_STATES = [
   AGENT_STATES.ON_CALL,
   AGENT_STATES.NOT_ROUTABLE,
-  AGENT_STATES.OFFLINE,
   AGENT_STATES.AGENT_PENDING,
   AGENT_STATES.PAUSED,
   AGENT_STATES.PENDING_CALL,
@@ -72,9 +72,29 @@ export const getStateDef = (state) => {
     console.log(`found state type: ${stateType} for state: ${state}`);
     const isOnline = state === 'offline' ? 'offline' : 'online';
     return [isOnline, stateType[0], state];
+  } else {
+    if ([AGENT_STATES.OFFLINE, AGENT_STATES.ONLINE].includes(state)) {
+      console.log('retrieving generic state definition!');
+      return {
+        [AGENT_STATES.ONLINE]: [
+          AGENT_STATES.ONLINE,
+          AGENT_STATES.ROUTABLE,
+          AGENT_STATES.ROUTABLE,
+        ],
+        [AGENT_STATES.OFFLINE]: [
+          AGENT_STATES.OFFLINE,
+          AGENT_STATES.NOT_ROUTABLE,
+          AGENT_STATES.NOT_ROUTABLE,
+        ],
+      }[state];
+    }
   }
   console.log(`Unknown state type for state: ${state}`);
-  return ['offline', '', state];
+  return [
+    AGENT_STATES.OFFLINE,
+    AGENT_STATES.NOT_ROUTABLE,
+    AGENT_STATES.NOT_ROUTABLE,
+  ];
 };
 
 export const AGENT_ATTRS = Object.freeze({
