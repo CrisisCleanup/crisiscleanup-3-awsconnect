@@ -21,4 +21,5 @@ testdata
 !.jest
 !.babelrc
 !config.js
+!.dynamodb
 !.git

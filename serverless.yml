@@ -79,9 +79,7 @@ custom:
     stages:
       - local
     start:
-      port: 4566
-      migration: true
-      noStart: true
+      migrate: true
   customDomain: ${self:custom.dynamic.domain}
   dax: ${self:custom.dynamic.dax}
   lambda: ${self:custom.dynamic.lambda}

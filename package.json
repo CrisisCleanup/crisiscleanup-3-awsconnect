@@ -25,6 +25,9 @@
     "test": "cross-env IS_OFFLINE=1 SLS_STAGE=local jest",
     "test:update": "cross-env IS_OFFLINE=1 SLS_STAGE=local jest --updateSnapshot",
     "test:cov": "yarn run test --coverage",
+    "test:migrate": "sls dynamodb migrate --stage local --env test",
+    "test:dbinstall": "sls --stage local --env test dynamodb install",
+    "test:dbstart": "yarn test:dbinstall && sls --stage local --env test dynamodb start --migrate",
     "test:watch": "yarn test --watchAll --silent"
   },
   "devDependencies": {

@@ -50,16 +50,35 @@ services:
 
   localstack:
     image: localstack/localstack:latest
+    ports:
+      - 4566:4566
     environment:
       SERVICES: 'serverless'
       START_WEB: '0'
 
-  tester:
-    <<: *default-deploy
-    command: ["test:watch"]
-    depends_on:
-      - localstack
+  dynamodb:
+    init: true
+    image: mhart/alpine-node:13
+    working_dir: /app
     env_file:
       - .env
       - .env.test
+    entrypoint: ["yarn"]
+    command: ["test:dbstart"]
+    ports:
+    - 8000:8000
+    volumes:
+      - ./:/app
 
+
+  tester:
+    init: true
+    image: mhart/alpine-node:13
+    working_dir: /app
+    env_file:
+      - .env
+      - .env.test
+    entrypoint: ["yarn"]
+    command: ["test:watch"]
+    volumes:
+      - ./:/app
