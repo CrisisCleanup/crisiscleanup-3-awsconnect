@@ -16,7 +16,7 @@ import { AGENT_ATTRS } from './api/agent/legacy';
 // Configure during lambda init
 configureEndpoint();
 
-export const checkWarmup = ({ source }) => {
+export const checkWarmup = ({ source } = {}) => {
   if (source === 'serverless-plugin-warmup') {
     console.log('Warmup! Lambda is warm.');
     return true;
@@ -109,27 +109,17 @@ export const agentStreamHandler = async (event) => {
   );
 
   const metric = new Metrics.Metrics();
-  await Promise.all(
-    Object.keys(metricUpdates[METRICS.ONLINE]).map((localeK) => {
-      const val = metricUpdates[METRICS.ONLINE][localeK];
-      if (val >= 1) {
-        return metric.increment(METRICS.ONLINE, val, localeK);
-      }
-      if (val < 0) {
-        return metric.decrement(METRICS.ONLINE, Math.abs(val), localeK);
-      }
-    }),
-  );
 
   await Promise.all(
-    Object.keys(metricUpdates[METRICS.AVAILABLE]).map((localeK) => {
-      const val = metricUpdates[METRICS.AVAILABLE][localeK];
-      if (val >= 1) {
-        return metric.increment(METRICS.AVAILABLE, val, localeK);
-      }
-      if (val < 0) {
-        return metric.decrement(METRICS.AVAILABLE, Math.abs(val), localeK);
-      }
+    Object.keys(metricUpdates).map((metricName) => {
+      Object.entries(metricUpdates[metricName]).forEach(([localeK, val]) => {
+        if (val >= 1) {
+          return metric.increment(metricName, val, localeK);
+        }
+        if (val < 0) {
+          return metric.decrement(metricName, Math.abs(val), localeK);
+        }
+      });
     }),
   );
 
@@ -246,7 +236,6 @@ export const wsConnectionHandler = async (event, context) => {
 export const wsHandler = async (event, context) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   console.log('got ws message', event, context);
-  configureEndpoint();
   const { meta, action, data } = WS.parse(event);
   if (!action) {
     console.log('[wsHandler] no action specified!');
@@ -289,8 +278,6 @@ export default async (event, context, callback) => {
   console.log('[awsConnect] entering action:', action);
   console.log('[awsConnect] event inputs:', event, context);
   console.log('[awsConnect] contact attributes: ', ContactData.Attributes);
-
-  configureEndpoint();
 
   // Handlers
   const actionArgs = {
