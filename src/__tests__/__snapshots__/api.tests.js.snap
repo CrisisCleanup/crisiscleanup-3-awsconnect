@@ -72,10 +72,10 @@ Object {
     "#T": "entered_timestamp",
   },
   "ExpressionAttributeValues": Object {
-    ":e": 1592629380,
+    ":e": 1592611380,
     ":p": "1",
     ":s": "somestate",
-    ":t": "2020-06-20T05:00:00.000Z",
+    ":t": "2020-06-20T00:00:00.000Z",
   },
   "Key": Object {
     "contact_id": "xxxx",
@@ -92,7 +92,7 @@ Object {
     "#X": "ttl",
   },
   "ExpressionAttributeValues": Object {
-    ":now": 1592629200,
+    ":now": 1592611200,
     ":s": "routed",
   },
   "FilterExpression": "#X > :now",

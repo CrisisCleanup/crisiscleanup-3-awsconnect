@@ -25,7 +25,7 @@ describe('utils', () => {
     process.env.SLS_STAGE = 'local';
     expect(Dynamo.dynamoOptions()).toMatchInlineSnapshot(`
       Object {
-        "endpoint": "http://localhost:8000",
+        "endpoint": "http://localstack:4566",
         "region": "localhost",
       }
     `);

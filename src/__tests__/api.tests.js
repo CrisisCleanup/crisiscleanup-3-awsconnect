@@ -179,7 +179,7 @@ describe('agent api', () => {
       Object {
         "active": "y",
         "connection_id": "zzzz",
-        "entered_timestamp": "2020-06-20T05:00:00.000Z",
+        "entered_timestamp": "2020-06-20T00:00:00.000Z",
         "locale": "en-US",
         "state": "online#routable#routable",
       }
@@ -194,7 +194,7 @@ describe('agent api', () => {
       Object {
         "active": "y",
         "connection_id": "zzzz",
-        "entered_timestamp": "2020-06-20T06:00:00.000Z",
+        "entered_timestamp": "2020-06-20T01:00:00.000Z",
         "locale": "en-US",
         "state": "offline#not_routable#not_routable",
       }
@@ -336,7 +336,7 @@ describe('agent api', () => {
         "active": "y",
         "connection_id": "zzzz",
         "current_contact_id": "abc",
-        "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "entered_timestamp": "2019-06-20T00:00:00.000Z",
         "locale": "en-US",
         "state": "online#not_routable#PendingBusy",
       }
@@ -351,7 +351,7 @@ describe('agent api', () => {
         "active": "y",
         "connection_id": "zzzz",
         "current_contact_id": "abc",
-        "entered_timestamp": "2019-06-20T05:00:00.000Z",
+        "entered_timestamp": "2019-06-20T00:00:00.000Z",
         "locale": "en-US",
         "state": "online#not_routable#Busy",
       }
