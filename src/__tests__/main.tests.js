@@ -3,10 +3,15 @@
  * Main Tests
  */
 
-import { Agent, Outbound } from '../api';
-import Handler from '../index';
+import { Agent, Outbound, Metrics, Client } from '../api';
+import { Dynamo } from '../utils';
+import Handler, { agentStreamHandler } from '../index';
 
 jest.mock('../ws');
+jest.mock('../utils/dynamo');
+jest.mock('../api/agent/index.js');
+jest.mock('../api/metrics/index.js');
+jest.mock('../api/client/index.js');
 
 const MockEvent = (data = {}) => ({
   Details: {
@@ -21,8 +26,19 @@ const MockEvent = (data = {}) => ({
     ContactData: {
       Attributes: {},
     },
+    client: 'ws',
   },
 });
+
+const MockRecords = ({ eventName, newImage, oldImage } = {}) => [
+  {
+    eventName: eventName || 'MODIFY',
+    dynamodb: {
+      NewImage: newImage || { locale: 'en-US' },
+      OldImage: oldImage || { locale: 'en-US' },
+    },
+  },
+];
 
 describe.skip('handler', () => {
   it('checks for existing case', async () => {
@@ -80,8 +96,8 @@ describe.skip('handler', () => {
 
 describe('SET_AGENT_STATE', () => {
   const setState = async (params, getParams = null) => {
-    Agent.setState = jest.fn();
-    Agent.get = jest.fn(() => getParams);
+    Agent.createStateWSPayload.mockReturnValue({ meta: { connectionId: '' } });
+    Agent.get.mockResolvedValue(getParams);
     const callback = jest.fn();
     await Handler(
       MockEvent({ action: 'SET_AGENT_STATE', ...params }),
@@ -98,6 +114,7 @@ describe('SET_AGENT_STATE', () => {
       state: 'online',
       locale: 'en-US',
     };
+    Agent.getStateDef.mockReturnValue('online#routable#routable'.split('#'));
     await setState(params);
     expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
       Array [
@@ -118,7 +135,10 @@ describe('SET_AGENT_STATE', () => {
       state: 'offline',
       locale: 'en-US',
     };
-    await setState(params);
+    Agent.getStateDef
+      .mockReturnValueOnce('offline#not_routable#not_routable'.split('#'))
+      .mockReturnValueOnce('offline#not_routable#not_routable'.split('#'));
+    await setState(params, 'offline#not_routable');
     expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -137,7 +157,7 @@ describe('SET_AGENT_STATE', () => {
       agentState: 'online#routable#routable',
       locale: 'en-US',
     };
-    await setState(params);
+    await setState(params, 'online#routable#routable');
     expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -150,7 +170,7 @@ describe('SET_AGENT_STATE', () => {
       ]
     `);
   });
-  it('correctly sets agent state for existing agent', async () => {
+  it('correctly sets agent state for existing agent w/o contact state', async () => {
     const params = {
       agentId: 'xxxx',
       routeState: 'not_routable',
@@ -161,7 +181,10 @@ describe('SET_AGENT_STATE', () => {
       agent_id: 'xxxx',
       state: 'online#not_routable#PendingBusy',
     };
-    await setState(params, existing);
+    Agent.getStateDef
+      .mockReturnValueOnce('online#not_routable#not_routable'.split('#'))
+      .mockReturnValueOnce('online#not_routable#PendingBusy'.split('#'));
+    await setState(params, '', existing);
     expect(Agent.setState.mock.calls[0]).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -193,6 +216,217 @@ describe('SET_AGENT_STATE', () => {
           "current_contact_id": null,
           "locale": undefined,
         },
+      ]
+    `);
+  });
+});
+
+describe('agentStreamHandler', () => {
+  const runEvent = async (records = null) => {
+    const event = MockEvent();
+    event.Records = records || MockRecords();
+    Dynamo.normalize = jest.fn((val) => val);
+    Client.Client.all.mockResolvedValue([]);
+
+    await agentStreamHandler(event);
+    return Metrics.Metrics.mock.instances[0];
+  };
+
+  it('correctly handles agent going offline', async () => {
+    Agent.isOnline.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    Agent.isRoutable.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    const metric = await runEvent();
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`Array []`);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ONLINE",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_AVAILABLE",
+          1,
+          "en-US",
+        ],
+      ]
+    `);
+  });
+
+  it('correctly handles agent going online', async () => {
+    Agent.isOnline.mockReturnValueOnce(false).mockReturnValueOnce(true);
+    Agent.isRoutable.mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+    const metric = await runEvent();
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ONLINE",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_AVAILABLE",
+          1,
+          "en-US",
+        ],
+      ]
+    `);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`Array []`);
+  });
+  it('correctly handles online agent going not_routable', async () => {
+    Agent.isOnline.mockReturnValueOnce(true).mockReturnValueOnce(true);
+    Agent.isRoutable.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    const metric = await runEvent();
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`Array []`);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_AVAILABLE",
+          1,
+          "en-US",
+        ],
+      ]
+    `);
+  });
+
+  it('correctly handles agents on call', async () => {
+    Agent.isOnline.mockReturnValue(true);
+    Agent.isRoutable.mockReturnValue(true);
+
+    const metric = await runEvent([
+      ...MockRecords({ newImage: { current_contact_id: '', locale: 'en-US' } }),
+    ]);
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ON_CALL",
+          1,
+          "en-US",
+        ],
+      ]
+    `);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`Array []`);
+  });
+
+  it('correctly handles new agents', async () => {
+    Agent.isOnline.mockReturnValueOnce(true);
+    Agent.isRoutable.mockReturnValueOnce(true);
+    const records = MockRecords({ oldImage: null });
+    records[0].dynamodb = { NewImage: { locale: 'en-US' } };
+
+    const metric = await runEvent(records);
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ONLINE",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_AVAILABLE",
+          1,
+          "en-US",
+        ],
+      ]
+    `);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`Array []`);
+  });
+
+  it('correctly cancels out online+offline agent', async () => {
+    Agent.isOnline
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
+
+    Agent.isRoutable
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
+
+    const metric = await runEvent([...MockRecords(), ...MockRecords()]);
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`Array []`);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`Array []`);
+  });
+
+  it('correctly handles multiple locales', async () => {
+    // 2 Agents online, 1 offline === yield 1 agent online+routable
+    Agent.isOnline
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true) // agent1 off -> on
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true) // agent2 off -> on
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent3 on -> off
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent4 (MX) online -> offline
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent5 (MX) online -> offline
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true); // agent6 (MX) online -> online
+
+    Agent.isRoutable
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true) // agent1 notr -> r
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true) // agent2 notr -> r
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent3 r -> notr
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent4 (MX) r -> notr
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false) // agent5 (MX) r -> notr
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(false); // agent6 (MX) notr -> notr
+
+    const metric = await runEvent([
+      ...MockRecords({ newImage: { current_contact_id: '', locale: 'en-US' } }), // US going online and on phone
+      ...MockRecords({ newImage: { locale: 'en-US' } }), // US going online
+      ...MockRecords({ newImage: { locale: 'en-US' } }), // US going offline
+      ...MockRecords({ newImage: { locale: 'es-MX' } }), // MX going offline
+      ...MockRecords({ newImage: { locale: 'es-MX' } }), // MX going offline
+      ...MockRecords({ newImage: { locale: 'es-MX', current_contact_id: '' } }), // MX going on call
+    ]);
+    expect(metric.increment.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ONLINE",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_AVAILABLE",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_ON_CALL",
+          1,
+          "en-US",
+        ],
+        Array [
+          "AGENTS_ON_CALL",
+          1,
+          "es-MX",
+        ],
+      ]
+    `);
+    expect(metric.decrement.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "AGENTS_ONLINE",
+          2,
+          "es-MX",
+        ],
+        Array [
+          "AGENTS_AVAILABLE",
+          2,
+          "es-MX",
+        ],
       ]
     `);
   });
