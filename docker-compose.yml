@@ -1,7 +1,6 @@
-version: "3.8"
+version: '3.8'
 
-x-deploy:
-  &default-deploy
+x-deploy: &default-deploy
   init: true
   build:
     context: .
@@ -29,21 +28,21 @@ services:
 
   deploy-dev:
     <<: *default-deploy
-    command: ["deploy:dev"]
+    command: ['deploy:dev']
     env_file:
       - .env
       - .env.dev
 
   deploy-staging:
     <<: *default-deploy
-    command: ["deploy:staging"]
+    command: ['deploy:staging']
     env_file:
       - .env
       - .env.staging
 
   deploy-prod:
     <<: *default-deploy
-    command: ["deploy:prod"]
+    command: ['deploy:prod']
     env_file:
       - .env
       - .env.prod
@@ -56,29 +55,19 @@ services:
       SERVICES: 'serverless'
       START_WEB: '0'
 
-  dynamodb:
-    init: true
-    image: mhart/alpine-node:13
-    working_dir: /app
-    env_file:
-      - .env
-      - .env.test
-    entrypoint: ["yarn"]
-    command: ["test:dbstart"]
-    ports:
-    - 8000:8000
-    volumes:
-      - ./:/app
-
-
   tester:
     init: true
     image: mhart/alpine-node:13
+    user: ${CURRENT_UID:-1000:1000}
     working_dir: /app
     env_file:
       - .env
       - .env.test
-    entrypoint: ["yarn"]
-    command: ["test:watch"]
+    environment:
+      LOCAL_DYNAMO_ENDPOINT: http://localstack:4566
+    entrypoint: ['yarn']
+    command: ['test:cov']
+    depends_on:
+      - localstack
     volumes:
       - ./:/app

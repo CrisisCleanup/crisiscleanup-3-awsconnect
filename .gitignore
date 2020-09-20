@@ -219,3 +219,5 @@ modules.xml
 
 .build
 .quokka
+
+!.env.test

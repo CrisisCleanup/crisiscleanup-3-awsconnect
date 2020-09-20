@@ -17,7 +17,7 @@ export const dynamoOptions = () => {
       endpoint:
         process.env.IS_OFFLINE === 'TUNNEL'
           ? 'http://marsdynamo.crisiscleanup.io'
-          : 'http://localhost:8000',
+          : process.env.LOCAL_DYNAMO_ENDPOINT,
     };
   }
   console.log('Dynamo Endpoints configured:', opts);

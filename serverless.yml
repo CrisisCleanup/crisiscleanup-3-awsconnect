@@ -81,6 +81,7 @@ custom:
       - local
     start:
       migrate: true
+      noStart: true
   customDomain: ${self:custom.dynamic.domain}
   dax: ${self:custom.dynamic.dax}
   lambda: ${self:custom.dynamic.lambda}
