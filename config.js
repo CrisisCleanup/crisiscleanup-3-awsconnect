@@ -93,8 +93,8 @@ const DAXConfig = {
     replicationFactor: 2,
   },
   prod: {
-    nodeType: 'dax.r4.large',
-    replicationFactor: 4,
+    nodeType: 'dax.r5.large',
+    replicationFactor: 3,
   },
 };
 

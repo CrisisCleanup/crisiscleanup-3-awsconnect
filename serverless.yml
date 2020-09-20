@@ -53,6 +53,7 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   dynamic: ${file(config.js)}
   prefix: ccu-connect-${self:custom.stage}
+  prefix-short: ccucon-${self:custom.stage}
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true

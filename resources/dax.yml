@@ -2,7 +2,7 @@ Resources:
   CCUConCluster:
     Type: AWS::DAX::Cluster
     Properties:
-      ClusterName: ${self:custom.prefix}
+      ClusterName: dax-${self:custom.prefix-short}
       Description: Cluster CCU Connect
       IAMRoleARN: !GetAtt CCUConDaxRole.Arn
       NodeType: ${self:custom.dax.nodeType}
