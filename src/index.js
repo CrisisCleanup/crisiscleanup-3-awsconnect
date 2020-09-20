@@ -43,17 +43,24 @@ export const agentStreamHandler = async (event) => {
   };
   Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
     if (['INSERT', 'MODIFY'].includes(eventName)) {
-      const oldItem = Dynamo.normalize(OldImage);
+      let oldItem = null;
+      let wasOnline = false;
+      let wasRoutable = false;
+      let wasConnected = false;
+
+      if (OldImage) {
+        oldItem = Dynamo.normalize(OldImage);
+        wasOnline = Agent.isOnline(oldItem.state);
+        wasRoutable = Agent.isRoutable(oldItem.state);
+        wasConnected = Object.keys(oldItem).includes(
+          AGENT_ATTRS.CURRENT_CONTACT,
+        );
+      }
+
       const newItem = Dynamo.normalize(NewImage);
 
-      const wasOnline = Agent.isOnline(oldItem.state);
-      const wasRoutable = Agent.isRoutable(oldItem.state);
       const isOnline = Agent.isOnline(newItem.state);
       const isRoutable = Agent.isRoutable(newItem.state);
-
-      const wasConnected = Object.keys(oldItem).includes(
-        AGENT_ATTRS.CURRENT_CONTACT,
-      );
       const isConnected = Object.keys(newItem).includes(
         AGENT_ATTRS.CURRENT_CONTACT,
       );
