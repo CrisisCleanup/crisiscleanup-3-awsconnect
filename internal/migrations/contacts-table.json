@@ -1,0 +1,45 @@
+{
+  "TableName": "connect-contacts-table-local",
+  "KeySchema": [
+    {
+      "AttributeName": "contact_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "contact_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "state",
+      "AttributeType": "S"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "state-index",
+      "KeySchema": [
+        {
+          "AttributeName": "state",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "contact_id",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}

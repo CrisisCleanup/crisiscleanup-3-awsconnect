@@ -1,0 +1,27 @@
+{
+  "TableName": "connect-metrics-table-local",
+  "KeySchema": [
+    {
+      "AttributeName": "type",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "name",
+      "KeyType": "RANGE"
+    }
+  ],
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "type",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "name",
+      "AttributeType": "S"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}

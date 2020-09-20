@@ -1,0 +1,65 @@
+{
+  "TableName": "connect-clients-table-local",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "connection_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "client_type",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "user_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "type-index",
+      "KeySchema": [
+        {
+          "AttributeName": "client_type",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "connection_id",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    },
+    {
+      "IndexName": "connection-index",
+      "KeySchema": [
+        {
+          "AttributeName": "connection_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}

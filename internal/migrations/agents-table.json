@@ -1,0 +1,69 @@
+{
+  "TableName": "connect-agents-table-local",
+  "KeySchema": [
+    {
+      "AttributeName": "agent_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "agent_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "state",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "current_contact_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "active",
+      "AttributeType": "S"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "state-index",
+      "KeySchema": [
+        {
+          "AttributeName": "active",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "state",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    },
+    {
+      "IndexName": "contact-index",
+      "KeySchema": [
+        {
+          "AttributeName": "current_contact_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}
