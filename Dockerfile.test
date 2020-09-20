@@ -10,5 +10,7 @@ RUN apk add --no-cache \
         awscli-local \
     && rm -rf /var/cache/apk/*
 
+RUN yarn install
+
 ENTRYPOINT ["yarn"]
 CMD ["test:ci"]

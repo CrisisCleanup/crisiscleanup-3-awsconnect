@@ -15,7 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install Dependencies
+        run: yarn install
+
       - name: Run Tests
-        run: docker-compose run tester
+        run: |
+          echo "" > .env
+          echo "" > .env.dev
+          echo "" > .env.staging
+          echo "" > .env.prod
+          docker-compose run tester
 
 

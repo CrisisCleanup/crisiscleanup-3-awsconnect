@@ -62,7 +62,6 @@ services:
       dockerfile: Dockerfile.test
     user: ${CURRENT_UID:-1000:1000}
     env_file:
-      - .env
       - .env.test
     environment:
       LOCAL_DYNAMO_ENDPOINT: http://localstack:4566
