@@ -1,0 +1,14 @@
+FROM mhart/alpine-node:13
+WORKDIR /app
+
+RUN apk add --no-cache \
+        python3 \
+        py3-pip \
+    && pip3 install --upgrade pip \
+    && pip3 install \
+        awscli \
+        awscli-local \
+    && rm -rf /var/cache/apk/*
+
+ENTRYPOINT ["yarn"]
+CMD ["test:ci"]

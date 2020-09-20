@@ -57,16 +57,18 @@ services:
 
   tester:
     init: true
-    image: mhart/alpine-node:13
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     user: ${CURRENT_UID:-1000:1000}
-    working_dir: /app
     env_file:
       - .env
       - .env.test
     environment:
       LOCAL_DYNAMO_ENDPOINT: http://localstack:4566
+      CI: 1
     entrypoint: ['yarn']
-    command: ['test:cov']
+    command: ['test:ci']
     depends_on:
       - localstack
     volumes:
