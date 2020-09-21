@@ -359,6 +359,46 @@ describe('agent api', () => {
     clear();
   });
 
+  it('sustains contact id on outbound call', async () => {
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+    });
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.AGENT_CALLING,
+      current_contact_id: 'abc',
+    });
+    let agentItem = await Agent.get({ agentId: 'xxxx' });
+    expect(agentItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "current_contact_id": "abc",
+        "entered_timestamp": "2019-06-20T00:00:00.000Z",
+        "locale": "en-US",
+        "state": "online#not_routable#CallingCustomer",
+      }
+    `);
+    await Agent.setState({
+      agentId: 'xxxx',
+      agentState: Agent.AGENT_STATES.BUSY,
+    });
+    agentItem = await Agent.get({ agentId: 'xxxx' });
+    expect(agentItem).toMatchInlineSnapshot(`
+      Object {
+        "active": "y",
+        "connection_id": "zzzz",
+        "current_contact_id": "abc",
+        "entered_timestamp": "2019-06-20T00:00:00.000Z",
+        "locale": "en-US",
+        "state": "online#not_routable#Busy",
+      }
+    `);
+    clear();
+  });
+
   it('gets the correct state def', () => {
     const routeState = Agent.getStateDef(Agent.AGENT_STATES.ROUTABLE);
     expect(routeState).toStrictEqual(['online', 'routable', 'routable']);

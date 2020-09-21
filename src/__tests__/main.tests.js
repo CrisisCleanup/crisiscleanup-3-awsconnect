@@ -281,7 +281,7 @@ describe('SET_AGENT_STATE', () => {
             "connection_id": null,
             "current_contact_id": "xxxx#yyyy",
             "locale": undefined,
-            "state_ttl": 1560989010,
+            "state_ttl": "1560989010",
           },
         ],
         Array [
@@ -314,6 +314,7 @@ describe('SET_AGENT_STATE', () => {
             },
             "data": Object {
               "action": "missed",
+              "state": "routed",
             },
             "namespace": "phone.streams",
           },
