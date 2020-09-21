@@ -41,20 +41,25 @@ export const agentStreamHandler = async (event) => {
       all: 0,
     },
   };
+  const externalUpdates = [];
   Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
     if (['INSERT', 'MODIFY'].includes(eventName)) {
       let oldItem = null;
-      let wasOnline = false;
-      let wasRoutable = false;
-      let wasConnected = false;
+      let wasOnline, wasRoutable, wasConnected, wasConnecting;
 
-      if (OldImage) {
+      try {
         oldItem = Dynamo.normalize(OldImage);
         wasOnline = Agent.isOnline(oldItem.state);
         wasRoutable = Agent.isRoutable(oldItem.state);
         wasConnected = Object.keys(oldItem).includes(
           AGENT_ATTRS.CURRENT_CONTACT,
         );
+        wasConnecting = Agent.isInRoute(oldItem.state);
+      } catch (e) {
+        wasOnline = false;
+        wasRoutable = false;
+        wasConnected = false;
+        wasConnecting = false;
       }
 
       const newItem = Dynamo.normalize(NewImage);
@@ -64,6 +69,7 @@ export const agentStreamHandler = async (event) => {
       const isConnected = Object.keys(newItem).includes(
         AGENT_ATTRS.CURRENT_CONTACT,
       );
+      const isConnecting = Agent.isInRoute(newItem.state);
 
       if (wasOnline === false && isOnline === true) {
         // Agent OFFLINE -> ONLINE
@@ -95,9 +101,28 @@ export const agentStreamHandler = async (event) => {
         metricUpdates[METRICS.ON_CALL][newItem.locale] =
           (metricUpdates[METRICS.ON_CALL][newItem.locale] || 0) + 1;
       }
+      if (wasConnecting === true && wasOnline === true && isOnline === false) {
+        // Agent dropped connection
+        externalUpdates.push({ newItem, oldItem });
+      }
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
+
+  await Promise.all(
+    externalUpdates.map(async ({ newItem, oldItem }) => {
+      try {
+        await ACTIONS.DENIED_CALLBACK({
+          agentId: newItem.agent_id,
+          contactId: oldItem.current_contact_id,
+        });
+      } catch (e) {
+        console.log('failed to deny callback, is client still on?');
+        console.log(e);
+      }
+    }),
+  );
+
   await Promise.all(
     clients.map(async ({ user_id, connection_id }) => {
       const clientObj = new Client.Client({
