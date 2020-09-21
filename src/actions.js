@@ -224,12 +224,12 @@ const setAgentState = async ({
   if (isEnteringContact) {
     // set state ttl for outbound calls
     stateExpire = Math.floor(Date.now() / 1000) + 70 * 3; // expire state if it doesn't change in 70s
-    statePayload.state_ttl = stateExpire;
+    statePayload.state_ttl = String(stateExpire);
     statePayload.current_contact_id = currentContactId;
   }
   if (isExpired) {
     // agent dropped contact, go offline
-    statePayload.agentState = 'offline#not_routable#not_routable'
+    statePayload.agentState = 'offline#not_routable#not_routable';
     statePayload.current_contact_id = null;
   }
   const resp = await Agent.setState(statePayload);
@@ -238,6 +238,7 @@ const setAgentState = async ({
     const agentClient = await new Client.Client({ connectionId }).load();
     await agentClient.send(
       RESP.UPDATE_CONTACT({
+        state: Contact.CONTACT_STATES.ROUTED,
         action: Contact.CONTACT_ACTIONS.MISSED,
       }),
     );
