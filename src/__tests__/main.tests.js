@@ -7,6 +7,7 @@ import { Agent, Outbound, Metrics, Client } from '../api';
 import { Dynamo } from '../utils';
 import Handler, { agentStreamHandler } from '../index';
 import { advanceTo, clear } from 'jest-date-mock';
+import { send } from '../ws/socket';
 
 jest.mock('../ws');
 jest.mock('../utils/dynamo');
@@ -228,17 +229,16 @@ describe('SET_AGENT_STATE', () => {
       .mockReturnValueOnce('online#not_routable#CallingCustomer'.split('#'))
       .mockReturnValueOnce('online#not_routable#CallingCustomer'.split('#'))
       .mockReturnValueOnce('offline#not_routable#not_routable'.split('#'));
-    const clientSendMock = jest.fn();
-    const clientMock = {
-      send() {
-        return clientSendMock;
-      },
-    };
-    Client.Client.mockReturnValue({
-      load() {
-        return clientMock;
-      },
-    });
+    const sendMock = jest.fn();
+    const clientMock = jest.fn(() => ({
+      load: () => ({
+        send: sendMock,
+      }),
+      send: sendMock,
+    }));
+    Client.Client.mockImplementation(() => ({
+      load: clientMock,
+    }));
     let params = {
       agentId: 'xxxx',
       contactState: 'CallingCustomer',
@@ -304,7 +304,35 @@ describe('SET_AGENT_STATE', () => {
         ],
       ]
     `);
-    expect(clientSendMock.mock.calls).toMatchInlineSnapshot(`Array []`);
+    expect(sendMock.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          Object {
+            "action": Object {
+              "name": "updateContact",
+              "type": "action",
+            },
+            "data": Object {
+              "action": "missed",
+            },
+            "namespace": "phone.streams",
+          },
+        ],
+        Array [
+          Object {
+            "action": Object {
+              "name": "updateAgentClient",
+              "type": "action",
+            },
+            "data": Object {
+              "routeState": "not_routable",
+              "state": "offline",
+            },
+            "namespace": "phone.streams",
+          },
+        ],
+      ]
+    `);
     clear();
   });
 });
