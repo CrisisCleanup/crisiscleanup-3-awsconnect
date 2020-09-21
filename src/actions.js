@@ -114,6 +114,7 @@ const denyCallback = async ({
   agentId,
   client,
   contactData,
+  contactId = null,
 }) => {
   console.log('setting agent state to offline...');
   const newState = {
@@ -121,7 +122,7 @@ const denyCallback = async ({
     agentState: 'offline#not_routable#not_routable',
   };
   const agent = Agent.getTargetAgent({
-    currentContactId: contactData.Attributes.CONTACT_ID,
+    currentContactId: contactId || contactData.Attributes.CONTACT_ID,
   });
 
   const contact = await new Contact.Contact({
@@ -205,14 +206,54 @@ const setAgentState = async ({
     }
     fullState = _fullState.join('#');
   }
-  const resp = await Agent.setState({
+  let stateExpire = null;
+
+  const statePayload = {
     agentId,
     agentState: fullState,
     current_contact_id: initContactId || currentContactId,
     connection_id: connectionId,
     locale,
-  });
+  };
+  const isEnteringContact =
+    agent &&
+    currentContactId &&
+    !agent.current_contact_id &&
+    [Agent.AGENT_STATES.AGENT_CALLING].includes(contactState);
+
+  const isExpired =
+    agent &&
+    agent.current_contact_id &&
+    agent.state_ttl &&
+    Math.floor(Date.now() / 1000) > Number(agent.state_ttl);
+
+  if (isEnteringContact) {
+    // set state ttl for outbound calls
+    stateExpire = Math.floor(Date.now() / 1000) + 70 * 3; // expire state if it doesn't change in 70s
+    statePayload.state_ttl = stateExpire;
+    statePayload.current_contact_id = currentContactId;
+  }
+  if (isExpired) {
+    // agent dropped contact, go offline
+    statePayload.agentState = 'offline#not_routable#not_routable'
+    statePayload.current_contact_id = null;
+  }
+  const resp = await Agent.setState(statePayload);
   console.log('agent state response', resp);
+  if (client === 'ws' && isExpired) {
+    const agentClient = await new Client.Client({ connectionId }).load();
+    await agentClient.send(
+      RESP.UPDATE_CONTACT({
+        action: Contact.CONTACT_ACTIONS.MISSED,
+      }),
+    );
+    await agentClient.send(
+      RESP.UPDATE_AGENT({
+        state: Agent.AGENT_STATES.OFFLINE,
+        routeState: Agent.AGENT_STATES.NOT_ROUTABLE,
+      }),
+    );
+  }
   if (client !== 'ws') {
     console.log('sending data to socket client!');
     const payload = await Agent.createStateWSPayload({ agentId, agentState });
