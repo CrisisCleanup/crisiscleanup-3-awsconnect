@@ -17,7 +17,7 @@ import RESP from './ws/response';
 import { LANGUAGE } from './api/helpers';
 import { METRICS } from './api/metrics';
 import { AGENT_STATES } from './api/agent/legacy';
-import { CONTACT_ACTIONS } from './api/contact/contact';
+import { CONTACT_ACTIONS, CONTACT_STATES } from './api/contact/contact';
 
 const checkCases = async ({
   inboundNumber,
@@ -135,17 +135,11 @@ const denyCallback = async ({
   const agentClient = await new Client.Client({
     connectionId: payload.meta.connectionId,
   }).load();
-
-  await agentClient.send({
-    ...RESP.UPDATE_AGENT({
-      state: Agent.AGENT_STATES.OFFLINE,
-      routeState: AGENT_STATES.NOT_ROUTABLE,
-    }),
-  });
   await agentClient.send({
     ...RESP.UPDATE_CONTACT({
-      contactId: contact.contactId,
-      actions: CONTACT_ACTIONS.MISSED,
+      ...(contact ? { contactId: contact.contactId } : {}),
+      action: CONTACT_ACTIONS.MISSED,
+      state: CONTACT_STATES.ROUTED,
     }),
   });
   console.log('unlocking callback for:', inboundNumber);
