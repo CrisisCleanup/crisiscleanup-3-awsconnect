@@ -6,6 +6,7 @@
 import { Agent, Outbound, Metrics, Client } from '../api';
 import { Dynamo } from '../utils';
 import Handler, { agentStreamHandler } from '../index';
+import { advanceTo, clear } from 'jest-date-mock';
 
 jest.mock('../ws');
 jest.mock('../utils/dynamo');
@@ -218,6 +219,93 @@ describe('SET_AGENT_STATE', () => {
         },
       ]
     `);
+  });
+  it('correctly handles outbound call state and expiration', async () => {
+    clear();
+    advanceTo(new Date(2019, 5, 20, 0, 0, 0, 0));
+    Agent.getStateDef
+      .mockReturnValueOnce('online#not_routable#CallingCustomer'.split('#'))
+      .mockReturnValueOnce('online#not_routable#CallingCustomer'.split('#'))
+      .mockReturnValueOnce('online#not_routable#CallingCustomer'.split('#'))
+      .mockReturnValueOnce('offline#not_routable#not_routable'.split('#'));
+    const clientSendMock = jest.fn();
+    const clientMock = {
+      send() {
+        return clientSendMock;
+      },
+    };
+    Client.Client.mockReturnValue({
+      load() {
+        return clientMock;
+      },
+    });
+    let params = {
+      agentId: 'xxxx',
+      contactState: 'CallingCustomer',
+      routeState: 'not_routable',
+      state: 'online',
+      currentContactId: 'xxxx#yyyy',
+    };
+    let existing = {
+      agent_id: 'xxxx',
+      state: 'online#routable#routable',
+      connection_id: 'abc123',
+    };
+    await setState(params, existing);
+    params = {
+      agentId: 'xxxx',
+      contactState: 'CallingCustomer',
+      routeState: 'not_routable',
+      state: 'online',
+      currentContactId: 'xxxx#yyyy',
+    };
+    existing = {
+      agent_id: 'xxxx',
+      state: 'online#not_routable#CallingCustomer',
+      state_ttl: Math.floor(Date.now() / 1000) + 70 * 3,
+      current_contact_id: 'xxxx#yyyy',
+      connection_id: 'abc123',
+    };
+    advanceTo(new Date(2019, 5, 20, 0, 0, 10, 0));
+    // only 10 seconds passed, agent should retain contact
+    await setState(params, existing);
+    advanceTo(new Date(2019, 5, 20, 0, 4, 0, 0));
+    // 2 minutes have passed, agent should release contact
+    await setState(params, existing);
+    expect(Agent.setState.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          Object {
+            "agentId": "xxxx",
+            "agentState": "online#not_routable#CallingCustomer",
+            "connection_id": null,
+            "current_contact_id": "xxxx#yyyy",
+            "locale": undefined,
+            "state_ttl": 1560989010,
+          },
+        ],
+        Array [
+          Object {
+            "agentId": "xxxx",
+            "agentState": "online#not_routable#CallingCustomer",
+            "connection_id": null,
+            "current_contact_id": "xxxx#yyyy",
+            "locale": undefined,
+          },
+        ],
+        Array [
+          Object {
+            "agentId": "xxxx",
+            "agentState": "offline#not_routable#not_routable",
+            "connection_id": null,
+            "current_contact_id": null,
+            "locale": undefined,
+          },
+        ],
+      ]
+    `);
+    expect(clientSendMock.mock.calls).toMatchInlineSnapshot(`Array []`);
+    clear();
   });
 });
 
