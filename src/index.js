@@ -327,6 +327,7 @@ export default async (event, context, callback) => {
     Details: {
       Parameters: { IS_OFFLINE, isDev, action, ...params },
       ContactData,
+      client = 'connect',
     },
   } = event;
 
@@ -338,7 +339,7 @@ export default async (event, context, callback) => {
   const actionArgs = {
     ...params,
     contactData: ContactData,
-    client: 'connect',
+    client: ['ws', 'connect'].includes(client) ? client : 'connect',
   };
   console.log(`[awsConnect] passing args to action (${action}):`, actionArgs);
   const { status, data } = await ACTIONS[action](actionArgs);
