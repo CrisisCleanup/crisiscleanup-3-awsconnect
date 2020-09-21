@@ -143,15 +143,38 @@ export const agentStreamHandler = async (event) => {
   const metric = new Metrics.Metrics();
 
   await Promise.all(
-    Object.keys(metricUpdates).map((metricName) => {
-      Object.entries(metricUpdates[metricName]).forEach(([localeK, val]) => {
-        if (val >= 1) {
-          return metric.increment(metricName, val, localeK);
-        }
-        if (val < 0) {
-          return metric.decrement(metricName, Math.abs(val), localeK);
-        }
-      });
+    Object.keys(metricUpdates[METRICS.ONLINE]).map((localeK) => {
+      const val = metricUpdates[METRICS.ONLINE][localeK];
+      if (val >= 1) {
+        return metric.increment(METRICS.ONLINE, val, localeK);
+      }
+      if (val < 0) {
+        return metric.decrement(METRICS.ONLINE, Math.abs(val), localeK);
+      }
+    }),
+  );
+
+  await Promise.all(
+    Object.keys(metricUpdates[METRICS.AVAILABLE]).map((localeK) => {
+      const val = metricUpdates[METRICS.AVAILABLE][localeK];
+      if (val >= 1) {
+        return metric.increment(METRICS.AVAILABLE, val, localeK);
+      }
+      if (val < 0) {
+        return metric.decrement(METRICS.AVAILABLE, Math.abs(val), localeK);
+      }
+    }),
+  );
+
+  await Promise.all(
+    Object.keys(metricUpdates[METRICS.ON_CALL]).map((localeK) => {
+      const val = metricUpdates[METRICS.ON_CALL][localeK];
+      if (val >= 1) {
+        return metric.increment(METRICS.ON_CALL, val, localeK);
+      }
+      if (val < 0) {
+        return metric.decrement(METRICS.ON_CALL, Math.abs(val), localeK);
+      }
     }),
   );
 
