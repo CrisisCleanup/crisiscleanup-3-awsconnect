@@ -219,6 +219,7 @@ const setAgentState = async ({
     agent &&
     agent.current_contact_id &&
     agent.state_ttl &&
+    [Agent.AGENT_STATES.AGENT_CALLING].includes(contactState) &&
     Math.floor(Date.now() / 1000) > Number(agent.state_ttl);
 
   if (isEnteringContact) {
