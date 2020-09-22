@@ -94,7 +94,7 @@ const DAXConfig = {
   },
   prod: {
     nodeType: 'dax.r5.large',
-    replicationFactor: 3,
+    replicationFactor: 4,
   },
 };
 
@@ -140,7 +140,7 @@ const LambdaConfig = {
   },
 };
 
-module.exports = (serverless) => {
+module.exports = serverless => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
     'Generating config for stage:',
