@@ -18,6 +18,7 @@ export const create = async ({
     language: await getLanguageId(language),
     incident_id: [incidentId],
     session_id: initContactId,
+    action: 'enter_ivr',
     ani,
   };
   console.log('creating inbound call...', params);
