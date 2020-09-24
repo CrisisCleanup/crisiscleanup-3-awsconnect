@@ -14,9 +14,6 @@ import {
 } from './api';
 import WS from './ws';
 import RESP from './ws/response';
-import { LANGUAGE } from './api/helpers';
-import { METRICS } from './api/metrics';
-import { AGENT_STATES } from './api/agent/legacy';
 import { CONTACT_ACTIONS, CONTACT_STATES } from './api/contact/contact';
 
 const checkCases = async ({
@@ -317,11 +314,8 @@ const findAgent = async ({
   currentContactId,
   targetAgentId,
   targetInboundId,
+  targetAgentState,
   triggerPrompt,
-  worksites,
-  ids,
-  pdas,
-  // dnisStats,
   contactData,
 }) => {
   console.log('trigger prompt timer:', triggerPrompt);
@@ -330,17 +324,17 @@ const findAgent = async ({
     newTriggerValue = 0;
   }
   console.log('finding next agent to serve contact too...');
-  let inbound;
   let inboundId = targetInboundId;
-  if (!targetAgentId) {
-    inbound = await Inbound.create({
-      initContactId,
-      number: inboundNumber,
-      incidentId,
-      language: userLanguage,
-      ani: callAni,
-    });
-    console.log('created inbound: ', inbound);
+  const [inbound, inboundEventCallback] = await Inbound.create({
+    initContactId,
+    number: inboundNumber,
+    incidentId,
+    language: userLanguage,
+    ani: callAni,
+    action: targetAgentState,
+  });
+  console.log('created inbound: ', inbound);
+  if (!targetInboundId) {
     inboundId = inbound.id;
   }
   const contact = await new Contact.Contact({
@@ -392,11 +386,20 @@ const findAgent = async ({
         contact_id: initContactId,
         ivr_action: 'reject',
       });
+      await inboundEventCallback(Inbound.InboundEvent.REJECT);
+      await denyCallback({
+        inboundNumber,
+        contactId: initContactId,
+        contactData,
+        agentId: targAgent.agent_id,
+        client: 'ws',
+      });
     } else {
       await contact.setState(Contact.CONTACT_STATES.ROUTED);
       await inboundEvent.update().save({
         ivr_action: Contact.CONTACT_STATES.ROUTED,
       });
+      await inboundEventCallback(Inbound.InboundEvent.ROUTED);
       // const attributes = { ...contact.cases, callerID: inboundNumber };
       const payload = {
         meta: {
@@ -425,6 +428,7 @@ const findAgent = async ({
             contact_id: initContactId,
             ivr_action: 'abandon',
           });
+          await inboundEventCallback(Inbound.InboundEvent.ABANDON);
           console.log('Lost connection to agent! Setting offline...');
           return {
             data: {
@@ -453,6 +457,7 @@ const findAgent = async ({
     agent = await Agent.findNextAgent(contact.locale);
   } catch (e) {
     if (e instanceof Agent.AgentError) {
+      await inboundEventCallback(Inbound.InboundEvent.NO_AVAILABLE);
       return {
         data: {
           targetAgentState: 'NONE',
@@ -487,6 +492,7 @@ const findAgent = async ({
     state_ttl: String(stateExpire),
   });
   if (Agent.isRoutable(agent.state) && Agent.isOnline(agent.state)) {
+    await inboundEventCallback(Inbound.InboundEvent.ROUTED);
     console.log('agent is routable! calling now...');
     const agentClient = await new Client.Client({
       connectionId: agent.connection_id,
