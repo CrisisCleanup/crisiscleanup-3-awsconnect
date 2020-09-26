@@ -131,6 +131,11 @@ functions:
     reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.agentStreamHandler
 
+  clientStreamHandler:
+    provisionedConcurrency: ${self:custom.lambda.provisioned}
+    reservedConcurrency: ${self:custom.lambda.reserved}
+    handler: src/index.clientStreamHandler
+
 resources:
   - Resources:
       # Connect Metrics Table
@@ -165,6 +170,8 @@ resources:
               AttributeType: S
             - AttributeName: active
               AttributeType: S
+            - AttributeName: connection_id
+              AttributeType: S
           KeySchema:
             - AttributeName: agent_id
               KeyType: HASH
@@ -182,6 +189,12 @@ resources:
             - IndexName: contact-index
               KeySchema:
                 - AttributeName: current_contact_id
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
+            - IndexName: connection-index
+              KeySchema:
+                - AttributeName: connection_id
                   KeyType: HASH
               Projection:
                 ProjectionType: ALL
@@ -242,6 +255,8 @@ resources:
                   KeyType: HASH
               Projection:
                 ProjectionType: ALL
+          StreamSpecification:
+            StreamViewType: NEW_AND_OLD_IMAGES
           TimeToLiveSpecification:
             AttributeName: ttl
             Enabled: true
@@ -251,6 +266,7 @@ resources:
       LambdaEventSourceMappingMetricsTable: ${self:custom.dynamic.resources.metricsEventMap}
       LambdaEventSourceMappingContactsTable: ${self:custom.dynamic.resources.contactsEventMap}
       LambdaEventSourceMappingAgentsTable: ${self:custom.dynamic.resources.agentsEventMap}
+      LambdaEventSourceMappingClientsTable: ${self:custom.dynamic.resources.clientsEventMap}
 
   # VPC Config
   - ${file(resources/vpc.yml)}

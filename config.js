@@ -81,6 +81,10 @@ const LambdaStreams = {
     dbRef: 'agentsTable',
     lambdaRef: 'AgentStreamHandlerLambdaFunction',
   },
+  clientsEventMap: {
+    dbRef: 'clientsTable',
+    lambdaRef: 'ClientStreamHandlerLambdaFunction',
+  },
 };
 
 const DAXConfig = {
@@ -140,7 +144,7 @@ const LambdaConfig = {
   },
 };
 
-module.exports = serverless => {
+module.exports = (serverless) => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
     'Generating config for stage:',
