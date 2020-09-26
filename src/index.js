@@ -333,6 +333,7 @@ export default async (event, context, callback) => {
 
   console.log('[awsConnect] entering action:', action);
   console.log('[awsConnect] event inputs:', event, context);
+  console.log('[awsConnect] contact data:', JSON.stringify(ContactData));
   console.log('[awsConnect] contact attributes: ', ContactData.Attributes);
 
   // Handlers

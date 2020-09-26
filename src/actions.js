@@ -310,14 +310,13 @@ const findAgent = async ({
   inboundNumber,
   incidentId,
   userLanguage,
-  callAni,
-  currentContactId,
   targetAgentId,
   targetInboundId,
   targetAgentState,
   triggerPrompt,
   contactData,
-}) => {
+  callAni,
+} = {}) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 25);
   if (newTriggerValue >= 500) {
@@ -345,175 +344,33 @@ const findAgent = async ({
   if (inbound) {
     contact.priority = inbound.priority || contact.priority;
   }
-  // await contact.setState(Contact.CONTACT_STATES.QUEUED);
-  await contact.setState();
-  const inboundEvent = new Events.Event({ itemId: inboundId }).object(
-    Events.EVENT_OBJECTS.INBOUND,
-  );
-  if (targetAgentId) {
-    const targAgent = await Agent.getTargetAgent({
-      currentContactId: initContactId,
-    });
-    const agentEvent = new Events.Event().object(Events.EVENT_OBJECTS.AGENT);
-    if (!targAgent) {
-      return {
-        data: {
-          targetAgentId: '',
-          targetAgentState: 'PENDING',
-          targetInboundId: inboundId,
-          triggerPrompt: newTriggerValue,
-          ...contact.cases,
-        },
-      };
-    }
+  if (!targetInboundId) {
+    await contact.setState();
+  }
 
-    contact.agentId = targAgent.agent_id;
-    const newState = Agent.isInRoute(targAgent.state) ? 'READY' : 'PENDING';
-    const isOnline = Agent.isOnline(targAgent.state);
-    const hasExpired =
-      Math.floor(Date.now() / 1000) > Number(targAgent.state_ttl);
-    if ((newState === 'PENDING' && hasExpired) || !isOnline) {
-      // release the contact id
-      console.log(
-        'agent state ttl has expired or agent is offline! setting offline and relasing contact...',
-      );
-      await Agent.setState({
-        agentId: targAgent.agent_id,
-        agentState: Agent.AGENT_STATES.OFFLINE,
-      });
-      await inboundEvent.join(agentEvent).save({
-        agent_id: targAgent.agent_id,
-        contact_id: initContactId,
-        ivr_action: 'reject',
-      });
-      await inboundEventCallback(Inbound.InboundEvent.REJECT);
-      await denyCallback({
-        inboundNumber,
-        contactId: initContactId,
-        contactData,
-        agentId: targAgent.agent_id,
-        client: 'ws',
-      });
-    } else {
-      await contact.setState(Contact.CONTACT_STATES.ROUTED);
-      await inboundEvent.update().save({
-        ivr_action: Contact.CONTACT_STATES.ROUTED,
-      });
-      await inboundEventCallback(Inbound.InboundEvent.ROUTED);
-      // const attributes = { ...contact.cases, callerID: inboundNumber };
-      const payload = {
-        meta: {
-          endpoint: process.env.WS_CALLBACK_URL,
-          connectionId: targAgent.connection_id,
-        },
-        ...RESP.UPDATE_CONTACT({
-          contactId: targAgent.current_contact_id,
-          agentId: targAgent.agent_id,
+  if (targetAgentState === 'READY' || targetAgentId !== '') {
+    console.log('agent is routable! calling now...');
+    const targAgent = await Agent.getTargetAgent({
+      currentContactId: contact.contactId,
+    });
+    if (targAgent) {
+      const agentClient = await new Client.Client({
+        connectionId: targAgent.connection_id,
+      }).load();
+      await agentClient.send(
+        RESP.UPDATE_CONTACT({
+          contactId: contact.contactId,
           state: contact.routeState,
           action: contact.action,
           attributes: { ...contactData.Attributes, ...contact.cases },
         }),
-      };
-      try {
-        await WS.send(payload);
-      } catch (e) {
-        // handle agent disconnects
-        if (e.statusCode === 410) {
-          await Agent.setState({
-            agentId: targAgent.agent_id,
-            agentState: Agent.AGENT_STATES.OFFLINE,
-          });
-          await inboundEvent.join(agentEvent).save({
-            agent_id: targAgent.agent_id,
-            contact_id: initContactId,
-            ivr_action: 'abandon',
-          });
-          await inboundEventCallback(Inbound.InboundEvent.ABANDON);
-          console.log('Lost connection to agent! Setting offline...');
-          return {
-            data: {
-              targetAgentId: '',
-              targetAgentState: '',
-              triggerPrompt: newTriggerValue,
-              targetInboundId: inboundId,
-              ...contact.cases,
-            },
-          };
-        }
-      }
+      );
     }
-    return {
-      data: {
-        targetAgentId: targAgent.agent_id,
-        targetAgentState: newState,
-        triggerPrompt: newTriggerValue,
-        targetInboundId: inboundId,
-        ...contact.cases,
-      },
-    };
-  }
-  let agent;
-  try {
-    agent = await Agent.findNextAgent(contact.locale);
-  } catch (e) {
-    if (e instanceof Agent.AgentError) {
-      await inboundEventCallback(Inbound.InboundEvent.NO_AVAILABLE);
-      return {
-        data: {
-          targetAgentState: 'NONE',
-          triggerPrompt: newTriggerValue,
-          targetInboundId: inboundId,
-          ...contact.cases,
-        },
-      };
-    }
-    throw e;
-  }
-
-  // agents are online, but not routable
-  if (!agent) {
-    return {
-      data: {
-        targetAgentId: '',
-        targetAgentState: 'PENDING',
-        targetInboundId: inboundId,
-        triggerPrompt: newTriggerValue,
-        ...contact.cases,
-      },
-    };
-  }
-
-  // found a routable and ready agent
-  const stateExpire = Math.floor(Date.now() / 1000) + 70 * 3; // expire state if it doesn't change in 70s
-  await Agent.setState({
-    agentId: agent.agent_id,
-    agentState: agent.state,
-    current_contact_id: initContactId,
-    state_ttl: String(stateExpire),
-  });
-  if (Agent.isRoutable(agent.state) && Agent.isOnline(agent.state)) {
-    await inboundEventCallback(Inbound.InboundEvent.ROUTED);
-    console.log('agent is routable! calling now...');
-    const agentClient = await new Client.Client({
-      connectionId: agent.connection_id,
-    }).load();
-    await agentClient.send(
-      RESP.UPDATE_CONTACT({
-        contactId: contact.contactId,
-        state: contact.routeState,
-        action: contact.action,
-        attributes: { ...contactData.Attributes, ...contact.cases },
-      }),
-    );
-    await Inbound.prompt({ inboundId: inboundId, agentId: agent.agent_id });
   }
   return {
     data: {
-      targetAgentId: agent.agent_id,
-      targetAgentState: 'PENDING',
       triggerPrompt: newTriggerValue,
       targetInboundId: inboundId,
-      ...contact.cases,
     },
   };
 };

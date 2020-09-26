@@ -296,7 +296,7 @@ export const getTargetAgent = async ({ currentContactId }) => {
   };
   console.log('checking for target agent...', params);
   const { Items } = await db.query(params).promise();
-  if (!Items.length) {
+  if (!Items || !Items.length) {
     console.log('no current target agent!');
     return null;
   }

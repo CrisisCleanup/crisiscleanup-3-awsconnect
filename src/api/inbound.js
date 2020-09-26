@@ -36,8 +36,13 @@ export const create = async ({
     incident_id: [incidentId],
     session_id: initContactId,
     action: InboundEventMapping[action] || InboundEvent.ENTER,
-    ani,
+    external_platform: 'awsconnect',
   };
+  if (!ani) {
+    console.log('no ani provided for inbound!')
+    return [{}, () => {}]
+  }
+  params.ani = ani
   console.log('creating inbound call...', params);
   const response = await axios.post('/phone_inbound', params);
   console.log('response:', response);
