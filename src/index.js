@@ -24,6 +24,37 @@ export const checkWarmup = ({ source } = {}) => {
   return false;
 };
 
+export const clientStreamHandler = async (event) => {
+  if (checkWarmup(event)) return { statusCode: 200 };
+  const { Records } = event;
+  console.log('[clients] incoming clients update:', Records);
+
+  const deletedClients = [];
+  Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
+    if (['REMOVE', 'DELETE'].includes(eventName)) {
+      const oldItem = Dynamo.normalize(OldImage);
+      deletedClients.push(oldItem);
+      console.log('[clients] client expired, placing agent offline!', oldItem);
+    }
+  });
+  await Promise.all(
+    deletedClients.map(async ({ connection_id }) => {
+      const agent = await Agent.Agent.byConnection({
+        connectionId: connection_id,
+      });
+      if (Agent.isOnline(agent.state)) {
+        await Agent.setState({
+          agentId: agent.agent_id,
+          state: Agent.AGENT_STATES.OFFLINE,
+        });
+      }
+    }),
+  );
+  return {
+    statusCode: 200,
+  };
+};
+
 export const agentStreamHandler = async (event) => {
   if (checkWarmup(event)) return { statusCode: 200 };
   const { Records } = event;

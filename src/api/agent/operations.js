@@ -76,3 +76,12 @@ export const updateStateByHeartbeat = ({ dbTable, agentId, agentState }) => ({
   UpdateExpression: 'set #AS = :as',
   ConditionExpression: 'attribute_not_exists(current_contact_id)',
 });
+
+// Get agent by Connection Id
+export const getByConnectionId = ({ dbTable, connectionId  }) => ({
+  TableName: dbTable,
+  Key: {
+    connection_id: connectionId
+  },
+  IndexName: 'connection-index'
+})

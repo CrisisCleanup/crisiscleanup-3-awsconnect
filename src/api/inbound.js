@@ -39,10 +39,10 @@ export const create = async ({
     external_platform: 'awsconnect',
   };
   if (!ani) {
-    console.log('no ani provided for inbound!')
-    return [{}, () => {}]
+    console.log('no ani provided for inbound!');
+    return [{}, () => {}];
   }
-  params.ani = ani
+  params.ani = ani;
   console.log('creating inbound call...', params);
   const response = await axios.post('/phone_inbound', params);
   console.log('response:', response);
