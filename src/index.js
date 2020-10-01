@@ -237,7 +237,7 @@ export const contactStreamHandler = async (event, context) => {
     } else if (eventName === 'DELETE' || eventName === 'REMOVE') {
       queueCounts[contactLocale] -= 1;
     }
-    if (['INSERT', 'MODIFY', 'REMOVE', 'DELETE'].includes(eventName)) {
+    if (['INSERT', 'MODIFY'].includes(eventName)) {
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
@@ -245,7 +245,7 @@ export const contactStreamHandler = async (event, context) => {
     if (queueCounts[k] >= 0) {
       metrics.increment(Metrics.METRICS.QUEUED, queueCounts[k], k);
     } else {
-      metrics.decrement(Metrics.METRICS.QUEUED, queueCounts[k], k);
+      metrics.decrement(Metrics.METRICS.QUEUED, Math.abs(queueCounts[k]), k);
     }
   });
   await adminClients.forEach(({ connection_id }) => {
