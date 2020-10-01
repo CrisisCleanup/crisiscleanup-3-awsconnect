@@ -328,6 +328,16 @@ const findAgent = async ({
   if (newTriggerValue >= 500) {
     newTriggerValue = 0;
   }
+
+  const contact = await new Contact.Contact({
+    contactId: initContactId,
+    priority: 1,
+    contactLocale: contactData.Attributes.USER_LANGUAGE,
+  }).load();
+  if (!targetInboundId) {
+    await contact.setState();
+  }
+
   console.log('finding next agent to serve contact too...');
   let inboundId = targetInboundId;
   const [inbound, inboundEventCallback] = await Inbound.create({
@@ -342,36 +352,9 @@ const findAgent = async ({
   if (!targetInboundId) {
     inboundId = inbound.id;
   }
-  const contact = await new Contact.Contact({
-    contactId: initContactId,
-    priority: 1,
-    contactLocale: contactData.Attributes.USER_LANGUAGE,
-  }).load();
-  if (inbound) {
-    contact.priority = inbound.priority || contact.priority;
-  }
-  if (!targetInboundId) {
-    await contact.setState();
-  }
 
   if (targetAgentState === 'READY' || targetAgentId !== '') {
     console.log('agent is routable! calling now...');
-    const targAgent = await Agent.getTargetAgent({
-      currentContactId: contact.contactId,
-    });
-    if (targAgent) {
-      const agentClient = await new Client.Client({
-        connectionId: targAgent.connection_id,
-      }).load();
-      await agentClient.send(
-        RESP.UPDATE_CONTACT({
-          contactId: contact.contactId,
-          state: contact.routeState,
-          action: contact.action,
-          attributes: { ...contactData.Attributes, ...contact.cases },
-        }),
-      );
-    }
   }
   return {
     data: {
