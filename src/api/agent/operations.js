@@ -63,7 +63,7 @@ export const updateConnectionId = ({ dbTable, agentId, connectionId }) => ({
     agent_id: agentId,
   },
   UpdateExpression: `set #C = :c`,
-  ConditionExpression: 'attribute_exists(agent_id)'
+  ConditionExpression: 'attribute_exists(agent_id)',
 });
 
 // Update agent state if it doesnt have contact id
@@ -78,10 +78,9 @@ export const updateStateByHeartbeat = ({ dbTable, agentId, agentState }) => ({
 });
 
 // Get agent by Connection Id
-export const getByConnectionId = ({ dbTable, connectionId  }) => ({
+export const getByConnectionId = ({ dbTable, connectionId }) => ({
   TableName: dbTable,
-  Key: {
-    connection_id: connectionId
-  },
-  IndexName: 'connection-index'
-})
+  IndexName: 'connection-index',
+  ...Expressions([{ key: 'c', name: 'connection_id', value: connectionId }]),
+  KeyConditionExpression: '#C = :c',
+});

@@ -45,7 +45,7 @@ export const clientStreamHandler = async (event) => {
       if (Agent.isOnline(agent.state)) {
         await Agent.setState({
           agentId: agent.agent_id,
-          state: Agent.AGENT_STATES.OFFLINE,
+          agentState: Agent.AGENT_STATES.OFFLINE,
         });
       }
     }),

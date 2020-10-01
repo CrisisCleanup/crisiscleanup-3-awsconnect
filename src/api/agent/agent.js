@@ -58,7 +58,7 @@ export default class Agent extends ApiModel {
     return Items;
   }
 
-  static async updateConnection({ agentId, connectionId, agentState }) {
+  static async updateConnection({ agentId, connectionId, agentState } = {}) {
     const db = Dynamo.DynamoClient(Dynamo.TABLES.AGENTS);
     const query = OPS.updateConnectionId({
       dbTable: Dynamo.TABLES.AGENTS.name,
@@ -90,9 +90,13 @@ export default class Agent extends ApiModel {
       connectionId,
     });
     console.log('[agents] fetching by connection:', query);
-    const result = await db.get(query).promise();
-    const { Item } = result;
-    return Item
+    const result = await db.query(query).promise();
+    console.log('[agents] response:', result);
+    const { Items } = result;
+    if (!Items || !Items.length) {
+      return null;
+    }
+    return Items[0];
   }
 
   static async refreshMetrics() {
