@@ -42,36 +42,17 @@ export const TABLES = {
 };
 
 export const DynamoTable = ({ name, bypassCache = false } = {}) => {
-  const isLocal = process.env.SLS_STAGE === 'local'; // serverless-offline
-  if (isLocal || bypassCache) {
-    if (!dynamoClient) {
-      dynamoClient = new AWS.DynamoDB({
-        ...dynamoOptions(),
-      });
-    }
-    return dynamoClient;
+  if (!dynamoClient) {
+    dynamoClient = new AWS.DynamoDB({
+      ...dynamoOptions(),
+    });
   }
-  daxClient = new AmazonDaxClient({
-    endpoints: [process.env.AWS_DAX_ENDPOINT],
-  });
-  return daxClient;
+  return dynamoClient;
 };
 
 export const DynamoClient = ({ name } = {}) => {
-  if (!daxClient) {
-    DynamoTable();
-  }
-  if (dynamoClient) {
-    if (!ddbClient) {
-      ddbClient = new AWS.DynamoDB.DocumentClient({
-        ...dynamoOptions(),
-      });
-    }
-    return ddbClient;
-  }
   if (!ddbClient) {
     ddbClient = new AWS.DynamoDB.DocumentClient({
-      service: daxClient,
       ...dynamoOptions(),
     });
   }
