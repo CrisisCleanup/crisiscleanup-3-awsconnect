@@ -5,7 +5,7 @@
 
 import { Agent, Outbound, Metrics, Client } from '../api';
 import { Dynamo } from '../utils';
-import Handler, { agentStreamHandler } from '../index';
+import Handler, { agentStreamHandler, clientStreamHandler } from '../index';
 import { advanceTo, clear } from 'jest-date-mock';
 import { send } from '../ws/socket';
 
@@ -543,6 +543,37 @@ describe('agentStreamHandler', () => {
           "AGENTS_AVAILABLE",
           2,
           "es-MX",
+        ],
+      ]
+    `);
+  });
+});
+
+describe('clientStreamHandler', () => {
+  const runEvent = async (records = null) => {
+    const event = MockEvent();
+    event.Records = records || MockRecords();
+    Dynamo.normalize = jest.fn((val) => val);
+    await clientStreamHandler(event);
+  };
+
+  it('sets agents of expired clients offline', async () => {
+    Agent.Agent.byConnection.mockResolvedValue({
+      agent_id: 'agent123',
+      state: 'online#routable#routable',
+    });
+    const records = MockRecords({
+      eventName: 'REMOVE',
+      oldImage: { connectionId: 'abc123' },
+    });
+    await runEvent(records);
+    expect(Agent.setState.mock.calls).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          Object {
+            "agentId": "agent123",
+            "agentState": "offline",
+          },
         ],
       ]
     `);
