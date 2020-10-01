@@ -271,4 +271,4 @@ resources:
   # VPC Config
   - ${file(resources/vpc.yml)}
   # DAX Config
-  - ${file(resources/dax.yml)}
+#  - ${file(resources/dax.yml)}
