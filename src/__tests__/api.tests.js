@@ -442,6 +442,24 @@ describe('agent api', () => {
       'routable',
     ]);
   });
+  it('fetches agent by connection id', async () => {
+    await Agent.setState({
+      agentId: 'abczzz',
+      agentState: Agent.AGENT_STATES.ROUTABLE,
+      connection_id: 'abc123'
+    });
+    await Agent.get({ agentId: 'abczzz' });
+    const client = await new Client.Client({
+      connectionId: 'connection#abczzz',
+      userId: '123',
+      type: 'user',
+    }).load();
+    await client.heartbeat('abczzz');
+    const agentItem = await Agent.Agent.byConnection({
+      connectionId: 'connection#abczzz',
+    });
+    expect(agentItem.agent_id).toBe('abczzz');
+  });
 });
 
 describe('contact api', () => {
