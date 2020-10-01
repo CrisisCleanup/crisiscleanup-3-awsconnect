@@ -129,16 +129,22 @@ const denyCallback = async ({
   const agentResp = await Agent.setState(newState);
   const payload = await Agent.createStateWSPayload(newState);
 
-  const agentClient = await new Client.Client({
-    connectionId: payload.meta.connectionId,
-  }).load();
-  await agentClient.send({
-    ...RESP.UPDATE_CONTACT({
-      ...(contact ? { contactId: contact.contactId } : {}),
-      action: CONTACT_ACTIONS.MISSED,
-      state: CONTACT_STATES.ROUTED,
-    }),
-  });
+  try {
+    const agentClient = await new Client.Client({
+      connectionId: payload.meta.connectionId,
+    }).load();
+    await agentClient.send({
+      ...RESP.UPDATE_CONTACT({
+        ...(contact ? { contactId: contact.contactId } : {}),
+        action: CONTACT_ACTIONS.MISSED,
+        state: CONTACT_STATES.ROUTED,
+      }),
+    });
+  } catch (e) {
+    console.error(e);
+    console.log('failed to update client state, are they still online?');
+  }
+
   console.log('unlocking callback for:', inboundNumber);
   const resp = await Outbound.unlock(inboundNumber);
   if (!resp.status === 200) {
