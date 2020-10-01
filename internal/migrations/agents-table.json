@@ -22,6 +22,10 @@
     {
       "AttributeName": "active",
       "AttributeType": "S"
+    },
+    {
+      "AttributeName": "connection_id",
+      "AttributeType": "S"
     }
   ],
   "GlobalSecondaryIndexes": [
@@ -50,6 +54,22 @@
       "KeySchema": [
         {
           "AttributeName": "current_contact_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 1,
+        "WriteCapacityUnits": 1
+      }
+    },
+    {
+      "IndexName": "connection-index",
+      "KeySchema": [
+        {
+          "AttributeName": "connection_id",
           "KeyType": "HASH"
         }
       ],
