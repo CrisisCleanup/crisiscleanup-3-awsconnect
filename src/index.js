@@ -241,13 +241,13 @@ export const contactStreamHandler = async (event, context) => {
       newImages.push(Dynamo.normalize(NewImage));
     }
   });
-  await Object.keys(queueCounts).map((k) => {
-    if (queueCounts[k] >= 0) {
-      metrics.increment(Metrics.METRICS.QUEUED, queueCounts[k], k);
-    } else {
-      metrics.decrement(Metrics.METRICS.QUEUED, Math.abs(queueCounts[k]), k);
-    }
-  });
+  // await Object.keys(queueCounts).map((k) => {
+  //   if (queueCounts[k] >= 0) {
+  //     metrics.increment(Metrics.METRICS.QUEUED, queueCounts[k], k);
+  //   } else {
+  //     metrics.decrement(Metrics.METRICS.QUEUED, Math.abs(queueCounts[k]), k);
+  //   }
+  // });
   await adminClients.forEach(({ connection_id }) => {
     const payload = {
       meta: {
