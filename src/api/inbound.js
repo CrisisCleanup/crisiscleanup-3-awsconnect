@@ -70,3 +70,10 @@ export const prompt = async ({ inboundId, agentId }) => {
     agent: agentId,
   });
 };
+
+export const requestTransferAni = async ({ callerDnis }) => {
+  const resp = await axios.post('/phone_connect/request_transfer_ani', {
+    phone_number: callerDnis,
+  });
+  return resp.data;
+};

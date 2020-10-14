@@ -423,6 +423,20 @@ export const clientHeartbeat = async ({
   return RESP.PONG();
 };
 
+export const findTransferAni = async ({ contactData }) => {
+  const {
+    CustomerEndpoint: { Address },
+  } = contactData;
+  console.log('requesting transfer ani for:', Address);
+  const resp = await Inbound.requestTransferAni({ callerDnis: Address });
+  console.log('got response!', resp);
+  return {
+    data: {
+      transferAni: '+' + String(resp.phone_number),
+    },
+  };
+};
+
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
@@ -434,4 +448,5 @@ export default {
   GET_CONTACTS: getContacts,
   CLIENT_HEARTBEAT: clientHeartbeat,
   GET_AGENTS: getAgents,
+  TRANSFER_ANI: findTransferAni,
 };

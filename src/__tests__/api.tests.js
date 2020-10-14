@@ -446,7 +446,7 @@ describe('agent api', () => {
     await Agent.setState({
       agentId: 'abczzz',
       agentState: Agent.AGENT_STATES.ROUTABLE,
-      connection_id: 'abc123'
+      connection_id: 'abc123',
     });
     await Agent.get({ agentId: 'abczzz' });
     const client = await new Client.Client({
