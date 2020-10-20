@@ -165,8 +165,6 @@ const setAgentState = async ({
   routeState,
   contactState,
   locale,
-  client,
-  contactData,
   initContactId = null,
   currentContactId = null,
   connectionId = null,
@@ -203,8 +201,6 @@ const setAgentState = async ({
     }
     fullState = _fullState.join('#');
   }
-  let stateExpire = null;
-
   const statePayload = {
     agentId,
     agentState: fullState,
@@ -212,85 +208,8 @@ const setAgentState = async ({
     connection_id: connectionId,
     locale,
   };
-  const isEnteringContact =
-    agent &&
-    currentContactId &&
-    !agent.current_contact_id &&
-    [Agent.AGENT_STATES.AGENT_CALLING].includes(contactState);
-
-  const isExpired =
-    agent &&
-    agent.current_contact_id &&
-    agent.state_ttl &&
-    [Agent.AGENT_STATES.AGENT_CALLING].includes(contactState) &&
-    Math.floor(Date.now() / 1000) > Number(agent.state_ttl);
-
-  if (isEnteringContact) {
-    // set state ttl for outbound calls
-    stateExpire = Math.floor(Date.now() / 1000) + 70 * 3; // expire state if it doesn't change in 70s
-    statePayload.state_ttl = String(stateExpire);
-    statePayload.current_contact_id = currentContactId;
-  }
-  if (isExpired) {
-    // agent dropped contact, go offline
-    statePayload.agentState = 'offline#not_routable#not_routable';
-    statePayload.current_contact_id = null;
-  }
   const resp = await Agent.setState(statePayload);
   console.log('agent state response', resp);
-  if (client === 'ws' && isExpired) {
-    const agentClient = await new Client.Client({ connectionId }).load();
-    await agentClient.send(
-      RESP.UPDATE_CONTACT({
-        state: Contact.CONTACT_STATES.ROUTED,
-        action: Contact.CONTACT_ACTIONS.MISSED,
-      }),
-    );
-    await agentClient.send(
-      RESP.UPDATE_AGENT({
-        state: Agent.AGENT_STATES.OFFLINE,
-        routeState: Agent.AGENT_STATES.NOT_ROUTABLE,
-      }),
-    );
-  }
-  if (client !== 'ws') {
-    console.log('sending data to socket client!');
-    const payload = await Agent.createStateWSPayload({ agentId, agentState });
-    console.log('[socket] (SERVER -> CLIENT)', payload);
-    const agentClient = await new Client.Client({
-      connectionId: payload.meta.connectionId,
-    }).load();
-    try {
-      const [stateOnline, routeState, contactState] = Agent.getStateDef(
-        agentState,
-      );
-      await agentClient.send({
-        ...RESP.UPDATE_AGENT({
-          state: stateOnline,
-          routeState,
-        }),
-      });
-      const agent = await Agent.get({ agentId });
-
-      if (agent.current_contact_id) {
-        let contactId = agent.current_contact_id;
-        const contact = await new Contact.Contact({
-          contactId,
-        }).load();
-        await agentClient.send(
-          RESP.UPDATE_CONTACT({
-            contactId: contact.contactId,
-            state: contact.routeState,
-            action: contact.action,
-            attributes: { ...contactData.Attributes, ...contact.cases },
-          }),
-        );
-      }
-    } catch (e) {
-      console.error(e);
-      console.log('failed to update agent state!');
-    }
-  }
   return {
     data: {
       promptCallType: currentContactId ? 'INBOUND' : 'OUTBOUND',
