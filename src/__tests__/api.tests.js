@@ -409,7 +409,7 @@ describe('agent api', () => {
       'not_routable',
     ]);
     expect(Agent.getStateDef(Agent.AGENT_STATES.NOT_ROUTABLE)).toStrictEqual([
-      'online',
+      'offline',
       'not_routable',
       'not_routable',
     ]);
