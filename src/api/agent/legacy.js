@@ -71,6 +71,16 @@ export const getStateDef = (state) => {
   if (stateType.length) {
     console.log(`found state type: ${stateType} for state: ${state}`);
     const isOnline = state === 'offline' ? 'offline' : 'online';
+    if (
+      stateType[0] === AGENT_STATES.NOT_ROUTABLE &&
+      state === AGENT_STATES.NOT_ROUTABLE
+    ) {
+      return [
+        AGENT_STATES.OFFLINE,
+        AGENT_STATES.NOT_ROUTABLE,
+        AGENT_STATES.NOT_ROUTABLE,
+      ];
+    }
     return [isOnline, stateType[0], state];
   } else {
     if ([AGENT_STATES.OFFLINE, AGENT_STATES.ONLINE].includes(state)) {
