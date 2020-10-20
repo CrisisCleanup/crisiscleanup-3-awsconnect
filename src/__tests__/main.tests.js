@@ -281,7 +281,6 @@ describe('SET_AGENT_STATE', () => {
             "connection_id": null,
             "current_contact_id": "xxxx#yyyy",
             "locale": undefined,
-            "state_ttl": "1560989010",
           },
         ],
         Array [
@@ -296,44 +295,15 @@ describe('SET_AGENT_STATE', () => {
         Array [
           Object {
             "agentId": "xxxx",
-            "agentState": "offline#not_routable#not_routable",
+            "agentState": "online#not_routable#CallingCustomer",
             "connection_id": null,
-            "current_contact_id": null,
+            "current_contact_id": "xxxx#yyyy",
             "locale": undefined,
           },
         ],
       ]
     `);
-    expect(sendMock.mock.calls).toMatchInlineSnapshot(`
-      Array [
-        Array [
-          Object {
-            "action": Object {
-              "name": "updateContact",
-              "type": "action",
-            },
-            "data": Object {
-              "action": "missed",
-              "state": "routed",
-            },
-            "namespace": "phone.streams",
-          },
-        ],
-        Array [
-          Object {
-            "action": Object {
-              "name": "updateAgentClient",
-              "type": "action",
-            },
-            "data": Object {
-              "routeState": "not_routable",
-              "state": "offline",
-            },
-            "namespace": "phone.streams",
-          },
-        ],
-      ]
-    `);
+    expect(sendMock.mock.calls).toMatchInlineSnapshot(`Array []`);
     clear();
   });
 });
