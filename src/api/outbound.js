@@ -95,3 +95,10 @@ export const unlock = async (inboundNumber) => {
   const resp = await axios.post(`/phone_outbound/${latestId}/unlock`);
   return resp;
 };
+
+export const resolveContactTransfer = async ({ contactId }) => {
+  const resp = await axios.post('/phone_connect/resolve_contact_transfer', {
+    transferred_id: contactId,
+  });
+  return resp.data;
+};

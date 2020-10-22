@@ -31,6 +31,7 @@ export const updateContact = ({
   priority,
   action,
   agentId,
+  transferId,
   cases: { pdas, worksites, ids },
 }) => ({
   TableName: dbTable,
@@ -43,6 +44,7 @@ export const updateContact = ({
     { key: 'd', name: 'pdas', value: pdas },
     { key: 'w', name: 'worksites', value: worksites },
     { key: 'z', name: 'ids', value: ids },
+    { key: 'x', name: 'transfer_id', value: transferId },
     // expire any contacts that are not updated in 90s
     // implying the call has been abandoned
     { key: 'e', name: 'ttl', value: Math.floor(Date.now() / 1000) + 60 * 3 },
@@ -52,7 +54,9 @@ export const updateContact = ({
   },
   UpdateExpression: `set #S = :s, #P = :p, #T = :t, #A = :a, #I = :i, #E = :e${
     pdas ? ', #D = :d' : ''
-  }${worksites ? ', #W = :w' : ''}${ids ? ', #Z = :z' : ''}`,
+  }${worksites ? ', #W = :w' : ''}${ids ? ', #Z = :z' : ''}${
+    transferId ? ', #X = :x' : ''
+  }`,
 });
 
 // Count Contacts in Queue

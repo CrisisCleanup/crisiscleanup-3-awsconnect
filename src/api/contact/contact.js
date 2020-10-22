@@ -28,7 +28,7 @@ export const CONTACT_ACTIONS = Object.freeze({
   CONNECTING: 'connecting',
   ERROR: 'error',
   DESTROYED: 'destroyed',
-  MISSED: 'missed'
+  MISSED: 'missed',
 });
 
 export const actionIsRouted = (action) => action !== CONTACT_ACTIONS.ENTER;
@@ -38,7 +38,8 @@ export class Contact extends ApiModel {
     const { contactId, contactRouted, contactLocale, action, agentId } = params;
     super({ dbTable: Dynamo.TABLES.CONTACTS });
     this.contactId = contactId;
-    this.locale = contactLocale === undefined ? 'en-US' : contactLocale.replace('_', '-');
+    this.locale =
+      contactLocale === undefined ? 'en-US' : contactLocale.replace('_', '-');
     this.currentAction = action || 'enter_ivr';
     this.routed =
       contactRouted === undefined ? actionIsRouted(this.action) : contactRouted;
@@ -46,6 +47,7 @@ export class Contact extends ApiModel {
     this.entered_timestamp = null;
     this.ttl = null;
     this.agentId = agentId || 'none';
+    this.transferId = null;
     this.casesData = {
       pdas: '-1',
       worksites: '-1',
@@ -83,7 +85,7 @@ export class Contact extends ApiModel {
   }
 
   get localeName() {
-    return this.locale.replace('_', '-')
+    return this.locale.replace('_', '-');
   }
 
   get state() {
@@ -191,6 +193,7 @@ export class Contact extends ApiModel {
       ids,
       agent_id,
       action,
+      transfer_id,
     } = Item;
     if (!ttl > Math.floor(Date.now() / 1000)) {
       this.log('contact is expired! recreating!');
@@ -202,6 +205,7 @@ export class Contact extends ApiModel {
         this.agent = agent_id || 'none';
         this.priority = priority;
         this.action = action;
+        this.transferId = transfer_id;
         return this;
       }
       return this;
@@ -210,6 +214,7 @@ export class Contact extends ApiModel {
     this.priority = priority;
     this.action = action;
     this.state = state;
+    this.transferId = transfer_id;
 
     this.cases = {
       pdas,

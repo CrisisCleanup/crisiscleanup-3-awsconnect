@@ -356,6 +356,15 @@ export const findTransferAni = async ({ contactData }) => {
   };
 };
 
+export const findTransferContact = async ({ contactData: { ContactId } }) => {
+  const resp = await Outbound.resolveContactTransfer({ contactId: ContactId });
+  return {
+    data: {
+      TRANSFER_FROM: String(resp.transfer_id),
+    },
+  };
+};
+
 export default {
   CHECK_CASE: checkCases,
   CALLBACK: createCallback,
@@ -368,4 +377,5 @@ export default {
   CLIENT_HEARTBEAT: clientHeartbeat,
   GET_AGENTS: getAgents,
   TRANSFER_ANI: findTransferAni,
+  RECV_TRANSFER_CONTACT: findTransferContact,
 };
