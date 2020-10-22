@@ -38,6 +38,7 @@ Object {
   "loggerName": "contact[abc|en-US#queued]",
   "priority": 1,
   "routed": false,
+  "transferId": null,
   "ttl": null,
 }
 `;
@@ -59,6 +60,7 @@ Object {
   "loggerName": "contact[abc|en-US#queued]",
   "priority": 1,
   "routed": true,
+  "transferId": null,
   "ttl": null,
 }
 `;
