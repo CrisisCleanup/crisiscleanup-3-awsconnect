@@ -376,5 +376,8 @@ export default async (event, context, callback) => {
   console.log(`[awsConnect] passing args to action (${action}):`, actionArgs);
   const { status, data } = await ACTIONS[action](actionArgs);
   console.log('action complete. returning data:', status, data);
-  callback(status || null, data);
+  callback(status || null, {
+    ...(data || {}),
+    LAST_ACTION: new Date().toUTCString(),
+  });
 };
