@@ -244,7 +244,7 @@ const findAgent = async ({
 } = {}) => {
   console.log('trigger prompt timer:', triggerPrompt);
   let newTriggerValue = String(Number(triggerPrompt) + 25);
-  if (newTriggerValue >= 500) {
+  if (newTriggerValue >= 500 || !newTriggerValue) {
     newTriggerValue = 0;
   }
 
