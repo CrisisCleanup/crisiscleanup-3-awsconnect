@@ -94,14 +94,13 @@ custom:
 
 functions:
   awsConnect:
+    memorySize: 256
     provisionedConcurrency: ${self:custom.lambda.awsConnect.provisioned}
-    reservedConcurrency: ${self:custom.lambda.awsConnect.reserved}
     handler: src/index.default
 
   connectionHandler:
     handler: src/index.wsConnectionHandler
     provisionedConcurrency: ${self:custom.lambda.provisioned}
-    reservedConcurrency: ${self:custom.lambda.reserved}
     memorySize: 512
     events:
       - websocket:
@@ -110,30 +109,30 @@ functions:
           route: $disconnect
 
   wsHandler:
+    memorySize: 512
     provisionedConcurrency: ${self:custom.lambda.wsHandler.provisioned}
-    reservedConcurrency: ${self:custom.lambda.wsHandler.reserved}
     handler: src/index.wsHandler
     events:
       - websocket: $default
 
   metricStreamHandler:
+    memorySize: 256
     provisionedConcurrency: ${self:custom.lambda.provisioned}
-    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.metricStreamHandler
 
   contactStreamHandler:
+    memorySize: 256
     provisionedConcurrency: ${self:custom.lambda.provisioned}
-    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.contactStreamHandler
 
   agentStreamHandler:
+    memorySize: 256
     provisionedConcurrency: ${self:custom.lambda.provisioned}
-    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.agentStreamHandler
 
   clientStreamHandler:
+    memorySize: 256
     provisionedConcurrency: ${self:custom.lambda.provisioned}
-    reservedConcurrency: ${self:custom.lambda.reserved}
     handler: src/index.clientStreamHandler
 
 resources:
