@@ -105,46 +105,46 @@ const DAXConfig = {
 const LambdaConfig = {
   dev: {
     warmupConcurrency: 0,
-    provisioned: 3,
-    reserved: 5,
+    provisioned: 0,
+    reserved: 3,
     wsHandler: {
-      provisioned: 10,
-      reserved: 15,
+      provisioned: 0,
+      reserved: 3,
     },
     awsConnect: {
-      provisioned: 5,
-      reserved: 8,
+      provisioned: 0,
+      reserved: 3,
     },
   },
   staging: {
-    warmupConcurrency: 1,
-    provisioned: 10,
-    reserved: 20,
+    warmupConcurrency: 0,
+    provisioned: 1,
+    reserved: 5,
     wsHandler: {
-      provisioned: 30,
-      reserved: 60,
+      provisioned: 1,
+      reserved: 10,
     },
     awsConnect: {
-      provisioned: 15,
-      reserved: 20,
+      provisioned: 1,
+      reserved: 5,
     },
   },
   prod: {
-    warmupConcurrency: 5,
-    provisioned: 15,
-    reserved: 30,
+    warmupConcurrency: 2,
+    provisioned: 10,
+    reserved: 25,
     wsHandler: {
-      provisioned: 30,
-      reserved: 100,
+      provisioned: 15,
+      reserved: 25,
     },
     awsConnect: {
-      provisioned: 30,
-      reserved: 100,
+      provisioned: 7,
+      reserved: 10,
     },
   },
 };
 
-module.exports = (serverless) => {
+module.exports = serverless => {
   serverless.cli.consoleLog('Loading Dynamic config...');
   serverless.cli.consoleLog(
     'Generating config for stage:',
