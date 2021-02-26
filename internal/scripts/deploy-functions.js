@@ -25,7 +25,7 @@ if (!targStage) {
   shelljs.exit(1);
 }
 
-const cmdBase = `sls --env ${targStage} --stage ${targStage} deploy`;
+const cmdBase = `node_modules/.bin/sls --env ${targStage} --stage ${targStage} deploy`;
 
 shelljs.echo(`Deploying functions for: ${targStage}`);
 
