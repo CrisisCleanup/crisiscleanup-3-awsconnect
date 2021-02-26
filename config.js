@@ -106,40 +106,40 @@ const LambdaConfig = {
   dev: {
     warmupConcurrency: 0,
     provisioned: 0,
-    reserved: 3,
+    reserved: 0,
     wsHandler: {
       provisioned: 0,
-      reserved: 3,
+      reserved: 0,
     },
     awsConnect: {
       provisioned: 0,
-      reserved: 3,
+      reserved: 0,
     },
   },
   staging: {
     warmupConcurrency: 0,
     provisioned: 1,
-    reserved: 5,
+    reserved: 0,
     wsHandler: {
       provisioned: 1,
-      reserved: 10,
+      reserved: 0,
     },
     awsConnect: {
       provisioned: 1,
-      reserved: 5,
+      reserved: 0,
     },
   },
   prod: {
     warmupConcurrency: 2,
-    provisioned: 10,
-    reserved: 25,
+    provisioned: 3,
+    reserved: 0,
     wsHandler: {
-      provisioned: 15,
-      reserved: 25,
+      provisioned: 4,
+      reserved: 0,
     },
     awsConnect: {
-      provisioned: 7,
-      reserved: 10,
+      provisioned: 4,
+      reserved: 0,
     },
   },
 };
