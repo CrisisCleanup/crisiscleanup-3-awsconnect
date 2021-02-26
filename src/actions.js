@@ -356,12 +356,24 @@ export const findTransferAni = async ({ contactData }) => {
   };
 };
 
-export const findTransferContact = async ({ contactData: { ContactId } }) => {
-  const resp = await Outbound.resolveContactTransfer({ contactId: ContactId });
+export const findTransferContact = async ({ contactData: { ContactId, CustomerEndpoint } }) => {
+  const resp = await Outbound.resolveContactTransfer({ contactId: ContactId, verifyAni: CustomerEndpoint.Address });
   return {
     data: {
       TRANSFER_FROM: String(resp.transfer_id),
     },
+  };
+};
+
+export const findVerifyAni = async ({
+  contactData: { ContactId, Attributes },
+}) => {
+  await Outbound.findOutboundVerifyAni({
+    contactId: ContactId,
+    taskId: Attributes.OUTBOUND_VERIFY_ANI_TASK || null,
+  });
+  return {
+    data: {},
   };
 };
 
@@ -378,4 +390,5 @@ export default {
   GET_AGENTS: getAgents,
   TRANSFER_ANI: findTransferAni,
   RECV_TRANSFER_CONTACT: findTransferContact,
+  DETERMINE_VERIFY_ANI: findVerifyAni,
 };

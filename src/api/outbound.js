@@ -96,9 +96,20 @@ export const unlock = async (inboundNumber) => {
   return resp;
 };
 
-export const resolveContactTransfer = async ({ contactId }) => {
+export const resolveContactTransfer = async ({ contactId, verifyAni }) => {
   const resp = await axios.post('/phone_connect/resolve_contact_transfer', {
     transferred_id: contactId,
+    verify_ani: verifyAni,
+  });
+  return resp.data;
+};
+
+export const findOutboundVerifyAni = async ({ contactId, taskId } = {}) => {
+  const resp = await axios.get('/phone_connect/determine_verify_ani', {
+    params: {
+      contact_id: contactId,
+      task_id: taskId,
+    },
   });
   return resp.data;
 };
