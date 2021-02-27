@@ -73,7 +73,7 @@
   "dependencies": {
     "amazon-dax-client": "^1.2.4",
     "aws-sdk": "^2.751.0",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "babel-core": "^7.0.0-bridge.0"
   }
 }
