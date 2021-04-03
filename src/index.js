@@ -224,6 +224,8 @@ export const contactStreamHandler = async (event, context) => {
   const queueCounts = {
     [LANGUAGE.en_US]: 0,
     [LANGUAGE.es_MX]: 0,
+    [LANGUAGE.ar]: 0,
+    [LANGUAGE.ku]: 0,
   };
   Records.forEach(({ eventName, dynamodb: { NewImage, OldImage } }) => {
     let contactLocale = LANGUAGE.en_US;
